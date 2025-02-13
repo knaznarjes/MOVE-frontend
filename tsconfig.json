@@ -1,0 +1,30 @@
+{
+    "compileOnSave": false,
+    "compilerOptions": {
+      "allowSyntheticDefaultImports": true,
+      "baseUrl": "./src",
+      "outDir": "./dist/out-tsc",
+      "sourceMap": true,
+      "declaration": false,
+      "downlevelIteration": true,
+      "experimentalDecorators": true,
+      "moduleResolution": "node",
+      "importHelpers": true,
+      "target": "es2017",
+      "module": "es2020",
+      "lib": [
+        "es2020",
+        "dom"
+      ]
+    },
+    "angularCompilerOptions": {
+      "enableI18nLegacyMessageIdFormat": false
+    },
+    "include": [
+      "src/**/*.ts"  // Assure que tous les fichiers .ts dans le dossier src sont inclus
+    ],
+    "exclude": [
+      "node_modules",
+      "dist"
+    ]
+  }

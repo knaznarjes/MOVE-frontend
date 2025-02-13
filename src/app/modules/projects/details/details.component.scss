@@ -1,0 +1,33 @@
+.bg-card {
+    background-color: #f9f9f9;
+  }
+
+  .shadow {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .rounded-2xl {
+    border-radius: 1rem;
+  }
+
+  .mt-4 {
+    margin-top: 1rem;
+  }
+
+  .mb-6 {
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    color: #fff;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 1rem;
+  }
+
+  p {
+    margin: 0;
+  }

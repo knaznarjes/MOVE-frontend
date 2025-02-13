@@ -1,0 +1,52 @@
+<h2>Add Developer</h2>
+<form [formGroup]="developerForm" (ngSubmit)="onSubmit()">
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Name</mat-label>
+    <input matInput formControlName="nom" placeholder="Developer's Name" required>
+    <mat-error *ngIf="developerForm.get('nom')?.hasError('required')">Name is required</mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Role</mat-label>
+    <mat-select formControlName="role" required>
+      <mat-option *ngFor="let role of availableRoles" [value]="role">
+        {{ role }}
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="developerForm.get('role')?.hasError('required')">Role is required</mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="full-width">
+    <mat-label>Skills</mat-label>
+    <mat-chip-list #chipList>
+      <mat-chip *ngFor="let skill of selectedSkills" (removed)="remove(skill)">
+        {{ skill }}
+        <button matChipRemove [attr.aria-label]="'Remove ' + skill">
+          <mat-icon>cancel</mat-icon>
+        </button>
+      </mat-chip>
+      <input placeholder="New skill..."
+             #skillInput
+             [formControl]="skillCtrl"
+             [matChipInputFor]="chipList"
+             [matAutocomplete]="auto"
+             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+             (matChipInputTokenEnd)="add($event)">
+    </mat-chip-list>
+    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
+      <mat-option *ngFor="let skill of filteredSkills | async" [value]="skill">{{ skill }}</mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+
+  <div class="full-width availability-toggle">
+    <mat-slide-toggle formControlName="disponibilite">
+      {{ developerForm.get('disponibilite')?.value ? 'Available' : 'Not Available' }}
+    </mat-slide-toggle>
+  </div>
+
+  <div class="dialog-actions">
+    <button mat-raised-button color="primary" type="submit" [disabled]="!developerForm.valid">Save</button>
+    <button mat-raised-button color="warn" type="button" (click)="onCancel()">Cancel</button>
+  </div>
+</form>

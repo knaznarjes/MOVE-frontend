@@ -1,0 +1,59 @@
+<div class="flex flex-col flex-auto min-w-0">
+
+    <div class="flex flex-col flex-auto items-center p-6 sm:p-10">
+
+      <div class="flex flex-col w-full max-w-4xl">
+
+        <div class="-ml-4 sm:mt-8">
+          <a mat-button [routerLink]="['/projects/project-list']" class="btn btn-primary">
+            <mat-icon>arrow_back</mat-icon>
+            <span class="ml-2">Back to Projects</span>
+          </a>
+        </div>
+
+        <div class="mt-2 text-4xl sm:text-7xl font-extrabold tracking-tight leading-tight">
+          {{ showTemplate === 'projectDetail' ? 'Project Details' : showTemplate === 'editProject' ? 'Edit Project' : showTemplate === 'versionDetail' ? 'Version Details' : 'Edit Version' }}
+        </div>
+
+        <div *ngIf="errorMessage" class="mt-4 mb-6 p-4 bg-red-200 text-red-700 rounded-md">
+          <p>{{ errorMessage }}</p>
+        </div>
+
+        <!-- pour l'édition d'un projet -->
+        <ng-container *ngIf="showTemplate === 'editProject'">
+          <div class="mt-8 sm:mt-12 p-6 pb-7 sm:p-10 sm:pb-7 shadow rounded-2xl bg-card">
+            <app-project-edit [project]="project" (templateName)="setTemplateName($event)"></app-project-edit>
+          </div>
+        </ng-container>
+
+        <!-- Si le template actuel est pour l'édition d'une version -->
+        <ng-container *ngIf="showTemplate === 'editVersion'">
+          <div class="mt-8 sm:mt-12 p-6 pb-7 sm:p-10 sm:pb-7 shadow rounded-2xl bg-card">
+            <app-version-edit [projetForm]="projetForm" [selectedVersion]="selectedVersion"></app-version-edit>
+          </div>
+        </ng-container>
+
+        <!--  pour les détails du projet -->
+        <ng-container *ngIf="showTemplate === 'projectDetail'">
+          <div>
+            <app-project-detail [project]="project" [selectedVersionIndex]="selectedVersionIndex" (versionSelected)="onVersionSelected($event)"></app-project-detail>
+            <div class="button-group mt-4">
+              <button mat-raised-button color="primary" (click)="setTemplateName('editProject')">Edit Project</button>
+              <button mat-raised-button color="accent" (click)="navigateToAddVersion()">Add Version</button>
+            </div>
+          </div>
+        </ng-container>
+
+        <!--  pour les détails d'une version -->
+        <ng-container *ngIf="showTemplate === 'versionDetail'">
+          <div>
+            <app-version-detail [selectedVersion]="selectedVersion" (templateName)="setTemplateName($event)"></app-version-detail>
+            <div class="button-group mt-4">
+              <button mat-raised-button color="warn" (click)="setTemplateName('projectDetail')">Back to Project Details</button>
+            </div>
+          </div>
+        </ng-container>
+
+      </div>
+    </div>
+  </div>

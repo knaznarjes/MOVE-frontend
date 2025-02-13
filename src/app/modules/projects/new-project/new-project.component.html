@@ -1,0 +1,66 @@
+<div class="container mx-auto mt-12">
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-semibold">Add New Project</h1>
+    </div>
+    <div class="p-6 pb-7 sm:p-10 sm:pb-7 shadow rounded-2xl bg-card max-w-4xl mx-auto">
+        <form [formGroup]="projectForm" (ngSubmit)="onSubmit()" class="space-y-6">
+            <!-- Project Name -->
+            <mat-form-field class="w-full">
+                <mat-label>Project Name</mat-label>
+                <input matInput formControlName="nom" />
+                <mat-error *ngIf="projectForm.get('nom').hasError('required')">Project name is required</mat-error>
+            </mat-form-field>
+
+            <!-- Description -->
+            <mat-form-field class="w-full">
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description"></textarea>
+            </mat-form-field>
+
+            <!-- Start Date -->
+            <mat-form-field class="w-full">
+                <mat-label>Start Date</mat-label>
+                <input matInput [matDatepicker]="startDatePicker" formControlName="dateDebut" />
+                <mat-datepicker-toggle matSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+                <mat-datepicker #startDatePicker></mat-datepicker>
+                <mat-error *ngIf="projectForm.get('dateDebut').hasError('required')">Start date is required</mat-error>
+            </mat-form-field>
+
+            <!-- End Date -->
+            <mat-form-field class="w-full">
+                <mat-label>End Date</mat-label>
+                <input matInput [matDatepicker]="endDatePicker" formControlName="dateLimite" />
+                <mat-datepicker-toggle matSuffix [for]="endDatePicker"></mat-datepicker-toggle>
+                <mat-datepicker #endDatePicker></mat-datepicker>
+                <mat-error *ngIf="projectForm.get('dateLimite').hasError('required')">End date is required</mat-error>
+            </mat-form-field>
+
+           <!-- Status -->
+<mat-form-field class="w-full">
+    <mat-label>Status</mat-label>
+    <mat-select formControlName="status" required>
+        <mat-option value="in-progress">In Progress</mat-option>
+        <mat-option value="not-started">Not Started</mat-option>
+    </mat-select>
+    <mat-error *ngIf="projectForm.get('status').hasError('required')">Status is required</mat-error>
+</mat-form-field>
+
+
+            <!-- Personnels -->
+            <mat-form-field class="w-full">
+                <mat-label>Select Developers</mat-label>
+                <mat-select formControlName="personnels" multiple>
+                    <mat-option *ngFor="let personnel of personnels" [value]="personnel.id">
+                        {{ personnel.nom }}
+                    </mat-option>
+                </mat-select>
+                <mat-error *ngIf="projectForm.get('personnels').hasError('required')">At least one personnel is required</mat-error>
+            </mat-form-field>
+
+            <div class="flex items-center justify-end mt-4">
+                <button mat-raised-button color="primary" type="submit">Add Project</button>
+                <button mat-raised-button color="warn" class="ml-2" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

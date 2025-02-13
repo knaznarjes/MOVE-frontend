@@ -1,0 +1,62 @@
+:host {
+    display: block;
+    padding: 20px;
+  }
+
+  h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    color: rgba(0, 0, 0, 0.87);
+    text-align: center; /* Optionnel : centre le texte horizontalement */
+    padding-bottom: 10px; /* Optionnel : ajoute un espacement sous le texte */
+  }
+
+  .full-width {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  mat-form-field {
+    display: block;
+  }
+
+  .availability-toggle {
+    margin-top: 15px;
+    margin-bottom: 25px;
+  }
+
+  mat-chip-list {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 15px;
+  }
+
+  mat-chip {
+    margin: 4px;
+    cursor: pointer;
+  }
+
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 30px;
+
+    button {
+      margin-left: 10px;
+    }
+  }
+
+  // Ajoutez ces styles pour améliorer l'apparence des chips
+  ::ng-deep .mat-chip-list-wrapper {
+    margin: 0 !important;
+  }
+
+  // Style pour le label des skills
+  .skills-label {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+

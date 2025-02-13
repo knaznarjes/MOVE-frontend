@@ -1,0 +1,71 @@
+<div *ngIf="project" class="bg-white shadow-lg rounded-lg overflow-hidden">
+    <div class="bg-indigo-600 text-white p-6">
+      <h1 class="text-3xl font-bold">{{ project.nom }}</h1>
+      <p class="mt-2 text-indigo-200">{{ project.description }}</p>
+    </div>
+
+    <div class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">Project Information</h2>
+          <div class="space-y-3">
+            <p><span class="font-medium text-gray-600">Start Date:</span> {{ project.dateDebut | date:'dd/MM/yyyy' }}</p>
+            <p><span class="font-medium text-gray-600">Due Date:</span> {{ project.dateLimite | date:'dd/MM/yyyy' }}</p>
+            <p>
+              <span class="font-medium text-gray-600">Status:</span>
+              <span [ngClass]="{
+                'text-green-600': project.status === 'In Progress',
+                'text-red-600': project.status === 'Delayed',
+                'text-blue-600': project.status === 'Completed'
+              }" class="font-semibold ml-2">{{ project.status }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">Developers</h2>
+          <ul class="space-y-2">
+            <li *ngFor="let dev of developers" class="bg-gray-100 rounded p-2">{{ dev.nom }}</li>
+            <li *ngIf="developers.length === 0" class="text-gray-500 italic">No developers assigned.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Versions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div *ngFor="let version of versions"
+               (click)="onSelectVersion(version)"
+               class="bg-white border rounded-lg p-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:border-indigo-500"
+               [ngClass]="{'ring-2 ring-indigo-500': selectedVersion?.id === version.id}">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-semibold text-lg">Version {{ version.numeroVersion }}</h3>
+            </div>
+            <p class="text-sm text-gray-600">
+              From {{ version.dateDebut | date:'dd/MM/yyyy' }} to {{ version.dateFin | date:'dd/MM/yyyy' }}
+            </p>
+          </div>
+          <div *ngIf="versions.length === 0" class="col-span-full text-center text-gray-500 italic">
+            No versions available.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="selectedVersion" class="mt-8 bg-indigo-50 rounded-lg p-6">
+    <h3 class="text-xl font-semibold mb-4 text-indigo-700">Version Details: {{ selectedVersion.numeroVersion }}</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <p><span class="font-medium text-gray-600">Start Date:</span> {{ selectedVersion.dateDebut | date:'dd/MM/yyyy' }}</p>
+      <p><span class="font-medium text-gray-600">End Date:</span> {{ selectedVersion.dateFin | date:'dd/MM/yyyy' }}</p>
+      <p class="col-span-full"><span class="font-medium text-gray-600">Technologies:</span> {{ selectedVersion.technologies?.join(', ') }}</p>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" aria-label="Loading"></div>
+  </div>
+
+  <div *ngIf="error" class="mt-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+    {{ error }}
+  </div>

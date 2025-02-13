@@ -1,0 +1,12 @@
+.task-form {
+    width: 100%;
+    max-width: 600px; 
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    mat-dialog-content {
+      padding: 24px;
+    }
+  }

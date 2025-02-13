@@ -1,0 +1,51 @@
+<div class="container mx-auto mt-12">
+    <form [formGroup]="projectForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <mat-form-field class="w-full">
+        <mat-label>Project Name</mat-label>
+        <input matInput formControlName="nom" />
+        <mat-error *ngIf="projectForm.get('nom')?.hasError('required')">Project name is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="w-full">
+        <mat-label>Description</mat-label>
+        <textarea matInput formControlName="description"></textarea>
+      </mat-form-field>
+
+      <mat-form-field class="w-full">
+        <mat-label>Start Date</mat-label>
+        <input matInput [matDatepicker]="startDatePicker" formControlName="dateDebut" />
+        <mat-datepicker-toggle matSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker #startDatePicker></mat-datepicker>
+        <mat-error *ngIf="projectForm.get('dateDebut')?.hasError('required')">Start date is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="w-full">
+        <mat-label>End Date</mat-label>
+        <input matInput [matDatepicker]="endDatePicker" formControlName="dateLimite" />
+        <mat-datepicker-toggle matSuffix [for]="endDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker #endDatePicker></mat-datepicker>
+        <mat-error *ngIf="projectForm.get('dateLimite')?.hasError('required')">End date is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="w-full">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="In Progress">In Progress</mat-option>
+          <mat-option value="Completed">Completed</mat-option>
+          <mat-option value="Not Started">Not Started</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="w-full">
+        <mat-label>Personnel</mat-label>
+        <mat-select formControlName="personnelIds" multiple>
+          <mat-option *ngFor="let personnel of personnels" [value]="personnel.id">
+            {{ personnel.nom }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" type="submit">Save</button>
+      <button mat-button (click)="onCancel()">Cancel</button>
+    </form>
+  </div>

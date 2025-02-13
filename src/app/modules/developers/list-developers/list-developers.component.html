@@ -1,0 +1,48 @@
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <mat-drawer-container class="flex-auto h-full bg-card">
+      <mat-drawer
+        class="w-full md:w-80"
+        [opened]="drawerOpened"
+        [position]="'end'"
+        [disableClose]="true"
+        #matDrawer
+      >
+        <div class="p-6">
+          <h3 class="text-2xl font-semibold mb-6">Developer Details</h3>
+          <div *ngIf="selectedPersonnel" class="space-y-4">
+            <h4 class="text-xl font-medium">{{ selectedPersonnel.nom }}</h4>
+            <p><strong>Role:</strong> {{ selectedPersonnel.role }}</p>
+            <p><strong>Skills:</strong> {{ selectedPersonnel.competences?.join(', ') }}</p>
+            <p><strong>Availability:</strong> {{ selectedPersonnel.disponibilite ? 'Available' : 'Not Available' }}</p>
+            <div class="mt-6 flex space-x-2">
+              <button mat-raised-button class="btn btn-edit" (click)="openEditDeveloperDialog()">Edit</button>
+              <button mat-raised-button class="btn btn-delete" (click)="deletePersonnel()">Delete</button>
+              <button mat-button class="btn btn-close" (click)="drawerOpened = false">Close</button>
+            </div>
+          </div>
+        </div>
+      </mat-drawer>
+
+      <mat-drawer-content class="flex flex-col">
+        <div class="p-6">
+          <div class="mb-6 flex justify-between items-center">
+            <h2 class="custom-title">List of Developers</h2>
+            <button mat-raised-button class="btn btn-add" (click)="openAddDeveloperDialog()">Add Developer</button>
+          </div>
+          <div class="mb-6">
+            <mat-form-field class="w-full">
+              <mat-icon matPrefix>search</mat-icon>
+              <input matInput [formControl]="searchInputControl" placeholder="Search Developers by Name">
+            </mat-form-field>
+          </div>
+          <ul class="list-none p-0 space-y-2">
+            <li *ngFor="let personnel of personnels"
+                (click)="selectPersonnel(personnel)"
+                class="p-4 bg-white rounded shadow cursor-pointer hover:bg-gray-100 transition-colors">
+              <h5 class="text-lg font-medium">{{ personnel.nom }}</h5>
+            </li>
+          </ul>
+        </div>
+      </mat-drawer-content>
+    </mat-drawer-container>
+  </div>

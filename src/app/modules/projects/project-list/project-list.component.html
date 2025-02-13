@@ -1,0 +1,106 @@
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-y-auto">
+    <!-- Header -->
+    <div class="relative flex-0 py-8 px-4 sm:p-16 overflow-hidden bg-gray-800">
+        <svg class="absolute inset-0 pointer-events-none"
+             viewBox="0 0 960 540" width="100%" height="100%" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+            <g class="text-gray-700 opacity-25" fill="none" stroke="currentColor" stroke-width="100">
+                <circle r="234" cx="196" cy="23"></circle>
+                <circle r="234" cx="790" cy="491"></circle>
+            </g>
+        </svg>
+        <div class="z-10 relative flex flex-col items-center">
+            <h2 class="text-xl font-semibold text-white">MOVE</h2>
+            <div class="mt-1 text-4xl sm:text-7xl font-extrabold tracking-tight leading-tight text-center text-white">
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-auto p-6 sm:p-10">
+        <div class="flex flex-col flex-auto w-full max-w-xs sm:max-w-5xl mx-auto">
+            <!-- Filters and Add Project Button -->
+            <div class="flex flex-col sm:flex-row items-center justify-between w-full max-w-xs sm:max-w-none">
+                <!-- Search bar -->
+                <mat-form-field
+                    class="fuse-mat-no-subscript w-full sm:w-72 mt-4 sm:mt-0 sm:ml-4"
+                    [floatLabel]="'always'">
+                    <mat-icon
+                        matPrefix
+                        class="icon-size-5"
+                        [svgIcon]="'heroicons_solid:search'"></mat-icon>
+                    <input
+                        (input)="filterByQuery(query.value)"
+                        placeholder="Search by title or description"
+                        matInput
+                        #query>
+                </mat-form-field>
+
+                <!-- Add Project Button -->
+                <div class="my-4 sm:my-0 sm:mx-4">
+                    <button
+                        mat-raised-button
+                        color="primary"
+                        (click)="addProject()">
+                        Add Project
+                    </button>
+                </div>
+
+              <!-- Hide completed projects -->
+              <mat-slide-toggle
+              class="mt-8 sm:mt-0 sm:ml-auto"
+              [color]="'primary'"
+              (change)="toggleCompleted($event)">
+              Hide completed
+          </mat-slide-toggle>
+
+      </div>
+
+
+            <!-- Projects -->
+            <div *ngIf="filteredProjets.length; else noProjects" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-8 sm:mt-10">
+                <div *ngFor="let projet of filteredProjets" class="flex flex-col h-96 shadow rounded-2xl overflow-hidden bg-white">
+                    <div class="flex flex-col p-6">
+                        <div class="mt-4 text-lg font-medium">{{ projet.nom }}</div>
+                        <div class="mt-0.5 line-clamp-2 text-gray-600">{{ projet.description }}</div>
+                        <div class="w-12 h-1 my-6 border-t-2 border-gray-200"></div>
+                        <div class="flex items-center leading-5 text-md text-gray-600">
+                            <mat-icon class="icon-size-5 text-gray-500" [svgIcon]="'heroicons_solid:calendar'"></mat-icon>
+                            <div class="ml-1.5">Start Date: {{ projet.dateDebut | date:'dd/MM/yyyy' }}</div>
+                        </div>
+                        <div class="flex items-center mt-2 leading-5 text-md text-gray-600">
+                            <mat-icon class="icon-size-5 text-gray-500" [svgIcon]="'heroicons_solid:clock'"></mat-icon>
+                            <div class="ml-1.5">Deadline: {{ projet.dateLimite | date:'dd/MM/yyyy' }}</div>
+                        </div>
+                        <div class="flex items-center mt-2 leading-5 text-md text-gray-600">
+                            <mat-icon class="icon-size-5 text-gray-500" [svgIcon]="'heroicons_solid:status-online'"></mat-icon>
+                            <div class="ml-1.5">Status: {{ projet.status }}</div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col w-full mt-auto">
+                        <div class="px-6 py-4 text-right bg-gray-50">
+                            <button
+                                mat-stroked-button
+                                [routerLink]="['/projects/details', projet.id]">
+                                Details
+                            </button>
+                            <button
+                                mat-stroked-button
+                                color="warn"
+                                (click)="confirmDelete(projet.id)"
+                                class="ml-4">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <ng-template #noProjects>
+                <div class="flex flex-auto flex-col items-center justify-center bg-gray-100">
+                    <mat-icon class="icon-size-20" [svgIcon]="'iconsmind:file_search'"></mat-icon>
+                    <div class="mt-6 text-2xl font-semibold tracking-tight text-gray-600">No projects found!</div>
+                </div>
+            </ng-template>
+        </div>
+    </div>
+</div>

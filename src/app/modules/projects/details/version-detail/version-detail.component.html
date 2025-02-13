@@ -1,0 +1,71 @@
+<div *ngIf="selectedVersion" class="bg-white shadow-lg rounded-lg overflow-hidden">
+
+    <div class="bg-indigo-600 text-white p-6">
+      <h2 class="text-3xl font-bold">Version {{ selectedVersion.numeroVersion }}</h2>
+    </div>
+
+    <div class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Version Information</h3>
+          <div class="space-y-3">
+            <p><span class="font-medium text-gray-600">Start Date:</span> {{ selectedVersion.dateDebut | date:'dd/MM/yyyy' }}</p>
+            <p><span class="font-medium text-gray-600">End Date:</span> {{ selectedVersion.dateFin | date:'dd/MM/yyyy' }}</p>
+            <p><span class="font-medium text-gray-600">Technologies:</span> {{ selectedVersion.technologies?.join(', ') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="selectedVersion?.tacheIds?.length > 0" class="bg-white shadow-lg rounded-lg overflow-hidden mt-6">
+        <div class="bg-indigo-600 text-white p-6">
+          <h3 class="text-xl font-semibold">Tasks:</h3>
+        </div>
+        <div class="p-6">
+          <ul class="list-disc pl-5 space-y-4">
+            <li *ngFor="let taskId of selectedVersion.tacheIds"
+                (click)="onTaskSelect(taskId)"
+                class="cursor-pointer p-2 hover:bg-gray-100 rounded"
+                role="button"
+                aria-label="Select Task">
+              {{ getTaskDescription(taskId) }}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <mat-drawer-container class="h-screen">
+        <mat-drawer #matDrawer position="end" mode="side" [opened]="drawerOpened" class="task-detail-drawer">
+          <div *ngIf="selectedTask" class="p-6">
+            <h2 class="text-2xl font-bold mb-4">{{ selectedTask.description }}</h2>
+            <p><span class="font-medium">Start Date:</span> {{ selectedTask.dateDebut | date:'dd/MM/yyyy' }}</p>
+            <p><span class="font-medium">End Date:</span> {{ selectedTask.dateFin | date:'dd/MM/yyyy' }}</p>
+            <p><span class="font-medium">Status:</span> {{ selectedTask.status }}</p>
+            <p><span class="font-medium">Developers:</span>
+                <span *ngFor="let id of (selectedTask.personnelIds)">
+                    {{ getDeveloperNames(id) }}
+                </span>
+            </p>
+            <div class="mt-4 flex gap-4">
+              <button mat-button (click)="editTask()">Edit</button>
+              <button mat-button color="warn" (click)="deleteTask()">Delete</button>
+              <button mat-button (click)="clearSelectedTask()">Close</button>
+            </div>
+          </div>
+        </mat-drawer>
+      </mat-drawer-container>
+
+      <div class="mt-8 flex gap-4">
+        <button mat-raised-button color="primary" (click)="openEditVersionModal()">Edit Version</button>
+        <button mat-raised-button color="warn" (click)="deleteVersion()">Delete Version</button>
+        <button mat-raised-button color="accent" (click)="openAddTaskModal()">Add Task</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" aria-label="Loading"></div>
+  </div>
+
+  <div *ngIf="error" class="mt-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+    {{ error }}
+  </div>

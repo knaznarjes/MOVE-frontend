@@ -1,0 +1,42 @@
+<div class="home-container">
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Welcome To MOVE</h1>
+           <p class="hero-subtitle">
+                <ng-container *ngFor="let word of subtitleWords; let last = last">
+                    <span class="word">
+                        <span class="first-letter">{{word.charAt(0)}}</span>{{word.slice(1)}}
+                    </span>
+                    <span *ngIf="!last">&nbsp;</span>
+                </ng-container>
+            </p>
+            <div class="cta-buttons">
+                <button mat-raised-button color="primary" (click)="navigateToLogin()">Get Started</button>
+                <button mat-button (click)="openInfoDialog()">Learn More</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="features">
+        <div class="container">
+            <h2>Our Features</h2>
+            <div class="feature-cards">
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3>Share Experiences</h3>
+                    <p>Share your travel stories with photos and videos</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>Travel Routes</h3>
+                    <p>Create and discover unique travel itineraries</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>Community</h3>
+                    <p>Connect with fellow travelers</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

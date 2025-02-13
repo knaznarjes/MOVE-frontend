@@ -1,0 +1,107 @@
+.bg-white {
+    background-color: #ffffff;
+  }
+
+  .shadow-lg {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .rounded-lg {
+    border-radius: 0.5rem;
+  }
+
+  .overflow-hidden {
+    overflow: hidden;
+  }
+
+  .mt-6 {
+    margin-top: 1.5rem;
+  }
+
+  .mt-8 {
+    margin-top: 2rem;
+  }
+
+  .p-6 {
+    padding: 1.5rem;
+  }
+
+  .bg-indigo-600 {
+    background-color: #4c51bf;
+  }
+
+  .text-white {
+    color: #ffffff;
+  }
+
+  .text-3xl {
+    font-size: 1.875rem;
+  }
+
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+
+  .text-xl {
+    font-size: 1.25rem;
+  }
+
+  .font-bold {
+    font-weight: 700;
+  }
+
+  .font-semibold {
+    font-weight: 600;
+  }
+
+  .text-gray-800 {
+    color: #2d3748;
+  }
+
+  .text-gray-600 {
+    color: #4a5568;
+  }
+
+  .space-y-3 > * + * {
+    margin-top: 0.75rem;
+  }
+
+  .space-y-4 > * + * {
+    margin-top: 1rem;
+  }
+
+  .list-disc {
+    list-style-type: disc;
+  }
+
+  .pl-5 {
+    padding-left: 1.25rem;
+  }
+
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  .hover\:bg-gray-100:hover {
+    background-color: #f7fafc;
+  }
+
+  .rounded {
+    border-radius: 0.25rem;
+  }
+
+  .flex {
+    display: flex;
+  }
+
+  .gap-4 {
+    gap: 1rem;
+  }
+
+  .h-screen {
+    height: 100vh;
+  }
+
+  .task-detail-drawer {
+    width: 100%;
+  }
