@@ -20,14 +20,9 @@ export const appRoutes: Route[] = [
             layout: 'empty'
         },
         children: [
-            {
-                path: 'register',
-                loadChildren: () => import('app/core/auth/register/register.module').then(m => m.RegisterModule)
-            },
-            {
-                path: 'login',
-                loadChildren: () => import('app/core/auth/login/login.module').then(m => m.LoginModule)
-            }
+            {path: 'home',loadChildren: () => import('app/core/home/home.module').then(m => m.HomeModule) },
+            {path: 'register',loadChildren: () => import('app/core/auth/register/register.module').then(m => m.RegisterModule)},
+            {path: 'login',loadChildren: () => import('app/core/auth/login/login.module').then(m => m.LoginModule)}
         ]
     },
 
@@ -39,10 +34,7 @@ export const appRoutes: Route[] = [
             layout: 'empty'
         },
         children: [
-            {
-                path: 'home',
-                loadChildren: () => import('app/core/home/home.module').then(m => m.HomeModule)
-            }
+            {path: 'home',loadChildren: () => import('app/core/home/home.module').then(m => m.HomeModule) }
         ]
     },
 
@@ -56,8 +48,9 @@ export const appRoutes: Route[] = [
         },
         children: [
             {
-                path: 'example',
-                loadChildren: () => import('app/modules/admin/example/example.module').then(m => m.ExampleModule)
+                path: 'profile-admin',
+                loadChildren: () => import('app/core/profile-admin/proflie-admin.module')
+                    .then(m => m.ProfileAdminModule)
             },
             {
                 path: 'projects',

@@ -28,6 +28,7 @@ import { CommonModule } from '@angular/common';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { CoreModule } from './core/core.module';
+import { ProfileAdminComponent } from './core/profile-admin/profile-admin.component';
 
 export const MY_DATE_FORMATS = {
   parse: {
@@ -49,8 +50,7 @@ const routerConfig: ExtraOptions = {
 
 @NgModule({
   declarations: [
-    AppComponent,
-  ],
+    AppComponent ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,

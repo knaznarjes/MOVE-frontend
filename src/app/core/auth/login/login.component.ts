@@ -32,7 +32,7 @@ export class LoginComponent implements OnInit {
         this._authService.login(this.loginForm.value)
             .subscribe({
                 next: () => {
-                    this._router.navigate(['/home']);
+                    this._router.navigate(['/profile-admin']);
                 },
                 error: (error) => {
                     console.error('Login error:', error);

@@ -29,13 +29,21 @@ import { Component } from '@angular/core';
                                 <mat-icon>email</mat-icon>
                                 <span>contactmove.com</span>
                             </a>
-                            <a href="https://instagram.com/move" target="_blank" class="contact-item">
-                                <mat-icon>photo_camera</mat-icon>
-                                <span>move</span>
+                            <a href="https://www.instagram.com/move_travel_smarter/" target="_blank" class="contact-item">
+                                <svg class="instagram-icon" xmlns="http://www.w3.org/2000/svg"
+                                width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                 stroke-linejoin="round">
+                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                </svg>
+                                <span>
+                                move_travel_smarter</span>
                             </a>
-                            <a href="https://facebook.com/move" target="_blank" class="contact-item">
+                            <a href="https://www.facebook.com/profile.php?id=61572674324675&locale=fr_FR" target="_blank" class="contact-item">
                                 <mat-icon>facebook</mat-icon>
-                                <span>MOVE Travel</span>
+                                <span>MOVE - Travel Smarter</span>
                             </a>
                         </div>
                     </div>
