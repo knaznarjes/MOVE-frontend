@@ -14,12 +14,10 @@ import { AppComponent } from 'app/app.component';
 import { appRoutes } from 'app/app.routing';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { AuthService } from 'app/core/auth/services/auth.service';
-import { JwtInterceptor } from 'app/core/auth/interceptors/jwt.interceptor';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule, MAT_DATE_FORMATS, DateAdapter } from '@angular/material/core';
+import { MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
@@ -28,7 +26,8 @@ import { CommonModule } from '@angular/common';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { CoreModule } from './core/core.module';
-import { ProfileAdminComponent } from './core/profile-admin/profile-admin.component';
+import { JwtInterceptor } from './core/auth/interceptors/jwt.interceptor';
+import { TokenStorageService } from './core/auth/services/TokenStorageService';
 
 export const MY_DATE_FORMATS = {
   parse: {
@@ -84,12 +83,12 @@ const routerConfig: ExtraOptions = {
     MatButtonModule
   ],
   providers: [
-    AuthService,
+    TokenStorageService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: JwtInterceptor,
       multi: true
-    },
+    }
   ],
   bootstrap: [AppComponent]
 })

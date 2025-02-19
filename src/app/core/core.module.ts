@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { NgModule, Optional, SkipSelf } from '@angular/core';
 import { AuthModule } from 'app/core/auth/auth.module';
 import { IconsModule } from 'app/core/icons/icons.module';
@@ -7,7 +8,8 @@ import { TranslocoCoreModule } from 'app/core/transloco/transloco.module';
     imports: [
         AuthModule,
         IconsModule,
-        TranslocoCoreModule
+        TranslocoCoreModule,
+        CommonModule
     ],
     declarations: [
   ]

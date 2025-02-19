@@ -1,23 +1,42 @@
-
 import { Injectable } from '@angular/core';
-import { Router, CanActivate } from '@angular/router';
+import { Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
+import { User } from '../models/auth.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthGuard implements CanActivate {
   constructor(
-    private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
-  canActivate(): boolean {
-    if (this.authService.isLoggedIn()) {
-      return true;
-    }
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<boolean> {
+    return this.authService.currentUser$.pipe(
+      take(1),
+      map((user: User | null) => {
+        // If no user is logged in, redirect to login
+        if (!user) {
+          this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+          return false;
+        }
 
-    this.router.navigate(['/login']);
-    return false;
+        // If we're trying to access an admin route
+        if (route.data['role'] === 'admin') {
+          if (user.role !== 'ADMIN' && user.role !== 'admin') {
+            this.router.navigate(['/unauthorized']);
+            return false;
+          }
+        }
+
+        return true;
+      })
+    );
   }
 }

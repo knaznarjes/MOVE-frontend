@@ -1,25 +1,18 @@
-
-export interface RegisterRequest {
-    firstName: string;
-    lastName: string;
+export interface AuthenticationRequest {
     email: string;
     password: string;
-    role: 'USER' | 'ADMIN';
-  }
+}
 
-  export interface AuthenticationRequest {
-    email: string;
-    password: string;
-  }
-
-  export interface AuthenticationResponse {
+export interface AuthenticationResponse {
     token: string;
-  }
+    refreshToken: string;
+    expiresAt: number;
+}
 
-  export interface User {
+export interface User {
     id: string;
+    email: string;
     firstName: string;
     lastName: string;
-    email: string;
-    role: 'USER' | 'ADMIN';
-  }
+    role: string;
+}

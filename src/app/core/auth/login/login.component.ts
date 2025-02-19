@@ -1,6 +1,5 @@
-// src/app/core/auth/login/login.component.ts
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
@@ -9,34 +8,81 @@ import { AuthService } from '../services/auth.service';
     templateUrl: './login.component.html'
 })
 export class LoginComponent implements OnInit {
-    loginForm!: FormGroup;
+    loginForm: FormGroup;
+    errorMessage = '';
+    loading = false;
+
     constructor(
-        private _formBuilder: FormBuilder,
-        private _authService: AuthService,
-        private _router: Router
+        private readonly _formBuilder: FormBuilder,
+        private readonly _authService: AuthService,
+        private readonly _router: Router
     ) {
         this.loginForm = this._formBuilder.group({
             email: ['', [Validators.required, Validators.email]],
-            password: ['', Validators.required]
+            password: ['', [Validators.required, Validators.minLength(6)]]
         });
     }
 
+    // -------------------------------------------------------------------------
+    // Lifecycle hooks
+    // -------------------------------------------------------------------------
+
     ngOnInit(): void {
+        console.log('LoginComponent initialisé');
+        console.log('État de connexion:', this._authService.isLoggedIn());
+
+        if (this._authService.isLoggedIn()) {
+            console.log('Redirection car déjà connecté');
+            this._router.navigate(['/']);
+        }
     }
 
-    login(): void {
+    // -------------------------------------------------------------------------
+    // Public methods
+    // -------------------------------------------------------------------------
+
+    onSubmit(): void {
         if (this.loginForm.invalid) {
             return;
         }
 
-        this._authService.login(this.loginForm.value)
+        this.loading = true;
+        this.errorMessage = '';
+
+        const credentials = {
+            email: this.loginForm.get('email')?.value,
+            password: this.loginForm.get('password')?.value
+        };
+
+        this._authService.login(credentials)
             .subscribe({
                 next: () => {
-                    this._router.navigate(['/profile-admin']);
+                    this.loading = false;
+                    if (this._authService.isAdmin()) {
+                        this._router.navigate(['/profile-admin']);
+                    } else {
+                        this._router.navigate(['/']);
+                    }
                 },
                 error: (error) => {
+                    this.loading = false;
+                    this.errorMessage = error.message || 'Échec de la connexion';
                     console.error('Login error:', error);
                 }
             });
+    }
+
+    // -------------------------------------------------------------------------
+    // Getters
+    // -------------------------------------------------------------------------
+
+    // eslint-disable-next-line @typescript-eslint/member-ordering, @typescript-eslint/explicit-function-return-type
+    get email() {
+        return this.loginForm.get('email');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/member-ordering, @typescript-eslint/explicit-function-return-type
+    get password() {
+        return this.loginForm.get('password');
     }
 }

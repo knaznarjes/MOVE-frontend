@@ -2,6 +2,8 @@ import { Component, ViewEncapsulation } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { InfoDialogComponent } from './info-dialog.component';
+// Ajustez ce chemin selon votre structure de projet
+import { AuthService } from '../../core/auth/services/auth.service';
 
 @Component({
     selector: 'home',
@@ -12,7 +14,8 @@ import { InfoDialogComponent } from './info-dialog.component';
 export class HomeComponent {
     constructor(
         private dialog: MatDialog,
-        private router: Router
+        private router: Router,
+        private _authService: AuthService
     ) { }
 
     openInfoDialog(): void {
@@ -25,7 +28,20 @@ export class HomeComponent {
     }
 
     navigateToLogin(): void {
-        this.router.navigate(['/login']);
+        console.log('Navigation vers login');
+
+        // Vérifier si l'utilisateur est déjà connecté
+        if (this._authService.isLoggedIn()) {
+            console.log('Utilisateur déjà connecté, déconnexion en cours...');
+            this._authService.logout(); // Déconnexion de l'utilisateur
+            console.log('Déconnexion effectuée, redirection vers la page de login');
+        }
+
+        // Redirection vers la page de login
+        this.router.navigate(['/login']).then(
+            success => console.log('Navigation réussie:', success),
+            error => console.error('Erreur de navigation:', error)
+        );
     }
 
     // Helper method to split text for styling first letters
