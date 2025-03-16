@@ -27,7 +27,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { CoreModule } from './core/core.module';
 import { JwtInterceptor } from './core/auth/interceptors/jwt.interceptor';
-import { TokenStorageService } from './core/auth/services/TokenStorageService';
 
 export const MY_DATE_FORMATS = {
   parse: {
@@ -83,7 +82,6 @@ const routerConfig: ExtraOptions = {
     MatButtonModule
   ],
   providers: [
-    TokenStorageService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: JwtInterceptor,

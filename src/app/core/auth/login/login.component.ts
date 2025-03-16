@@ -1,88 +1,65 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { Router, ActivatedRoute } from '@angular/router';
+import { AuthenticationRequest } from 'app/core/models/models';
+import { AuthService } from 'app/core/services/auth.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
-    selector: 'app-login',
-    templateUrl: './login.component.html'
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit {
-    loginForm: FormGroup;
-    errorMessage = '';
-    loading = false;
+  loginForm!: FormGroup;
+  loading = false;
+  errorMessage = '';
 
-    constructor(
-        private readonly _formBuilder: FormBuilder,
-        private readonly _authService: AuthService,
-        private readonly _router: Router
-    ) {
-        this.loginForm = this._formBuilder.group({
-            email: ['', [Validators.required, Validators.email]],
-            password: ['', [Validators.required, Validators.minLength(6)]]
-        });
+  constructor(
+    private formBuilder: FormBuilder,
+    private authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
+
+  ngOnInit(): void {
+    this.loginForm = this.formBuilder.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', Validators.required]
+    });
+
+    // Redirect if already logged in
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/']);
+    }
+  }
+
+  onSubmit(): void {
+    if (this.loginForm.invalid) {
+      return;
     }
 
-    // -------------------------------------------------------------------------
-    // Lifecycle hooks
-    // -------------------------------------------------------------------------
+    this.loading = true;
+    this.errorMessage = '';
 
-    ngOnInit(): void {
-        console.log('LoginComponent initialisé');
-        console.log('État de connexion:', this._authService.isLoggedIn());
+    const request: AuthenticationRequest = {
+      email: this.loginForm.value.email,
+      password: this.loginForm.value.password
+    };
 
-        if (this._authService.isLoggedIn()) {
-            console.log('Redirection car déjà connecté');
-            this._router.navigate(['/']);
+    this.authService.login(request)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: () => {
+          this.router.navigate(['/profile']);
+        },
+        error: (error) => {
+          if (error.status === 401) {
+            this.errorMessage = 'Invalid email or password';
+          } else {
+            this.errorMessage = error.error?.message || 'Login failed. Please try again.';
+          }
         }
-    }
-
-    // -------------------------------------------------------------------------
-    // Public methods
-    // -------------------------------------------------------------------------
-
-    onSubmit(): void {
-        if (this.loginForm.invalid) {
-            return;
-        }
-
-        this.loading = true;
-        this.errorMessage = '';
-
-        const credentials = {
-            email: this.loginForm.get('email')?.value,
-            password: this.loginForm.get('password')?.value
-        };
-
-        this._authService.login(credentials)
-            .subscribe({
-                next: () => {
-                    this.loading = false;
-                    if (this._authService.isAdmin()) {
-                        this._router.navigate(['/profile-admin']);
-                    } else {
-                        this._router.navigate(['/']);
-                    }
-                },
-                error: (error) => {
-                    this.loading = false;
-                    this.errorMessage = error.message || 'Échec de la connexion';
-                    console.error('Login error:', error);
-                }
-            });
-    }
-
-    // -------------------------------------------------------------------------
-    // Getters
-    // -------------------------------------------------------------------------
-
-    // eslint-disable-next-line @typescript-eslint/member-ordering, @typescript-eslint/explicit-function-return-type
-    get email() {
-        return this.loginForm.get('email');
-    }
-
-    // eslint-disable-next-line @typescript-eslint/member-ordering, @typescript-eslint/explicit-function-return-type
-    get password() {
-        return this.loginForm.get('password');
-    }
+      });
+  }
 }

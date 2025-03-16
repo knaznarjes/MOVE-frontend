@@ -2,7 +2,6 @@ import { Route } from '@angular/router';
 import { AuthGuard } from 'app/core/auth/guards/auth.guard';
 import { LayoutComponent } from 'app/layout/layout.component';
 import { InitialDataResolver } from 'app/app.resolvers';
-import { UnauthorizedComponent } from './core/unauthorized.component';
 
 // @formatter:off
 /* eslint-disable max-len */
@@ -19,15 +18,6 @@ export const appRoutes: Route[] = [
         path: 'signed-in-redirect',
         pathMatch: 'full',
         redirectTo: 'example'
-    },
-
-    // Unauthorized route
-    {
-        path: 'unauthorized',
-        component: UnauthorizedComponent,
-        data: {
-            layout: 'empty'
-        }
     },
 
     // Auth routes for guests
@@ -78,10 +68,9 @@ export const appRoutes: Route[] = [
         },
         children: [
             {
-                path: 'profile-admin',
-                loadChildren: () => import('app/core/profile-admin/proflie-admin.module')
-                    .then(m => m.ProfileAdminModule),
-                data: { requiresAdmin: true }
+                path: 'profile',
+                loadChildren: () => import('app/core/profile/traveler-profile.module')
+                    .then(m => m.TravelerProfileModule)
             },
             {
                 path: 'projects',

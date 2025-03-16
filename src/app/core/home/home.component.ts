@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/member-ordering */
 import { Component, ViewEncapsulation } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { InfoDialogComponent } from './info-dialog.component';
+import { AuthService } from '../services/auth.service';
 // Ajustez ce chemin selon votre structure de projet
-import { AuthService } from '../../core/auth/services/auth.service';
 
 @Component({
     selector: 'home',
