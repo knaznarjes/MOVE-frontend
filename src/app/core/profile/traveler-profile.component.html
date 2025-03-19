@@ -1,109 +1,140 @@
-<!-- traveler-profile.component.html -->
 <div class="profile-container">
-    <div class="loading-overlay" *ngIf="isLoading">
-      <mat-spinner></mat-spinner>
+    <h1 class="profile-title">Traveler Profile</h1>
+
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading profile data...</p>
     </div>
 
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Traveler Profile</mat-card-title>
-        <mat-card-subtitle>Manage your personal information and preferences</mat-card-subtitle>
-      </mat-card-header>
+    <div *ngIf="!isLoading" class="profile-content">
+      <!-- Profile Card -->
+      <mat-card class="profile-card">
+        <mat-card-header>
+          <mat-card-title>Personal Information</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="profile-photo-section">
+            <div class="profile-photo">
+                <img [src]="profileImageSrc"
+                     alt="Profile Photo"
+                     (error)="handleImageError()">
+                <button mat-mini-fab color="primary" class="photo-upload-button" (click)="fileInput.click()">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <input #fileInput type="file" hidden (change)="onFileSelected($event)" accept="image/*">
+              </div>
 
-      <mat-card-content>
-        <!-- Profile Photo -->
-        <div class="profile-photo-section">
-          <div class="profile-image-container">
-            <img [src]="profileImageSrc || 'assets/images/default-avatar.png'" alt="Profile photo" class="profile-image">
-            <button mat-mini-fab color="primary" class="upload-button" (click)="fileInput.click()">
-              <mat-icon>photo_camera</mat-icon>
-            </button>
-            <input hidden type="file" #fileInput (change)="onFileSelected($event)" accept="image/*">
+            <div class="upload-controls" *ngIf="selectedFile">
+              <button mat-raised-button color="primary" [disabled]="!selectedFile || isPhotoUploading" (click)="uploadProfilePhoto()">
+                <mat-icon>cloud_upload</mat-icon>
+                Upload Photo
+              </button>
+
+              <mat-progress-bar *ngIf="isPhotoUploading" [value]="uploadProgress" mode="determinate"></mat-progress-bar>
+            </div>
           </div>
-          <button mat-raised-button color="primary" [disabled]="!selectedFile || isUpdating" (click)="uploadProfilePhoto()">
-            <mat-icon>cloud_upload</mat-icon>
-            Save Photo
-          </button>
-        </div>
 
-        <!-- Personal Information -->
-        <div class="form-section">
-          <h3>Personal Information</h3>
           <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Full Name</mat-label>
-              <input matInput formControlName="fullName" placeholder="Your full name">
+              <input matInput formControlName="fullName" placeholder="Enter your full name">
               <mat-error *ngIf="profileForm.get('fullName')?.hasError('required')">
                 Full name is required
               </mat-error>
               <mat-error *ngIf="profileForm.get('fullName')?.hasError('minlength')">
-                The name must be at least 3 characters long
+                Full name must be at least 3 characters
               </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Email</mat-label>
-              <input matInput formControlName="email" placeholder="Your email">
-              <mat-hint>Email cannot be changed</mat-hint>
+              <input matInput formControlName="email" placeholder="Enter your email" readonly>
             </mat-form-field>
 
             <div class="form-actions">
               <button mat-raised-button color="primary" type="submit" [disabled]="profileForm.invalid || isUpdating">
                 <mat-icon>save</mat-icon>
-                Update Profile
+                Save Profile
               </button>
             </div>
           </form>
-        </div>
+        </mat-card-content>
+      </mat-card>
 
-        <!-- Travel Preferences -->
-        <div class="form-section">
-          <h3>Travel Preferences</h3>
+      <!-- Preferences Card -->
+      <mat-card class="preferences-card">
+        <mat-card-header>
+          <mat-card-title>Travel Preferences</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
           <form [formGroup]="preferencesForm" (ngSubmit)="updatePreferences()">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Preferred Category</mat-label>
-              <mat-select formControlName="category">
-                <mat-option value="BEACH">Beach</mat-option>
-                <mat-option value="MOUNTAIN">Mountain</mat-option>
-                <mat-option value="COUNTRYSIDE">Countryside</mat-option>
-                <mat-option value="CITY">City</mat-option>
-                <mat-option value="CULTURAL">Cultural</mat-option>
-              </mat-select>
-              <mat-error *ngIf="preferencesForm.get('category')?.hasError('required')">
-                Please select a category
-              </mat-error>
-            </mat-form-field>
+            <div formArrayName="preferences">
+              <div *ngFor="let preference of preferencesArray.controls; let i = index" [formGroupName]="i" class="preference-item">
+                <div class="preference-fields">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Category</mat-label>
+                    <mat-select formControlName="category">
+                      <mat-option value="accommodation">Accommodation</mat-option>
+                      <mat-option value="transportation">Transportation</mat-option>
+                      <mat-option value="activities">Activities</mat-option>
+                      <mat-option value="food">Food</mat-option>
+                      <mat-option value="budget">Budget</mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="preferencesArray.at(i).get('category')?.hasError('required')">
+                      Category is required
+                    </mat-error>
+                  </mat-form-field>
 
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Priority</mat-label>
-              <mat-select formControlName="priority">
-                <mat-option value="PRICE">Price</mat-option>
-                <mat-option value="COMFORT">Comfort</mat-option>
-                <mat-option value="PROXIMITY">Proximity</mat-option>
-                <mat-option value="ATTRACTIONS">Attractions</mat-option>
-              </mat-select>
-              <mat-error *ngIf="preferencesForm.get('priority')?.hasError('required')">
-                Please select a priority
-              </mat-error>
-            </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Priority</mat-label>
+                    <mat-select formControlName="priority">
+                      <mat-option value="low">Low</mat-option>
+                      <mat-option value="medium">Medium</mat-option>
+                      <mat-option value="high">High</mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="preferencesArray.at(i).get('priority')?.hasError('required')">
+                      Priority is required
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <button mat-icon-button color="warn" type="button" (click)="removePreferenceField(i)"
+                        [disabled]="preferencesArray.length <= 1">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="add-preference">
+              <button mat-stroked-button type="button" (click)="addPreferenceField()">
+                <mat-icon>add</mat-icon>
+                Add Preference
+              </button>
+            </div>
 
             <div class="form-actions">
-              <button mat-raised-button color="accent" type="submit" [disabled]="preferencesForm.invalid || isUpdating">
-                <mat-icon>bookmark</mat-icon>
+              <button mat-raised-button color="primary" type="submit" [disabled]="preferencesForm.invalid || isUpdating">
+                <mat-icon>save</mat-icon>
                 Save Preferences
               </button>
             </div>
           </form>
-        </div>
+        </mat-card-content>
+      </mat-card>
 
-        <!-- Account Settings -->
-        <div class="form-section">
-          <h3>Account Settings</h3>
-          <button mat-raised-button color="warn" (click)="deleteAccount()">
-            <mat-icon>delete_forever</mat-icon>
-            Delete My Account
-          </button>
-        </div>
-      </mat-card-content>
-    </mat-card>
+      <!-- Account Management Card -->
+      <mat-card class="account-card">
+        <mat-card-header>
+          <mat-card-title>Account Management</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="account-actions">
+            <button mat-raised-button color="warn" (click)="deleteAccount()">
+              <mat-icon>delete_forever</mat-icon>
+              Delete Account
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>

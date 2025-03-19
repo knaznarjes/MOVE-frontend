@@ -26,7 +26,7 @@ import { CommonModule } from '@angular/common';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { CoreModule } from './core/core.module';
-import { JwtInterceptor } from './core/auth/interceptors/jwt.interceptor';
+import { AuthInterceptor } from './core/auth/interceptors/jwt.interceptor';
 
 export const MY_DATE_FORMATS = {
   parse: {
@@ -84,7 +84,7 @@ const routerConfig: ExtraOptions = {
   providers: [
     {
       provide: HTTP_INTERCEPTORS,
-      useClass: JwtInterceptor,
+      useClass: AuthInterceptor,
       multi: true
     }
   ],

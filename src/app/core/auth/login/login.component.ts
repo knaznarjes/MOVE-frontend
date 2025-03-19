@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { AuthenticationRequest } from 'app/core/models/models';
+import { AuthRequest } from 'app/core/models/models';
 import { AuthService } from 'app/core/services/auth.service';
 import { finalize } from 'rxjs/operators';
 
@@ -14,6 +14,7 @@ export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   loading = false;
   errorMessage = '';
+  redirectUrl: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -28,9 +29,12 @@ export class LoginComponent implements OnInit {
       password: ['', Validators.required]
     });
 
+    // Get redirect URL from route parameters or localStorage
+    this.redirectUrl = localStorage.getItem('redirectUrl') || this.route.snapshot.queryParams['redirectUrl'] || '/profile';
+
     // Redirect if already logged in
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/']);
+      this.router.navigate([this.redirectUrl]);
     }
   }
 
@@ -42,7 +46,7 @@ export class LoginComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    const request: AuthenticationRequest = {
+    const request: AuthRequest = {  // Using the correct interface
       email: this.loginForm.value.email,
       password: this.loginForm.value.password
     };
@@ -51,7 +55,9 @@ export class LoginComponent implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: () => {
-          this.router.navigate(['/profile']);
+          // Navigate to the redirect URL and then clear it from localStorage
+          this.router.navigate([this.redirectUrl]);
+          localStorage.removeItem('redirectUrl');
         },
         error: (error) => {
           if (error.status === 401) {

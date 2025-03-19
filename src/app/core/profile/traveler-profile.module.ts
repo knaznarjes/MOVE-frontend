@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule } from '@angular/material/snack-bar'; // Add this import
 
 import { TravelerProfileComponent } from './traveler-profile.component';
 
@@ -24,8 +25,9 @@ import { TravelerProfileComponent } from './traveler-profile.component';
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSnackBarModule // Add this to the imports array
   ],
   exports: [TravelerProfileComponent]
 })
-export class TravelerProfileModule { } // Changed from ProfileModule to TravelerProfileModule
+export class TravelerProfileModule { }

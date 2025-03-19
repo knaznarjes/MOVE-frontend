@@ -1,44 +1,45 @@
+// src/app/guards/auth.guard.ts
 import { Injectable } from '@angular/core';
-import { Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
-
-// Change this import to use the User type from user.types
-import { User } from 'app/core/user/user.types';
+import {
+  CanActivate,
+  CanActivateChild,
+  ActivatedRouteSnapshot,
+  RouterStateSnapshot,
+  Router
+} from '@angular/router';
 import { AuthService } from 'app/core/services/auth.service';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
-export class AuthGuard implements CanActivate {
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
+export class AuthGuard implements CanActivate, CanActivateChild {
+  constructor(private authService: AuthService, private router: Router) {}
 
   canActivate(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ): Observable<boolean> {
-    return this.authService.currentUser$.pipe(
-      take(1),
-      map((user: User | null): boolean => {
-        // If no user is logged in, redirect to login
-        if (!user) {
-          this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
-          return false;
-        }
+  ): Observable<boolean> | Promise<boolean> | boolean {
+    return this.checkAuth(state.url);
+  }
 
-        // If we're trying to access an admin route
-        if (route.data['role'] === 'admin') {
-          if (user.role !== 'ADMIN' && user.role !== 'admin') {
-            this.router.navigate(['/unauthorized']);
-            return false;
-          }
-        }
+  canActivateChild(
+    childRoute: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<boolean> | Promise<boolean> | boolean {
+    return this.canActivate(childRoute, state);
+  }
 
-        return true;
-      })
-    );
+  private checkAuth(url: string): boolean {
+    if (this.authService.isLoggedIn()) {
+      return true;
+    }
+
+    // Store the attempted URL for redirecting after login
+    localStorage.setItem('redirectUrl', url);
+
+    // Navigate to the login page
+    this.router.navigate(['/login']);
+    return false;
   }
 }

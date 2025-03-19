@@ -29,21 +29,14 @@ export class HomeComponent {
     }
 
     navigateToLogin(): void {
-        console.log('Navigation vers login');
-
-        // Vérifier si l'utilisateur est déjà connecté
         if (this._authService.isLoggedIn()) {
-            console.log('Utilisateur déjà connecté, déconnexion en cours...');
-            this._authService.logout(); // Déconnexion de l'utilisateur
-            console.log('Déconnexion effectuée, redirection vers la page de login');
+          this._authService.logout();
         }
-
-        // Redirection vers la page de login
-        this.router.navigate(['/login']).then(
-            success => console.log('Navigation réussie:', success),
-            error => console.error('Erreur de navigation:', error)
-        );
-    }
+        // Add a small delay to ensure logout completes
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 100);
+      }
 
     // Helper method to split text for styling first letters
     subtitleWords = 'Memories Organize Vacations Explore'.split(' ');

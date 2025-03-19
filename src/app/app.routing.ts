@@ -1,26 +1,19 @@
-import { Route } from '@angular/router';
-import { AuthGuard } from 'app/core/auth/guards/auth.guard';
-import { LayoutComponent } from 'app/layout/layout.component';
-import { InitialDataResolver } from 'app/app.resolvers';
-
-// @formatter:off
-/* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+import { Route } from '@angular/router';
+import { LayoutComponent } from './layout/layout.component';
+import { AuthGuard } from './core/auth/guards/auth.guard';
+import { TravelerProfileComponent } from './core/profile/traveler-profile.component';
+import { RoleGuard } from './core/auth/guards/role.guard';
+
 export const appRoutes: Route[] = [
-    // Redirect empty path
+    // Rediriger le chemin vide vers 'home'
     {
         path: '',
         pathMatch: 'full',
         redirectTo: 'home'
     },
 
-    {
-        path: 'signed-in-redirect',
-        pathMatch: 'full',
-        redirectTo: 'example'
-    },
-
-    // Auth routes for guests
+    // Routes pour les invités (non authentifiés)
     {
         path: '',
         component: LayoutComponent,
@@ -30,58 +23,49 @@ export const appRoutes: Route[] = [
         children: [
             {
                 path: 'home',
-                loadChildren: () => import('app/core/home/home.module').then(m => m.HomeModule)
+                loadChildren: () => import('./core/home/home.module').then(m => m.HomeModule) // Cette route est publique, pas protégée par AuthGuard
             },
             {
                 path: 'register',
-                loadChildren: () => import('app/core/auth/register/register.module').then(m => m.RegisterModule)
+                loadChildren: () => import('./core/auth/register/register.module').then(m => m.RegisterModule)
             },
             {
                 path: 'login',
-                loadChildren: () => import('app/core/auth/login/login.module').then(m => m.LoginModule)
+                loadChildren: () => import('./core/auth/login/login.module').then(m => m.LoginModule)
             }
         ]
     },
 
-    // Landing routes
-    {
-        path: '',
-        component: LayoutComponent,
-        data: {
-            layout: 'empty'
-        },
-        children: [
-            {
-                path: 'home',
-                loadChildren: () => import('app/core/home/home.module').then(m => m.HomeModule)
-            }
-        ]
-    },
-
-    // Admin routes
+    // Routes authentifiées
     {
         path: '',
         canActivate: [AuthGuard],
         component: LayoutComponent,
-        resolve: {
-            initialData: InitialDataResolver,
-        },
         children: [
             {
                 path: 'profile',
-                loadChildren: () => import('app/core/profile/traveler-profile.module')
-                    .then(m => m.TravelerProfileModule)
-            },
-            {
-                path: 'projects',
-                loadChildren: () => import('app/modules/projects/projects-routing.module')
-                    .then(m => m.ProjectsRoutingModule)
-            },
-            {
-                path: 'developers',
-                loadChildren: () => import('app/modules/developers/developers-routing.module')
-                    .then(m => m.DevelopersModule)
+                component: TravelerProfileComponent
             }
         ]
+        /* ,
+            {
+                path: 'admin',
+                canActivate: [RoleGuard],
+                data: {
+                    role: 'ADMIN'
+                },
+                loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)
+            },
+            {
+                path: 'dashboard',
+                loadChildren: () => import('./dashboard/dashboard.module').then(m => m.DashboardModule)
+            }*/
+    },
+
+    // Route wildcard pour 404
+    {
+        path: '**',
+        redirectTo: 'home'
     }
 ];
+

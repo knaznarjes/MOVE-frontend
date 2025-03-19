@@ -1,13 +1,13 @@
-// traveler-profile.component.ts
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { AuthService } from '../services/auth.service';
+import { AccountService } from '../services/account.service';
+import { PreferenceService } from '../services/preference.service';
+import { UserService } from '../services/user.service';
+import { User, Preference, Account } from '../models/models';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { finalize } from 'rxjs/operators';
-
-import { UserService } from '../../core/services/user.service';
-import { PreferenceService } from '../../core/services/preference.service';
-import { AuthService } from '../../core/services/auth.service';
-import { User, Preference } from '../../core/models/models';
+import { catchError, finalize } from 'rxjs/operators';
+import { of, firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-traveler-profile',
@@ -15,20 +15,23 @@ import { User, Preference } from '../../core/models/models';
   styleUrls: ['./traveler-profile.component.scss']
 })
 export class TravelerProfileComponent implements OnInit {
-  user: User | null = null;
-  preferences: Preference[] = [];
   profileForm: FormGroup;
   preferencesForm: FormGroup;
-  isLoading = false;
+  isLoading = true;
   isUpdating = false;
-  profileImageSrc: string | ArrayBuffer | null = null;
+  currentUser: User | null = null;
+  profileImageSrc: string | null = null;
   selectedFile: File | null = null;
+  userPreferences: Preference[] = [];
+  uploadProgress: number = 0;
+  isPhotoUploading: boolean = false;
 
   constructor(
-    private userService: UserService,
-    private preferenceService: PreferenceService,
-    private authService: AuthService,
     private fb: FormBuilder,
+    private authService: AuthService,
+    private accountService: AccountService,
+    private preferenceService: PreferenceService,
+    private userService: UserService,
     private snackBar: MatSnackBar
   ) {
     this.profileForm = this.fb.group({
@@ -37,213 +40,261 @@ export class TravelerProfileComponent implements OnInit {
     });
 
     this.preferencesForm = this.fb.group({
+      preferences: this.fb.array([])
+    });
+  }
+
+  ngOnInit(): void {
+    const userId = localStorage.getItem('userId');
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      this.snackBar.open('User not authenticated. Please log in again.', 'Close', { duration: 3000 });
+      this.authService.logout();
+      return;
+    }
+    this.loadUserData(userId);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  get preferencesArray(): FormArray {
+    return this.preferencesForm.get('preferences') as FormArray;
+  }
+
+  createPreferenceFormGroup(): FormGroup {
+    return this.fb.group({
+      id: [''],
       category: ['', Validators.required],
       priority: ['', Validators.required]
     });
   }
 
-  ngOnInit(): void {
-    this.loadUserProfile();
+  addPreferenceField(): void {
+    this.preferencesArray.push(this.createPreferenceFormGroup());
   }
 
-  loadUserProfile(): void {
+  removePreferenceField(index: number): void {
+    this.preferencesArray.removeAt(index);
+  }
+
+  loadUserData(userId: string): void {
     this.isLoading = true;
-    const userId = this.authService.currentUserValue?.id;
+    console.log('Loading user data for ID:', userId);
 
-    if (userId) {
-      this.userService.getUserById(userId).pipe(
-        finalize(() => this.isLoading = false)
-      ).subscribe({
-        next: (user) => {
-          this.user = user;
+    this.userService.getUserById(userId).pipe(
+      catchError((userError) => {
+        console.error('User not found, trying account service:', userError);
+        return this.accountService.getAccountById(userId).pipe(
+          catchError((accountError) => {
+            console.error('Account not found either:', accountError);
+            this.snackBar.open('User profile not found. Please log in again.', 'Close', { duration: 3000 });
+            this.authService.logout();
+            return of(null);
+          })
+        );
+      }),
+      finalize(() => this.isLoading = false)
+    ).subscribe((userData) => {
+      if (userData) {
+        if ('fullName' in userData) {
+          this.currentUser = userData as User;
           this.profileForm.patchValue({
-            fullName: user.fullName,
-            email: user.email
+            fullName: userData.fullName || '',
+            email: userData.email
           });
 
-          if (user.photoProfile) {
-            this.profileImageSrc = user.photoProfile;
+          if ('profilePhotoUrl' in userData) {
+            this.profileImageSrc = (userData as User).profilePhotoUrl;
+          } else {
+            this.profileImageSrc = null;
           }
-
-          this.loadUserPreferences(userId);
-        },
-        error: (error) => {
-          this.snackBar.open('Erreur lors du chargement du profil: ' + error.message, 'Fermer', { duration: 5000 });
-        }
-      });
-    } else {
-      this.isLoading = false;
-      this.snackBar.open('Utilisateur non connecté', 'Fermer', { duration: 5000 });
-      this.authService.logout();
-    }
-  }
-
-  loadUserPreferences(userId: string): void {
-    this.preferenceService.getUserPreferences(userId).subscribe({
-      next: (preferences) => {
-        this.preferences = preferences;
-
-        // If user has preferences, populate the form with the first one
-        if (preferences.length > 0) {
-          this.preferencesForm.patchValue({
-            category: preferences[0].category,
-            priority: preferences[0].priority
+        } else {
+          const account = userData as Account;
+          this.currentUser = {
+            id: userId,
+            fullName: account.fullName || '',
+            email: account.email,
+            profilePhotoUrl: null
+          };
+          this.profileForm.patchValue({
+            fullName: account.fullName || '',
+            email: account.email
           });
+          this.profileImageSrc = account.profilePhotoUrl || null;
         }
-      },
-      error: (error) => {
-        this.snackBar.open('Erreur lors du chargement des préférences: ' + error.message, 'Fermer', { duration: 5000 });
+
+        if (this.currentUser) {
+          this.loadPreferences(this.currentUser.id);
+        }
       }
     });
   }
 
-  updateProfile(): void {
-    if (this.profileForm.invalid) {
-      return;
-    }
+  loadPreferences(userId: string): void {
+    this.preferenceService.getUserPreferences(userId).pipe(
+      catchError((error) => {
+        console.error('Error loading preferences:', error);
+        this.snackBar.open('Error loading preferences: ' + error.message, 'Close', { duration: 3000 });
+        return of([]);
+      })
+    ).subscribe((preferences) => {
+      this.userPreferences = preferences || [];
+      this.preferencesArray.clear();
 
-    this.isUpdating = true;
-    const userId = this.authService.currentUserValue?.id;
-
-    if (userId && this.user) {
-      const updatedUser: User = {
-        ...this.user,
-        fullName: this.profileForm.get('fullName')?.value
-      };
-
-      this.userService.updateUser(userId, updatedUser).pipe(
-        finalize(() => this.isUpdating = false)
-      ).subscribe({
-        next: (result) => {
-          this.user = result;
-          this.authService.fetchCurrentUser(); // Refresh current user in AuthService
-          this.snackBar.open('Profil mis à jour avec succès', 'Fermer', { duration: 3000 });
-        },
-        error: (error) => {
-          this.snackBar.open('Erreur lors de la mise à jour du profil: ' + error.message, 'Fermer', { duration: 5000 });
-        }
-      });
-    } else {
-      this.isUpdating = false;
-      this.snackBar.open('Utilisateur non connecté', 'Fermer', { duration: 5000 });
-    }
-  }
-
-  updatePreferences(): void {
-    if (this.preferencesForm.invalid) {
-      return;
-    }
-
-    this.isUpdating = true;
-    const userId = this.authService.currentUserValue?.id;
-
-    if (userId) {
-      const preference: Preference = {
-        userId,
-        category: this.preferencesForm.get('category')?.value,
-        priority: this.preferencesForm.get('priority')?.value
-      };
-
-      // If user already has preferences, update the first one
-      if (this.preferences.length > 0 && this.preferences[0].id) {
-        this.preferenceService.updatePreference(this.preferences[0].id, preference).pipe(
-          finalize(() => this.isUpdating = false)
-        ).subscribe({
-          next: (result) => {
-            this.preferences[0] = result;
-            this.snackBar.open('Préférences mises à jour avec succès', 'Fermer', { duration: 3000 });
-          },
-          error: (error) => {
-            this.snackBar.open('Erreur lors de la mise à jour des préférences: ' + error.message, 'Fermer', { duration: 5000 });
-          }
-        });
+      if (preferences && preferences.length > 0) {
+        preferences.forEach(pref => this.preferencesArray.push(this.fb.group({
+          id: [pref.id || ''],
+          category: [pref.category, Validators.required],
+          priority: [pref.priority, Validators.required]
+        })));
       } else {
-        // Otherwise create a new preference
-        this.preferenceService.createPreference(preference).pipe(
-          finalize(() => this.isUpdating = false)
-        ).subscribe({
-          next: (result) => {
-            this.preferences.push(result);
-            this.snackBar.open('Préférences créées avec succès', 'Fermer', { duration: 3000 });
-          },
-          error: (error) => {
-            this.snackBar.open('Erreur lors de la création des préférences: ' + error.message, 'Fermer', { duration: 5000 });
-          }
-        });
+        this.addPreferenceField();
       }
-    } else {
-      this.isUpdating = false;
-      this.snackBar.open('Utilisateur non connecté', 'Fermer', { duration: 5000 });
-    }
+    });
   }
 
   onFileSelected(event: Event): void {
     const element = event.target as HTMLInputElement;
-    if (element.files && element.files.length > 0) {
+    if (element.files && element.files.length) {
       this.selectedFile = element.files[0];
-
-      // Preview image
+      if (!this.selectedFile.type.startsWith('image/')) {
+        this.snackBar.open('Invalid file type. Please upload an image.', 'Close', { duration: 3000 });
+        this.selectedFile = null;
+        return;
+      }
       const reader = new FileReader();
       // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-      reader.onload = (e) => {
-        this.profileImageSrc = e.target?.result as string;
-      };
+      reader.onload = e => this.profileImageSrc = e.target?.result as string;
       reader.readAsDataURL(this.selectedFile);
     }
   }
 
-  uploadProfilePhoto(): void {
-    if (!this.selectedFile) {
+  async uploadProfilePhoto(): Promise<void> {
+    if (!this.selectedFile || !this.currentUser?.id) {
       return;
     }
 
-    this.isUpdating = true;
-    const userId = this.authService.currentUserValue?.id;
+    this.isPhotoUploading = true;
+    this.uploadProgress = 0;
 
-    if (userId) {
-      this.userService.updateProfilePhoto(userId, this.selectedFile).pipe(
-        finalize(() => this.isUpdating = false)
-      ).subscribe({
-        next: (result) => {
-          this.user = result;
-          this.profileImageSrc = result.photoProfile;
-          this.selectedFile = null;
-          this.authService.fetchCurrentUser(); // Refresh current user in AuthService
-          this.snackBar.open('Photo de profil mise à jour avec succès', 'Fermer', { duration: 3000 });
-        },
-        error: (error) => {
-          this.snackBar.open('Erreur lors de la mise à jour de la photo: ' + error.message, 'Fermer', { duration: 5000 });
+    try {
+      const progressInterval = setInterval(() => {
+        if (this.uploadProgress < 90) {
+          this.uploadProgress += 10;
         }
-      });
-    } else {
-      this.isUpdating = false;
-      this.snackBar.open('Utilisateur non connecté', 'Fermer', { duration: 5000 });
+      }, 300);
+
+      await firstValueFrom(this.userService.uploadProfilePhoto(this.currentUser.id, this.selectedFile));
+
+      clearInterval(progressInterval);
+      this.uploadProgress = 100;
+      this.selectedFile = null;
+      this.snackBar.open('Profile photo uploaded successfully', 'Close', { duration: 3000 });
+
+      this.loadUserData(this.currentUser.id);
+    } catch (error: any) {
+      this.snackBar.open('Error uploading photo: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
+    } finally {
+      this.isPhotoUploading = false;
     }
   }
 
-  deleteAccount(): void {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer votre compte? Cette action est irréversible.')) {
+  async updatePreferences(): Promise<void> {
+    if (this.preferencesForm.invalid || !this.currentUser?.id) {
+      this.snackBar.open('Please fill in all required preference fields.', 'Close', { duration: 3000 });
       return;
     }
 
     this.isUpdating = true;
-    const userId = this.authService.currentUserValue?.id;
 
-    if (userId) {
-      this.userService.deleteUser(userId).pipe(
-        finalize(() => this.isUpdating = false)
-      ).subscribe({
-        next: () => {
-          this.snackBar.open('Compte supprimé avec succès', 'Fermer', { duration: 3000 });
-          this.authService.logout();
-        },
-        error: (error) => {
-          this.snackBar.open('Erreur lors de la suppression du compte: ' + error.message, 'Fermer', { duration: 5000 });
-        }
-      });
-    } else {
+    try {
+      const preferencesToSave: Preference[] = this.preferencesArray.value.map((pref: any) => ({
+        id: pref.id || undefined,
+        userId: this.currentUser?.id,
+        category: pref.category,
+        priority: pref.priority
+      }));
+
+      await Promise.all(preferencesToSave.map(pref => pref.id
+        ? firstValueFrom(this.preferenceService.updatePreference(pref.id, pref))
+        : firstValueFrom(this.preferenceService.createPreference(pref))
+      ));
+
+      this.snackBar.open('Preferences updated successfully', 'Close', { duration: 3000 });
+      this.loadPreferences(this.currentUser.id);
+    } catch (error: any) {
+      console.error('Error updating preferences:', error);
+      this.snackBar.open('Error updating preferences: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
+    } finally {
       this.isUpdating = false;
-      this.snackBar.open('Utilisateur non connecté', 'Fermer', { duration: 5000 });
     }
+  }
+
+  async updateProfile(): Promise<void> {
+    if (this.profileForm.invalid || !this.currentUser?.id) {
+      this.snackBar.open('Please fill in all required fields.', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.isUpdating = true;
+
+    try {
+      const updatedUser: User = {
+        id: this.currentUser.id,
+        fullName: this.profileForm.get('fullName')?.value,
+        email: this.profileForm.get('email')?.value,
+        profilePhotoUrl: this.currentUser.profilePhotoUrl || null
+      };
+
+      await firstValueFrom(this.userService.updateUser(this.currentUser.id, updatedUser));
+      this.snackBar.open('Profile updated successfully', 'Close', { duration: 3000 });
+
+      // Recharger les données pour voir les modifications
+      this.loadUserData(this.currentUser.id);
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      this.snackBar.open('Error updating profile: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
+    } finally {
+      this.isUpdating = false;
+    }
+  }
+  async deleteAccount(): Promise<void> {
+    if (!this.currentUser?.id || !this.currentUser?.email) {
+      return;
+    }
+
+    try {
+      this.isUpdating = true;
+
+      // 1. Delete user preferences
+      await firstValueFrom(this.preferenceService.deleteUserPreferences(this.currentUser.id).pipe(
+        catchError((error) => {
+          console.error('Error deleting preferences:', error);
+          this.snackBar.open('Error deleting preferences: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
+          throw error;
+        })
+      ));
+
+      // 2. Delete account using email instead of ID
+      await firstValueFrom(this.accountService.deleteAccountByEmail(this.currentUser.email).pipe(
+        catchError((error) => {
+          console.error('Error deleting account:', error);
+          this.snackBar.open('Error deleting account: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
+          throw error;
+        })
+      ));
+
+      this.snackBar.open('Account deleted successfully.', 'Close', { duration: 3000 });
+
+      // Logout after deleting the account
+      this.authService.logout();
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      this.snackBar.open('Error deleting account: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
+    } finally {
+      this.isUpdating = false;
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  handleImageError(event: any) {
+    event.target.src = 'assets/images/default-profile.png';
   }
 }

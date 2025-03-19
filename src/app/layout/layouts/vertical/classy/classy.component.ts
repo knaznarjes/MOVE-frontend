@@ -5,19 +5,25 @@ import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
 import { FuseNavigationService, FuseVerticalNavigationComponent } from '@fuse/components/navigation';
 import { Navigation } from 'app/core/navigation/navigation.types';
 import { NavigationService } from 'app/core/navigation/navigation.service';
-import { User } from 'app/core/user/user.types';
 import { UserService } from 'app/core/user/user.service';
+import { User } from 'app/core/models/models';
+import { User as UserTypes } from 'app/core/user/user.types';
 
 @Component({
     selector     : 'classy-layout',
     templateUrl  : './classy.component.html',
     encapsulation: ViewEncapsulation.None
 })
-export class ClassyLayoutComponent implements OnInit, OnDestroy
-{
-    isScreenSmall: boolean;
-    navigation: Navigation;
-    user: User;
+export class ClassyLayoutComponent implements OnInit, OnDestroy {
+    isScreenSmall: boolean = false;
+    // Initialiser navigation avec une valeur par défaut
+    navigation: Navigation = {
+        default: [],
+        compact: [],
+        futuristic: [],
+        horizontal: []
+    };
+    user: User | null = null;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     /**
@@ -32,11 +38,11 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy
         private _fuseNavigationService: FuseNavigationService
     )
     {
+        // Vous pouvez également initialiser ici si nécessaire
+        // this._navigationService.get().then(navigation => {
+        //    this.navigation = navigation;
+        // });
     }
-
-    // -----------------------------------------------------------------------------------------------------
-    // @ Accessors
-    // -----------------------------------------------------------------------------------------------------
 
     /**
      * Getter for current year
@@ -45,10 +51,6 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy
     {
         return new Date().getFullYear();
     }
-
-    // -----------------------------------------------------------------------------------------------------
-    // @ Lifecycle hooks
-    // -----------------------------------------------------------------------------------------------------
 
     /**
      * On init
@@ -59,21 +61,39 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy
         this._navigationService.navigation$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((navigation: Navigation) => {
-                this.navigation = navigation;
+                console.log('Navigation reçue:', navigation); // Ajout de log
+                if (navigation) {
+                    this.navigation = navigation;
+                } else {
+                    console.warn('Navigation est undefined ou null');
+                    // Définir une navigation par défaut pour éviter les erreurs
+                }
             });
 
         // Subscribe to the user service
         this._userService.user$
-            .pipe((takeUntil(this._unsubscribeAll)))
-            .subscribe((user: User) => {
-                this.user = user;
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((userFromService: UserTypes) => {
+                console.log('User reçu:', userFromService); // Ajout de log
+                if (userFromService) {
+                    // Convertir du type User de user.types vers le type User de models
+                    this.user = {
+                        id: userFromService.id,
+                        fullName: userFromService.name || '', // Adaptation entre name et fullName
+                        email: userFromService.email,
+                        profilePhotoUrl: null, // Explicitly set to null as required by the interface
+                        role: userFromService.role
+                    };
+
+                    // If you need to use the avatar from userFromService elsewhere, you can store it in a separate property
+                    // this.userAvatar = userFromService.avatar;
+                }
             });
 
         // Subscribe to media changes
         this._fuseMediaWatcherService.onMediaChange$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe(({matchingAliases}) => {
-
                 // Check if the screen is small
                 this.isScreenSmall = !matchingAliases.includes('md');
             });
@@ -89,10 +109,6 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy
         this._unsubscribeAll.complete();
     }
 
-    // -----------------------------------------------------------------------------------------------------
-    // @ Public methods
-    // -----------------------------------------------------------------------------------------------------
-
     /**
      * Toggle navigation
      *
@@ -101,9 +117,9 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy
     toggleNavigation(name: string): void
     {
         // Get the navigation
-        const navigation = this._fuseNavigationService.getComponent<FuseVerticalNavigationComponent>(name);
+        const navigation = this._fuseNavigationService.getComponent(name);
 
-        if ( navigation )
+        if (navigation && navigation instanceof FuseVerticalNavigationComponent)
         {
             // Toggle the opened status
             navigation.toggle();

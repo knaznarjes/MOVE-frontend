@@ -1,57 +1,65 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-// src/app/core/models/account.model.ts
+// src/app/models/account.model.ts
 export interface Account {
-  id?: string;
-  email: string;
-}
+    fullName: string;
+    profilePhotoUrl: null;
+    id?: string;
+    email: string;
+    password?: string;
+  }
 
-// src/app/core/models/authentication-request.model.ts
-export interface AuthenticationRequest {
-  email: string;
-  password: string;
-}
+  // src/app/models/preference.model.ts
+  export interface Preference {
+    id?: string;
+    userId?: string;
+    category: string;
+    priority: string;
+  }
 
-// src/app/core/models/authentication-response.model.ts
-export interface AuthenticationResponse {
-  token: string;
-  refreshToken: string;
-  expiresAt: number;
-  userId: string;
-}
+  // src/app/models/user.model.ts
+  export interface User {
+    profilePhotoUrl: null;
+    id?: string;
+    fullName: string;
+    email?: string;
+    role?: string;
+    creationDate?: Date;
+    photoProfile?: string;
+    preferences?: Preference[];
+  }
 
-// src/app/core/models/preference.model.ts
-export interface Preference {
-  id?: string;
-  userId?: string;
-  category: string;
-  priority: string;
-}
+  // src/app/models/auth.model.ts
+  export interface RegisterRequest {
+    fullName: string;
+    email: string;
+    password: string;
+    role?: string;
+  }
 
-// src/app/core/models/refresh-token-request.model.ts
-export interface RefreshTokenRequest {
-  refreshToken: string;
-}
+  export interface AuthRequest {
+    email: string;
+    password: string;
+  }
 
-// src/app/core/models/register-request.model.ts
-export enum Role {
-  ADMIN = 'ADMIN',
-  TRAVELER = 'TRAVELER'
-}
+  export interface AuthResponse {
+    token: string;
+    refreshToken: string;
+    expiresAt: number;
+    userId: string;
+  }
 
-export interface RegisterRequest {
-  fullName: string;
-  email: string;
-  password: string;
-  role?: Role;
-}
+  export interface RefreshTokenRequest {
+    refreshToken: string;
+  }
 
-// src/app/core/models/user.model.ts
-export interface User {
-  id?: string;
-  fullName: string;
-  email?: string;
-  role?: string;
-  creationDate?: Date;
-  photoProfile?: string;
-  preference?: Preference;
-}
+  export enum Role {
+    ADMIN = 'ADMIN',
+    TRAVELER = 'TRAVELER'
+  }
+
+  // src/app/models/api-response.model.ts
+ // export interface ApiResponse<T> {
+   // data?: T;
+   // message?: string;
+    //error?: string;
+   // status?: number;}

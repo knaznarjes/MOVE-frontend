@@ -19,7 +19,8 @@ export class UserComponent implements OnInit, OnDestroy
     /* eslint-enable @typescript-eslint/naming-convention */
 
     @Input() showAvatar: boolean = true;
-    user: User;
+    // Initialize with default values to avoid undefined errors
+    user: User = { status: 'not-visible' } as User;
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -47,7 +48,7 @@ export class UserComponent implements OnInit, OnDestroy
         this._userService.user$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: User) => {
-                this.user = user;
+                this.user = user || { status: 'not-visible' } as User; // Ensure user is never undefined
 
                 // Mark for check
                 this._changeDetectorRef.markForCheck();
