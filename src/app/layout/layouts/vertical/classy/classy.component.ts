@@ -79,10 +79,10 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
                     // Convertir du type User de user.types vers le type User de models
                     this.user = {
                         id: userFromService.id,
-                        fullName: userFromService.name || '', // Adaptation entre name et fullName
+                        fullName: userFromService.fullName || '',
                         email: userFromService.email,
-                        profilePhotoUrl: null, // Explicitly set to null as required by the interface
-                        role: userFromService.role
+                        role: userFromService.role || 'TRAVELER',
+                        photoProfile: null  // Use photoProfile instead of profilePhotoUrl
                     };
 
                     // If you need to use the avatar from userFromService elsewhere, you can store it in a separate property

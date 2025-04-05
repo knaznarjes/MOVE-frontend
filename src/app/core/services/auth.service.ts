@@ -36,7 +36,6 @@ export class AuthService {
   }
 
   register(request: RegisterRequest): Observable<void> {
-    // Modifié pour correspondre au backend qui renvoie void
     return this.http.post<void>(`${this.apiUrl}/register`, request)
       .pipe(
         catchError(this.handleError)
@@ -74,6 +73,11 @@ export class AuthService {
         tap((user) => {
           this.currentUserSubject.next(user);
           localStorage.setItem('user', JSON.stringify(user));
+
+          // Si l'utilisateur a un rôle dans l'objet user, le stocker également
+          if (user && user.role) {
+            localStorage.setItem('userRole', user.role);
+          }
         }),
         catchError(this.handleError)
       );
@@ -84,6 +88,8 @@ export class AuthService {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('expiresAt');
     localStorage.removeItem('user');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
     this.currentUserSubject.next(null);
     this.stopRefreshTokenTimer();
     this.router.navigate(['/login']);
@@ -98,11 +104,37 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
+  getUserRole(): string {
+    // Essayer d'abord de récupérer du localStorage
+    const storedRole = localStorage.getItem('userRole');
+    if (storedRole) {
+      return storedRole;
+    }
+
+    // Si non disponible, vérifier l'utilisateur courant
+    const currentUser = this.currentUserSubject.value;
+    if (currentUser && currentUser.role) {
+      return currentUser.role;
+    }
+
+    return '';
+  }
+
+  isAdmin(): boolean {
+    const role = this.getUserRole();
+    return role?.toUpperCase() === 'ADMIN';
+  }
+
   private setSession(authResponse: AuthResponse): void {
     localStorage.setItem('token', authResponse.token);
     localStorage.setItem('refreshToken', authResponse.refreshToken);
     localStorage.setItem('expiresAt', authResponse.expiresAt.toString());
     localStorage.setItem('userId', authResponse.userId);
+
+    // Stocker le rôle s'il est présent dans la réponse
+    if (authResponse.role) {
+      localStorage.setItem('userRole', authResponse.role);
+    }
 
     this.startRefreshTokenTimer();
 

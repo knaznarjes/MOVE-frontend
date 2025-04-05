@@ -1,0 +1,448 @@
+<div class="admin-profile-container">
+    <!-- Main container with tabs navigation -->
+    <div class="tabs-container">
+      <button class="tab-button" [class.active]="activeCardIndex === 0" (click)="setActiveCard(0)">
+        <span class="material-icons">person</span> Profile
+      </button>
+      <button class="tab-button" [class.active]="activeCardIndex === 1" (click)="setActiveCard(1)">
+        <span class="material-icons">settings</span> Preferences
+      </button>
+      <button class="tab-button" [class.active]="activeCardIndex === 2" (click)="setActiveCard(2)">
+        <span class="material-icons">group</span> User Management
+      </button>
+      <button class="tab-button" [class.active]="activeCardIndex === 3" (click)="setActiveCard(3)" *ngIf="selectedUser">
+        <span class="material-icons">account_circle</span> User Details
+      </button>
+    </div>
+
+
+
+
+    <!-- Profile Card -->
+    <div class="mat-card profile-card" *ngIf="activeCardIndex === 0">
+      <div class="mat-card-header">
+        <div>
+          <div class="mat-card-title">Admin Profile</div>
+          <div class="mat-card-subtitle">Update your personal information</div>
+        </div>
+      </div>
+
+      <div class="mat-card-content">
+        <div class="loading-indicator" *ngIf="isLoading">
+          <div class="spinner"></div>
+          <p>Loading profile data...</p>
+        </div>
+
+        <div class="profile-content" *ngIf="!isLoading">
+          <div class="profile-photo-section">
+            <div class="profile-photo-container">
+              <img [src]="profileImageSrc || 'assets/images/default-profile.png'"
+                   alt="Profile photo"
+                   class="profile-photo"
+                   (error)="handleImageError($event)">
+
+              <div class="photo-upload-overlay" *ngIf="isPhotoUploading">
+                <div class="spinner"></div>
+                <span class="upload-percentage">{{ uploadProgress }}%</span>
+              </div>
+            </div>
+
+            <div class="photo-actions">
+              <button color="primary" (click)="fileInput.click()">
+                <span class="material-icons">add_photo_alternate</span>
+                Select Photo
+              </button>
+              <input hidden type="file" #fileInput (change)="onFileSelected($event)" accept="image/*">
+
+              <button color="accent" [disabled]="!selectedFile || isPhotoUploading" (click)="uploadProfilePhoto()">
+                <span class="material-icons">cloud_upload</span>
+                Upload
+              </button>
+            </div>
+          </div>
+
+          <form [formGroup]="profileForm" class="profile-form">
+            <div class="form-field">
+              <label for="fullName">Full Name</label>
+              <input id="fullName" formControlName="fullName" placeholder="Enter your full name">
+              <div class="error" *ngIf="profileForm.get('fullName')?.hasError('required') && profileForm.get('fullName')?.touched">
+                Full name is required
+              </div>
+              <div class="error" *ngIf="profileForm.get('fullName')?.hasError('minlength') && profileForm.get('fullName')?.touched">
+                Full name must be at least 3 characters
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="email">Email</label>
+              <input id="email" formControlName="email" placeholder="Email" readonly>
+            </div>
+
+            <div class="form-actions">
+              <button color="warn" (click)="openDeleteConfirmation()">
+                <span class="material-icons">delete_forever</span>
+                Delete Account
+              </button>
+
+              <button color="primary" [disabled]="profileForm.invalid || isUpdating" (click)="updateProfile()">
+                <span class="material-icons">save</span>
+                Save Profile
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preferences Card -->
+    <div class="mat-card preferences-card" *ngIf="activeCardIndex === 1">
+      <div class="mat-card-header">
+        <div>
+          <div class="mat-card-title">Travel Preferences</div>
+          <div class="mat-card-subtitle">Customize your travel settings</div>
+        </div>
+      </div>
+
+      <div class="mat-card-content">
+        <form [formGroup]="preferencesForm" (ngSubmit)="updatePreferences()">
+          <div formArrayName="preferences">
+            <div *ngFor="let preference of preferencesArray.controls; let i = index" [formGroupName]="i" class="preference-item">
+              <div class="preference-fields">
+                <div class="form-field">
+                  <label for="category{{i}}">Category</label>
+                  <select id="category{{i}}" formControlName="category">
+                    <option value="accommodation">Accommodation</option>
+                    <option value="transportation">Transportation</option>
+                    <option value="activities">Activities</option>
+                    <option value="food">Food</option>
+                    <option value="budget">Budget</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label for="priority{{i}}">Priority</label>
+                  <select id="priority{{i}}" formControlName="priority">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="button" (click)="removePreferenceField(i)"
+                     [disabled]="preferencesArray.length <= 1" aria-label="Remove this preference">
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="add-preference">
+            <button type="button" (click)="addPreferenceField()">
+              <span class="material-icons">add</span>
+              Add Preference
+            </button>
+          </div>
+
+          <div class="form-actions">
+            <button color="primary" type="submit" [disabled]="preferencesForm.invalid || isUpdating">
+              <span class="material-icons">save</span>
+              Save Preferences
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- User Management Card -->
+    <div class="mat-card user-management-card" *ngIf="activeCardIndex === 2">
+      <div class="mat-card-header">
+        <div>
+          <div class="mat-card-title">User Management</div>
+          <div class="mat-card-subtitle">View and manage system users</div>
+        </div>
+      </div>
+
+      <div class="mat-card-content">
+        <div class="loading-indicator" *ngIf="isLoadingUsers">
+          <div class="spinner"></div>
+          <p>Loading users...</p>
+        </div>
+
+        <div class="user-content" *ngIf="!isLoadingUsers">
+          <div class="search-field">
+            <span class="material-icons">search</span>
+            <input placeholder="Search users" (keyup)="applyFilter($event)">
+          </div>
+
+          <div class="table-container">
+            <table class="user-table">
+              <thead>
+                <tr>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let user of users">
+                  <td>{{ user.fullName }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    <button color="primary" title="View Details" (click)="viewUserDetails(user)">
+                      <span class="material-icons">visibility</span>
+                    </button>
+                    <button color="accent" title="Change Role" (click)="openUpdateRoleDialog(user)">
+                      <span class="material-icons">security</span>
+                    </button>
+                    <button color="warn" title="Delete User" (click)="openUserDeleteConfirmation(user)">
+                      <span class="material-icons">delete</span>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="users?.length === 0">
+                  <td colspan="4" class="no-data">
+                    No users found matching "{{ searchTerm }}"
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <button [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
+              <span class="material-icons">chevron_left</span>
+            </button>
+            <span>Page {{ currentPage }} of {{ totalPages }}</span>
+            <button [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
+              <span class="material-icons">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Details Card -->
+    <div class="mat-card user-details-card" *ngIf="activeCardIndex === 3 && selectedUser">
+      <div class="mat-card-header">
+        <div>
+          <div class="mat-card-title">User Details</div>
+          <div class="mat-card-subtitle">{{ selectedUser.fullName }}</div>
+        </div>
+      </div>
+
+      <div class="mat-card-content">
+        <div class="user-details-content">
+          <div class="user-photo-section">
+            <img [src]="selectedUser.photoProfile || 'assets/images/default-profile.png'"
+                 alt="User photo"
+                 class="user-detail-photo"
+                 (error)="handleImageError($event)">
+          </div>
+
+          <div class="user-info-section">
+            
+            <div class="info-row">
+              <span class="info-label">Full Name:</span>
+              <span class="info-value">{{ selectedUser.fullName }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Email:</span>
+              <span class="info-value">{{ selectedUser.email }}</span>
+            </div>
+
+            <div class="user-actions">
+              <button color="primary" (click)="openUpdateRoleDialog(selectedUser)">
+                <span class="material-icons">security</span>
+                Change Role
+              </button>
+              <button color="warn" (click)="openUserDeleteConfirmation(selectedUser)">
+                <span class="material-icons">delete</span>
+                Delete User
+              </button>
+              <button (click)="setActiveCard(2)">
+                <span class="material-icons">keyboard_return</span>
+                Back to List
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add these styles inline to ensure they're applied -->
+  <style>
+    /* Spinner style */
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 0, 153, 0.1);
+      border-radius: 50%;
+      border-top-color: #ff0099;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Error messages */
+    .error {
+      color: #ff0099;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    /* Table styles */
+    .table-container {
+      overflow-x: auto;
+      margin-bottom: 24px;
+    }
+
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .user-table th, .user-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(0, 184, 169, 0.1);
+    }
+
+    .user-table th {
+      background-color: rgba(230, 247, 255, 0.4);
+      color: #004d66;
+      font-weight: 600;
+    }
+
+    .user-table tr:nth-child(even) {
+      background-color: rgba(230, 247, 255, 0.1);
+    }
+
+    .user-table tr:hover {
+      background-color: rgba(230, 247, 255, 0.3);
+    }
+
+    .user-table button {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      margin: 0 4px;
+    }
+
+    .user-table button[color="primary"] .material-icons {
+      color: #ff0099;
+    }
+
+    .user-table button[color="accent"] .material-icons {
+      color: #00b8a9;
+    }
+
+    .user-table button[color="warn"] .material-icons {
+      color: #8080ff;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 16px;
+    }
+
+    .pagination button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination span {
+      margin: 0 16px;
+      color: #004d66;
+    }
+
+    /* Search field */
+    .search-field {
+      display: flex;
+      align-items: center;
+      background-color: rgba(230, 247, 255, 0.1);
+      border-radius: 12px;
+      padding: 8px 16px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(0, 184, 169, 0.1);
+    }
+
+    .search-field input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+    }
+
+    .search-field input:focus {
+      outline: none;
+    }
+
+    .search-field .material-icons {
+      color: #00b8a9;
+      margin-right: 8px;
+    }
+
+    /* Preferences styles */
+    .preference-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 16px;
+      background-color: rgba(230, 247, 255, 0.1);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 184, 169, 0.1);
+    }
+
+    .preference-fields {
+      display: flex;
+      flex: 1;
+      gap: 16px;
+    }
+
+    .add-preference {
+      margin-bottom: 24px;
+    }
+
+    .add-preference button {
+      background-color: rgba(0, 184, 169, 0.1);
+      border: 1px solid rgba(0, 184, 169, 0.3);
+      border-radius: 20px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .add-preference button .material-icons {
+      margin-right: 8px;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 184, 169, 0.3);
+      background-color: white;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #ff0099;
+    }
+  </style>

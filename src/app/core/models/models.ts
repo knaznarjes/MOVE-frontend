@@ -18,13 +18,12 @@ export interface Account {
 
   // src/app/models/user.model.ts
   export interface User {
-    profilePhotoUrl: null;
     id?: string;
     fullName: string;
     email?: string;
     role?: string;
     creationDate?: Date;
-    photoProfile?: string;
+    photoProfile?: string | null;
     preferences?: Preference[];
   }
 
@@ -46,6 +45,8 @@ export interface Account {
     refreshToken: string;
     expiresAt: number;
     userId: string;
+    role: string;  // Assurez-vous que cette propriété existe
+
   }
 
   export interface RefreshTokenRequest {
@@ -56,10 +57,3 @@ export interface Account {
     ADMIN = 'ADMIN',
     TRAVELER = 'TRAVELER'
   }
-
-  // src/app/models/api-response.model.ts
- // export interface ApiResponse<T> {
-   // data?: T;
-   // message?: string;
-    //error?: string;
-   // status?: number;}

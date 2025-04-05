@@ -1,9 +1,11 @@
+// app.routes.ts
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { Route } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
 import { AuthGuard } from './core/auth/guards/auth.guard';
 import { TravelerProfileComponent } from './core/profile/traveler-profile.component';
 import { RoleGuard } from './core/auth/guards/role.guard';
+import { AdminProfileComponent } from './core/profile-admin/admin-profile.component';
 
 export const appRoutes: Route[] = [
     // Rediriger le chemin vide vers 'home'
@@ -23,7 +25,7 @@ export const appRoutes: Route[] = [
         children: [
             {
                 path: 'home',
-                loadChildren: () => import('./core/home/home.module').then(m => m.HomeModule) // Cette route est publique, pas protégée par AuthGuard
+                loadChildren: () => import('./core/home/home.module').then(m => m.HomeModule)
             },
             {
                 path: 'register',
@@ -44,22 +46,21 @@ export const appRoutes: Route[] = [
         children: [
             {
                 path: 'profile',
-                component: TravelerProfileComponent
-            }
-        ]
-        /* ,
-            {
-                path: 'admin',
+                component: TravelerProfileComponent,
                 canActivate: [RoleGuard],
                 data: {
-                    role: 'ADMIN'
-                },
-                loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)
+                    allowedRoles: ['TRAVELER', 'USER'] // Permettre les rôles de voyageur/utilisateur
+                }
             },
             {
-                path: 'dashboard',
-                loadChildren: () => import('./dashboard/dashboard.module').then(m => m.DashboardModule)
-            }*/
+                path: 'admin/profile',
+                component: AdminProfileComponent,
+                canActivate: [RoleGuard],
+                data: {
+                    allowedRoles: ['ADMIN']
+                }
+            }
+        ]
     },
 
     // Route wildcard pour 404
@@ -68,4 +69,3 @@ export const appRoutes: Route[] = [
         redirectTo: 'home'
     }
 ];
-

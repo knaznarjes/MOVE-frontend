@@ -15,7 +15,6 @@ export class AccountService {
 
   constructor(private http: HttpClient) { }
 
-  // Method to update a user's profile information
   updateUserProfile(id: string, userData: {
     fullName?: string;
     email?: string;
@@ -26,7 +25,6 @@ export class AccountService {
       .pipe(catchError(this.handleError));
   }
 
-  // Upload user profile photo
   uploadProfilePhoto(userId: string, file: File): Observable<User> {
     const formData = new FormData();
     formData.append('file', file);
@@ -35,19 +33,16 @@ export class AccountService {
       .pipe(catchError(this.handleError));
   }
 
-  // Get user by ID
   getUserById(id: string): Observable<User> {
     return this.http.get<User>(`${this.usersApiUrl}/${id}`)
       .pipe(catchError(this.handleError));
   }
 
-  // Get current user profile
   getCurrentUserProfile(): Observable<User> {
     return this.http.get<User>(`${this.usersApiUrl}/me`)
       .pipe(catchError(this.handleError));
   }
 
-  // Get account by ID
   getAccountById(id: string): Observable<Account> {
     return this.http.get<Account>(`${this.accountsApiUrl}/${id}`)
       .pipe(

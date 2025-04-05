@@ -1,140 +1,215 @@
 <div class="profile-container">
-    <h1 class="profile-title">Traveler Profile</h1>
-
     <div *ngIf="isLoading" class="loading-container">
       <mat-spinner diameter="40"></mat-spinner>
-      <p>Loading profile data...</p>
+      <p>Loading your profile...</p>
     </div>
 
     <div *ngIf="!isLoading" class="profile-content">
-      <!-- Profile Card -->
-      <mat-card class="profile-card">
-        <mat-card-header>
-          <mat-card-title>Personal Information</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="profile-photo-section">
-            <div class="profile-photo">
-                <img [src]="profileImageSrc"
-                     alt="Profile Photo"
-                     (error)="handleImageError()">
-                <button mat-mini-fab color="primary" class="photo-upload-button" (click)="fileInput.click()">
+      <!-- Progress indicator -->
+      <div class="progress-indicator">
+        <div class="step" [class.active]="activeCardIndex === 0" (click)="setActiveCard(0)" aria-label="Personal Information tab"></div>
+        <div class="step" [class.active]="activeCardIndex === 1" (click)="setActiveCard(1)" aria-label="Travel Preferences tab"></div>
+        <div class="step" [class.active]="activeCardIndex === 2" (click)="setActiveCard(2)" aria-label="Account Management tab"></div>
+      </div>
+
+      <div class="cards-carousel">
+        <!-- Profile Card -->
+        <mat-card class="profile-card"
+                  [class.active]="activeCardIndex === 0"
+                  [class.prev]="activeCardIndex > 0"
+                  [class.next]="activeCardIndex < 0">
+          <mat-card-header>
+            <mat-card-title>Personal Information</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="profile-photo-section">
+              <div class="profile-photo" [@photoAnimation]="photoState">
+                <img [src]="profileImageSrc || 'assets/images/default-profile.png'"
+                     alt="Profile photo"
+                     (error)="handleImageError($event)">
+                <button mat-mini-fab class="photo-upload-button" (click)="fileInput.click()"
+                        aria-label="Edit profile photo">
                   <mat-icon>edit</mat-icon>
                 </button>
                 <input #fileInput type="file" hidden (change)="onFileSelected($event)" accept="image/*">
               </div>
 
-            <div class="upload-controls" *ngIf="selectedFile">
-              <button mat-raised-button color="primary" [disabled]="!selectedFile || isPhotoUploading" (click)="uploadProfilePhoto()">
-                <mat-icon>cloud_upload</mat-icon>
-                Upload Photo
-              </button>
-
-              <mat-progress-bar *ngIf="isPhotoUploading" [value]="uploadProgress" mode="determinate"></mat-progress-bar>
-            </div>
-          </div>
-
-          <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Full Name</mat-label>
-              <input matInput formControlName="fullName" placeholder="Enter your full name">
-              <mat-error *ngIf="profileForm.get('fullName')?.hasError('required')">
-                Full name is required
-              </mat-error>
-              <mat-error *ngIf="profileForm.get('fullName')?.hasError('minlength')">
-                Full name must be at least 3 characters
-              </mat-error>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Email</mat-label>
-              <input matInput formControlName="email" placeholder="Enter your email" readonly>
-            </mat-form-field>
-
-            <div class="form-actions">
-              <button mat-raised-button color="primary" type="submit" [disabled]="profileForm.invalid || isUpdating">
-                <mat-icon>save</mat-icon>
-                Save Profile
-              </button>
-            </div>
-          </form>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Preferences Card -->
-      <mat-card class="preferences-card">
-        <mat-card-header>
-          <mat-card-title>Travel Preferences</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <form [formGroup]="preferencesForm" (ngSubmit)="updatePreferences()">
-            <div formArrayName="preferences">
-              <div *ngFor="let preference of preferencesArray.controls; let i = index" [formGroupName]="i" class="preference-item">
-                <div class="preference-fields">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Category</mat-label>
-                    <mat-select formControlName="category">
-                      <mat-option value="accommodation">Accommodation</mat-option>
-                      <mat-option value="transportation">Transportation</mat-option>
-                      <mat-option value="activities">Activities</mat-option>
-                      <mat-option value="food">Food</mat-option>
-                      <mat-option value="budget">Budget</mat-option>
-                    </mat-select>
-                    <mat-error *ngIf="preferencesArray.at(i).get('category')?.hasError('required')">
-                      Category is required
-                    </mat-error>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Priority</mat-label>
-                    <mat-select formControlName="priority">
-                      <mat-option value="low">Low</mat-option>
-                      <mat-option value="medium">Medium</mat-option>
-                      <mat-option value="high">High</mat-option>
-                    </mat-select>
-                    <mat-error *ngIf="preferencesArray.at(i).get('priority')?.hasError('required')">
-                      Priority is required
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <button mat-icon-button color="warn" type="button" (click)="removePreferenceField(i)"
-                        [disabled]="preferencesArray.length <= 1">
-                  <mat-icon>delete</mat-icon>
+              <div class="upload-controls" *ngIf="selectedFile" [@fadeIn]>
+                <button mat-raised-button color="primary" [disabled]="!selectedFile || isPhotoUploading" (click)="uploadProfilePhoto()">
+                  <mat-icon>cloud_upload</mat-icon>
+                  Upload Photo
                 </button>
+
+                <mat-progress-bar *ngIf="isPhotoUploading" [value]="uploadProgress" mode="determinate"
+                               aria-label="Upload progress"></mat-progress-bar>
               </div>
             </div>
+            <form [formGroup]="profileForm" (ngSubmit)="updateProfile()" [@formAnimation]="formState">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Full Name</mat-label>
+                <input matInput formControlName="fullName" placeholder="Enter your full name">
+                <mat-icon matSuffix>person</mat-icon>
+                <mat-error *ngIf="profileForm.get('fullName')?.hasError('required')">
+                  Full name is required
+                </mat-error>
+                <mat-error *ngIf="profileForm.get('fullName')?.hasError('minlength')">
+                  Name must be at least 3 characters long
+                </mat-error>
+              </mat-form-field>
 
-            <div class="add-preference">
-              <button mat-stroked-button type="button" (click)="addPreferenceField()">
-                <mat-icon>add</mat-icon>
-                Add Preference
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Email</mat-label>
+                <input matInput formControlName="email" placeholder="Enter your email" readonly>
+                <mat-icon matSuffix>email</mat-icon>
+              </mat-form-field>
+
+              <div class="form-actions">
+                <button mat-raised-button color="primary" type="submit" [disabled]="profileForm.invalid || isUpdating">
+                  <mat-icon>save</mat-icon>
+                  Save Profile
+                </button>
+              </div>
+            </form>
+
+            <!-- Navigation controls inside card -->
+            <div class="navigation-controls in-card">
+              <button mat-fab color="primary" aria-label="Previous card"
+                      [disabled]="activeCardIndex === 0"
+                      (click)="navigateCards('prev')">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+
+              <button mat-fab color="primary" aria-label="Next card"
+                      (click)="navigateCards('next')">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Preferences Card -->
+        <mat-card class="preferences-card"
+                  [class.active]="activeCardIndex === 1"
+                  [class.prev]="activeCardIndex > 1"
+                  [class.next]="activeCardIndex < 1">
+          <mat-card-header>
+            <mat-card-title>Travel Preferences</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <form [formGroup]="preferencesForm" (ngSubmit)="updatePreferences()" [@formAnimation]="formState">
+              <div formArrayName="preferences">
+                <div *ngFor="let preference of preferencesArray.controls; let i = index" [formGroupName]="i" class="preference-item">
+                  <div class="preference-fields">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Category</mat-label>
+                      <mat-select formControlName="category">
+                        <mat-option value="accommodation">Accommodation</mat-option>
+                        <mat-option value="transportation">Transportation</mat-option>
+                        <mat-option value="activities">Activities</mat-option>
+                        <mat-option value="food">Food</mat-option>
+                        <mat-option value="budget">Budget</mat-option>
+                      </mat-select>
+                      <mat-icon matSuffix>category</mat-icon>
+                      <mat-error *ngIf="preferencesArray.at(i).get('category')?.hasError('required')">
+                        Category is required
+                      </mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Priority</mat-label>
+                      <mat-select formControlName="priority">
+                        <mat-option value="low">Low</mat-option>
+                        <mat-option value="medium">Medium</mat-option>
+                        <mat-option value="high">High</mat-option>
+                      </mat-select>
+                      <mat-icon matSuffix>priority_high</mat-icon>
+                      <mat-error *ngIf="preferencesArray.at(i).get('priority')?.hasError('required')">
+                        Priority is required
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+
+                  <button mat-icon-button color="warn" type="button" (click)="removePreferenceField(i)"
+                          [disabled]="preferencesArray.length <= 1" aria-label="Remove this preference">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <div class="add-preference">
+                <button mat-stroked-button type="button" (click)="addPreferenceField()">
+                  <mat-icon>add</mat-icon>
+                  Add Preference
+                </button>
+              </div>
+
+              <div class="form-actions">
+                <button mat-raised-button color="primary" type="submit" [disabled]="preferencesForm.invalid || isUpdating">
+                  <mat-icon>save</mat-icon>
+                  Save Preferences
+                </button>
+              </div>
+            </form>
+
+            <!-- Navigation controls inside card -->
+            <div class="navigation-controls in-card">
+              <button mat-fab color="primary" aria-label="Previous card"
+                      (click)="navigateCards('prev')">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+
+              <button mat-fab color="primary" aria-label="Next card"
+                      (click)="navigateCards('next')">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Account Management Card -->
+        <mat-card class="account-card"
+                  [class.active]="activeCardIndex === 2"
+                  [class.prev]="activeCardIndex > 2"
+                  [class.next]="activeCardIndex < 2">
+          <mat-card-header>
+            <mat-card-title>Account Management</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="account-actions" [@fadeIn]>
+              <button mat-raised-button color="warn" (click)="openDeleteConfirmation()">
+                <mat-icon>delete_forever</mat-icon>
+                Delete My Account
               </button>
             </div>
 
-            <div class="form-actions">
-              <button mat-raised-button color="primary" type="submit" [disabled]="preferencesForm.invalid || isUpdating">
-                <mat-icon>save</mat-icon>
-                Save Preferences
+            <!-- Navigation controls inside card -->
+            <div class="navigation-controls in-card">
+              <button mat-fab color="primary" aria-label="Previous card"
+                      (click)="navigateCards('prev')">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+
+              <button mat-fab color="primary" aria-label="Next card"
+                      [disabled]="activeCardIndex === 2"
+                      (click)="navigateCards('next')">
+                <mat-icon>chevron_right</mat-icon>
               </button>
             </div>
-          </form>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Account Management Card -->
-      <mat-card class="account-card">
-        <mat-card-header>
-          <mat-card-title>Account Management</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="account-actions">
-            <button mat-raised-button color="warn" (click)="deleteAccount()">
-              <mat-icon>delete_forever</mat-icon>
-              Delete Account
-            </button>
-          </div>
-        </mat-card-content>
-      </mat-card>
+          </mat-card-content>
+        </mat-card>
+      </div>
     </div>
   </div>
+
+  <!-- Delete confirmation dialog -->
+  <ng-template #deleteConfirmationDialog>
+    <h2 mat-dialog-title>Confirm Account Deletion</h2>
+    <mat-dialog-content>
+      <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+      <p>All your personal data and preferences will be permanently removed.</p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button mat-dialog-close>Cancel</button>
+      <button mat-raised-button color="warn" [mat-dialog-close]="true">Delete Account</button>
+    </mat-dialog-actions>
+  </ng-template>

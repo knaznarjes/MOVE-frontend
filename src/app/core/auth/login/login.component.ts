@@ -1,3 +1,4 @@
+// login.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -30,11 +31,11 @@ export class LoginComponent implements OnInit {
     });
 
     // Get redirect URL from route parameters or localStorage
-    this.redirectUrl = localStorage.getItem('redirectUrl') || this.route.snapshot.queryParams['redirectUrl'] || '/profile';
+    this.redirectUrl = localStorage.getItem('redirectUrl') || this.route.snapshot.queryParams['redirectUrl'];
 
     // Redirect if already logged in
     if (this.authService.isLoggedIn()) {
-      this.router.navigate([this.redirectUrl]);
+      this.redirectBasedOnRole();
     }
   }
 
@@ -46,7 +47,7 @@ export class LoginComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    const request: AuthRequest = {  // Using the correct interface
+    const request: AuthRequest = {
       email: this.loginForm.value.email,
       password: this.loginForm.value.password
     };
@@ -55,8 +56,8 @@ export class LoginComponent implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: () => {
-          // Navigate to the redirect URL and then clear it from localStorage
-          this.router.navigate([this.redirectUrl]);
+          // After login is successful and user info is stored, redirect based on role
+          this.redirectBasedOnRole();
           localStorage.removeItem('redirectUrl');
         },
         error: (error) => {
@@ -67,5 +68,19 @@ export class LoginComponent implements OnInit {
           }
         }
       });
+  }
+
+  private redirectBasedOnRole(): void {
+    // Get user role from the auth service
+    const userRole = this.authService.getUserRole();
+
+    // Lowercase comparison to ensure case-insensitivity
+    if (userRole.toLowerCase() === 'admin') {
+      // Redirect admin to the admin page
+      this.router.navigate(['/admin/profile']);
+    } else {
+      // Redirect traveler to profile page
+      this.router.navigate(['/profile']);
+    }
   }
 }

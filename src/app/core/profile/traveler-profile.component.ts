@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/member-ordering */
+import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { AccountService } from '../services/account.service';
@@ -6,13 +8,42 @@ import { PreferenceService } from '../services/preference.service';
 import { UserService } from '../services/user.service';
 import { User, Preference, Account } from '../models/models';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { catchError, finalize } from 'rxjs/operators';
 import { of, firstValueFrom } from 'rxjs';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { trigger, state, style, animate, transition } from '@angular/animations';
 
 @Component({
   selector: 'app-traveler-profile',
   templateUrl: './traveler-profile.component.html',
-  styleUrls: ['./traveler-profile.component.scss']
+  styleUrls: ['./traveler-profile.component.scss'],
+  animations: [
+    trigger('photoAnimation', [
+      state('default', style({
+        transform: 'scale(1)'
+      })),
+      state('active', style({
+        transform: 'scale(1.05)'
+      })),
+      transition('default <=> active', animate('200ms ease-in-out'))
+    ]),
+    trigger('formAnimation', [
+      state('default', style({
+        opacity: 1
+      })),
+      state('loading', style({
+        opacity: 0.7
+      })),
+      transition('default <=> loading', animate('300ms ease-in-out'))
+    ]),
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('300ms ease-out', style({ opacity: 1 }))
+      ])
+    ])
+  ]
 })
 export class TravelerProfileComponent implements OnInit {
   profileForm: FormGroup;
@@ -20,11 +51,16 @@ export class TravelerProfileComponent implements OnInit {
   isLoading = true;
   isUpdating = false;
   currentUser: User | null = null;
-  profileImageSrc: string | null = null;
+  profileImageSrc: string | SafeUrl | null = null;
   selectedFile: File | null = null;
   userPreferences: Preference[] = [];
   uploadProgress: number = 0;
   isPhotoUploading: boolean = false;
+  activeCardIndex: number = 0;
+  photoState: string = 'default';
+  formState: string = 'default';
+
+  @ViewChild('deleteConfirmationDialog') deleteConfirmationDialog!: TemplateRef<any>;
 
   constructor(
     private fb: FormBuilder,
@@ -32,7 +68,9 @@ export class TravelerProfileComponent implements OnInit {
     private accountService: AccountService,
     private preferenceService: PreferenceService,
     private userService: UserService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private sanitizer: DomSanitizer,
+    private dialog: MatDialog
   ) {
     this.profileForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(3)]],
@@ -54,7 +92,6 @@ export class TravelerProfileComponent implements OnInit {
     this.loadUserData(userId);
   }
 
-  // eslint-disable-next-line @typescript-eslint/member-ordering
   get preferencesArray(): FormArray {
     return this.preferencesForm.get('preferences') as FormArray;
   }
@@ -77,6 +114,7 @@ export class TravelerProfileComponent implements OnInit {
 
   loadUserData(userId: string): void {
     this.isLoading = true;
+    this.formState = 'loading';
     console.log('Loading user data for ID:', userId);
 
     this.userService.getUserById(userId).pipe(
@@ -91,7 +129,10 @@ export class TravelerProfileComponent implements OnInit {
           })
         );
       }),
-      finalize(() => this.isLoading = false)
+      finalize(() => {
+        this.isLoading = false;
+        this.formState = 'default';
+      })
     ).subscribe((userData) => {
       if (userData) {
         if ('fullName' in userData) {
@@ -101,30 +142,97 @@ export class TravelerProfileComponent implements OnInit {
             email: userData.email
           });
 
-          if ('profilePhotoUrl' in userData) {
-            this.profileImageSrc = (userData as User).profilePhotoUrl;
-          } else {
-            this.profileImageSrc = null;
-          }
+          // Process the profile image URL properly
+          this.setProfileImage((userData as User).photoProfile);
         } else {
           const account = userData as Account;
           this.currentUser = {
-            id: userId,
+            id: account.id,
             fullName: account.fullName || '',
             email: account.email,
-            profilePhotoUrl: null
+            photoProfile: account.profilePhotoUrl || null,
+            preferences: []
           };
           this.profileForm.patchValue({
             fullName: account.fullName || '',
             email: account.email
           });
-          this.profileImageSrc = account.profilePhotoUrl || null;
+
+          // Process the profile image URL properly
+          this.setProfileImage(account.profilePhotoUrl);
         }
 
         if (this.currentUser) {
           this.loadPreferences(this.currentUser.id);
         }
       }
+    });
+  }
+
+  // Helper method to properly set the profile image
+  private setProfileImage(url: string | null): void {
+    if (!url) {
+      this.profileImageSrc = 'assets/images/default-profile.png';
+      return;
+    }
+
+    // Check if it's a base64 string
+    if (url.startsWith('data:image')) {
+      // It's already a data URL, use as is
+      this.profileImageSrc = this.sanitizer.bypassSecurityTrustUrl(url);
+    } else if (url.startsWith('/9j/') || url.match(/^[A-Za-z0-9+/=]+$/)) {
+      // It looks like a base64 string without the data:image prefix
+      const dataUrl = `data:image/jpeg;base64,${url}`;
+      this.profileImageSrc = this.sanitizer.bypassSecurityTrustUrl(dataUrl);
+    } else {
+      // Assume it's a regular URL
+      this.profileImageSrc = url;
+    }
+  }
+
+  async uploadProfilePhoto(): Promise<void> {
+    if (!this.selectedFile || !this.currentUser?.id) {
+      this.snackBar.open('No file selected or user not found', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.isPhotoUploading = true;
+    this.uploadProgress = 0;
+
+    try {
+      // Convert file to base64
+      const base64Image = await this.fileToBase64(this.selectedFile);
+
+      // Create updated user object with the base64 image
+      const updatedUser: User = {
+        ...this.currentUser,
+        photoProfile: base64Image
+      };
+
+      // Update user with base64 image instead of file upload
+      await firstValueFrom(this.userService.updateUser(this.currentUser.id, updatedUser));
+
+      this.snackBar.open('Profile photo uploaded successfully', 'Close', { duration: 3000 });
+      this.selectedFile = null;
+      this.uploadProgress = 100;
+
+      // Reload user data to confirm changes
+      this.loadUserData(this.currentUser.id);
+    } catch (error: any) {
+      console.error('Error uploading photo:', error);
+      this.snackBar.open('Error uploading photo: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
+      this.uploadProgress = 0;
+    } finally {
+      this.isPhotoUploading = false;
+    }
+  }
+
+  private fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
     });
   }
 
@@ -162,38 +270,11 @@ export class TravelerProfileComponent implements OnInit {
       }
       const reader = new FileReader();
       // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-      reader.onload = e => this.profileImageSrc = e.target?.result as string;
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        this.profileImageSrc = this.sanitizer.bypassSecurityTrustUrl(result);
+      };
       reader.readAsDataURL(this.selectedFile);
-    }
-  }
-
-  async uploadProfilePhoto(): Promise<void> {
-    if (!this.selectedFile || !this.currentUser?.id) {
-      return;
-    }
-
-    this.isPhotoUploading = true;
-    this.uploadProgress = 0;
-
-    try {
-      const progressInterval = setInterval(() => {
-        if (this.uploadProgress < 90) {
-          this.uploadProgress += 10;
-        }
-      }, 300);
-
-      await firstValueFrom(this.userService.uploadProfilePhoto(this.currentUser.id, this.selectedFile));
-
-      clearInterval(progressInterval);
-      this.uploadProgress = 100;
-      this.selectedFile = null;
-      this.snackBar.open('Profile photo uploaded successfully', 'Close', { duration: 3000 });
-
-      this.loadUserData(this.currentUser.id);
-    } catch (error: any) {
-      this.snackBar.open('Error uploading photo: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
-    } finally {
-      this.isPhotoUploading = false;
     }
   }
 
@@ -204,6 +285,7 @@ export class TravelerProfileComponent implements OnInit {
     }
 
     this.isUpdating = true;
+    this.formState = 'loading';
 
     try {
       const preferencesToSave: Preference[] = this.preferencesArray.value.map((pref: any) => ({
@@ -225,6 +307,7 @@ export class TravelerProfileComponent implements OnInit {
       this.snackBar.open('Error updating preferences: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
     } finally {
       this.isUpdating = false;
+      this.formState = 'default';
     }
   }
 
@@ -235,27 +318,41 @@ export class TravelerProfileComponent implements OnInit {
     }
 
     this.isUpdating = true;
+    this.formState = 'loading';
 
     try {
       const updatedUser: User = {
         id: this.currentUser.id,
         fullName: this.profileForm.get('fullName')?.value,
         email: this.profileForm.get('email')?.value,
-        profilePhotoUrl: this.currentUser.profilePhotoUrl || null
+        photoProfile: this.currentUser.photoProfile || null,
+        preferences: this.currentUser.preferences || []
       };
 
       await firstValueFrom(this.userService.updateUser(this.currentUser.id, updatedUser));
       this.snackBar.open('Profile updated successfully', 'Close', { duration: 3000 });
 
-      // Recharger les données pour voir les modifications
+      // Reload the data to see the changes
       this.loadUserData(this.currentUser.id);
     } catch (error: any) {
       console.error('Error updating profile:', error);
       this.snackBar.open('Error updating profile: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
     } finally {
       this.isUpdating = false;
+      this.formState = 'default';
     }
   }
+
+  openDeleteConfirmation(): void {
+    const dialogRef = this.dialog.open(this.deleteConfirmationDialog);
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === true) {
+        this.deleteAccount();
+      }
+    });
+  }
+
   async deleteAccount(): Promise<void> {
     if (!this.currentUser?.id || !this.currentUser?.email) {
       return;
@@ -293,8 +390,22 @@ export class TravelerProfileComponent implements OnInit {
       this.isUpdating = false;
     }
   }
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  handleImageError(event: any) {
+
+  handleImageError(event: any): void {
     event.target.src = 'assets/images/default-profile.png';
   }
+
+  // Added methods for card navigation
+  setActiveCard(index: number): void {
+    this.activeCardIndex = index;
+  }
+
+  navigateCards(direction: 'prev' | 'next'): void {
+    if (direction === 'prev' && this.activeCardIndex > 0) {
+      this.activeCardIndex--;
+    } else if (direction === 'next' && this.activeCardIndex < 2) {
+      this.activeCardIndex++;
+    }
+  }
+
 }
