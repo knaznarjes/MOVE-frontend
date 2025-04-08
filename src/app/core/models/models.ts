@@ -1,14 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-// src/app/models/account.model.ts
 export interface Account {
-    fullName: string;
-    profilePhotoUrl: null;
     id?: string;
     email: string;
     password?: string;
   }
 
-  // src/app/models/preference.model.ts
   export interface Preference {
     id?: string;
     userId?: string;
@@ -16,23 +12,23 @@ export interface Account {
     priority: string;
   }
 
-  // src/app/models/user.model.ts
   export interface User {
-    id?: string;
+    id: string;
     fullName: string;
-    email?: string;
-    role?: string;
+    role: string;
     creationDate?: Date;
     photoProfile?: string | null;
+    account?: Account;
     preferences?: Preference[];
+
+
   }
 
-  // src/app/models/auth.model.ts
   export interface RegisterRequest {
     fullName: string;
     email: string;
     password: string;
-    role?: string;
+    role?: Role;
   }
 
   export interface AuthRequest {
@@ -45,8 +41,7 @@ export interface Account {
     refreshToken: string;
     expiresAt: number;
     userId: string;
-    role: string;  // Assurez-vous que cette propriété existe
-
+    role: Role;
   }
 
   export interface RefreshTokenRequest {
@@ -56,4 +51,28 @@ export interface Account {
   export enum Role {
     ADMIN = 'ADMIN',
     TRAVELER = 'TRAVELER'
+  }
+
+  export interface AccountDTO {
+    id: string;
+    email: string;
+    password?: string;
+
+  }
+
+  export interface UserDTO {
+    id: string;
+    fullName: string;
+    role: string;
+    creationDate: Date;
+    photoProfile?: string;
+    accountDTO?: AccountDTO;
+    preferences?: PreferenceDTO[];
+  }
+
+  export interface PreferenceDTO {
+    id: string;
+    userId: string;
+    category: string;
+    priority: string;
   }

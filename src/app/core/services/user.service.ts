@@ -1,168 +1,136 @@
+/* eslint-disable curly */
 /* eslint-disable @typescript-eslint/member-ordering */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpEventType, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { Observable, BehaviorSubject, throwError } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from 'environments/environment';
-import { User, Preference } from '../models/models';
+import { UserDTO } from '../models/models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = `${environment.apiUrl}/api/users`;
+  private baseUrl = `${environment.apiUrl}/api/users`;
+  private adminUrl = `${environment.apiUrl}/api/users/admin`;
 
-  constructor(private http: HttpClient) { }
+  private currentUserSubject = new BehaviorSubject<UserDTO | null>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
 
-  getAllUsers(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/admin`)
-      .pipe(catchError(error => this.handleError(error)));
-  }
+  constructor(private http: HttpClient) {}
 
-  getCurrentUser(): Observable<User> {
-    return this.http.get<User>(`${this.apiUrl}/me`)
-      .pipe(catchError(error => this.handleError(error)));
-  }
-
-  getUserById(id: string): Observable<User> {
-    return this.http.get<User>(`${this.apiUrl}/${id}`)
-      .pipe(catchError(error => this.handleError(error)));
-  }
-
-  createUser(user: User): Observable<User> {
-    return this.http.post<User>(`${this.apiUrl}`, user)
-      .pipe(catchError(error => this.handleError(error)));
-  }
-
-  updateUser(id: string, user: User): Observable<User> {
-    // Create a DTO object that matches what the backend expects
-    const userDTO = {
-      fullName: user.fullName,
-      email: user.email, // Use the email directly from the User object
-      photoProfile: user.photoProfile,
-      preferences: user.preferences ? user.preferences.map(pref => ({
-        id: pref.id,
-        userId: pref.userId,
-        category: pref.category,
-        priority: pref.priority.toString()
-      })) : []
-    };
-
-    return this.http.put<User>(`${this.apiUrl}/${id}`, userDTO)
-      .pipe(catchError(error => this.handleError(error)));
-  }
-
-  deleteUser(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`)
-      .pipe(catchError(error => this.handleError(error)));
-  }
-
-  uploadProfilePhoto(userId: string, file: File): Observable<any> {
-    const formData: FormData = new FormData();
-    formData.append('file', file);
-
-    // Log details to help debug
-    console.log('Uploading photo for user:', userId);
-    console.log('File size:', file.size, 'bytes');
-    console.log('File type:', file.type);
-
-    const url = `${this.apiUrl}/${userId}/uploadPhoto`;
-    console.log('Upload URL:', url);
-
-    return this.http.post<any>(
-      url,
-      formData,
-      {
-        reportProgress: true,
-        observe: 'events',
-      }
-    ).pipe(
-      map((event) => {
-        switch (event.type) {
-          case HttpEventType.UploadProgress:
-            // Calculate and return upload progress
-            const progress = Math.round(100 * event.loaded / (event.total || 1));
-            console.log(`Upload progress: ${progress}%`);
-            return { status: 'progress', progress };
-
-          case HttpEventType.Response:
-            // Return the final response
-            console.log('Upload complete, server response:', event.body);
-            return { status: 'complete', data: event.body };
-
-          default:
-            // Other event types
-            return { status: 'event', type: event.type };
-        }
-      }),
-      catchError(error => this.handleError(error))
+  //  USER PART
+  getCurrentUser(): Observable<UserDTO> {
+    return this.http.get<UserDTO>(`${this.baseUrl}/me`).pipe(
+      tap(user => this.currentUserSubject.next(user)),
+      catchError(this.handleError)
     );
   }
 
-  updateUserRole(userId: string, role: string): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/${userId}/role`, { role })
-      .pipe(catchError(error => this.handleError(error)));
+  getUserById(id: string): Observable<UserDTO> {
+    return this.http.get<UserDTO>(`${this.baseUrl}/${id}`).pipe(
+      catchError(this.handleError)
+    );
   }
 
-  updatePassword(userId: string, password: string): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${userId}/password`, { password })
-      .pipe(catchError(error => this.handleError(error)));
+  updateUser(id: string, userDTO: UserDTO): Observable<UserDTO> {
+    return this.http.put<UserDTO>(`${this.baseUrl}/${id}`, userDTO).pipe(
+      catchError(this.handleError)
+    );
   }
 
-  updateUserPreferences(userId: string, preferences: Preference[]): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${userId}/preferences`, preferences)
-      .pipe(catchError(error => this.handleError(error)));
+  deleteUser(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
+      catchError(this.handleError)
+    );
   }
 
-  searchUsers(name?: string, email?: string, role?: string): Observable<User[]> {
+  uploadPhoto(id: string, file: File): Observable<UserDTO> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<UserDTO>(`${this.baseUrl}/${id}/uploadPhoto`, formData).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  //  ADMIN PART
+
+  getAllUsers(): Observable<UserDTO[]> {
+    return this.http.get<UserDTO[]>(`${this.adminUrl}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getAdminUserById(id: string): Observable<UserDTO> {
+    return this.http.get<UserDTO>(`${this.adminUrl}/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  createUser(userPayload: any): Observable<UserDTO> {
+    return this.http.post<UserDTO>(`${this.adminUrl}`, userPayload).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  updateUserByAdmin(id: string, userDTO: UserDTO): Observable<UserDTO> {
+    return this.http.put<UserDTO>(`${this.adminUrl}/${id}`, userDTO).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  deleteUserByAdmin(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.adminUrl}/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  updateUserRole(id: string, role: string): Observable<UserDTO> {
+    return this.http.put<UserDTO>(`${this.adminUrl}/${id}/role`, { role }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  uploadPhotoByAdmin(id: string, file: File): Observable<UserDTO> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<UserDTO>(`${this.adminUrl}/${id}/uploadPhoto`, formData).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  searchUsers(name?: string, email?: string, role?: string): Observable<UserDTO[]> {
     let params = new HttpParams();
+    if (name) params = params.set('name', name);
+    if (email) params = params.set('email', email);
+    if (role) params = params.set('role', role);
 
-    if (name) {
-      params = params.set('name', name);
-    }
-
-    if (email) {
-      params = params.set('email', email);
-    }
-
-    if (role) {
-      params = params.set('role', role);
-    }
-
-    return this.http.get<User[]>(`${this.apiUrl}/search`, { params })
-      .pipe(catchError(error => this.handleError(error)));
+    return this.http.get<UserDTO[]>(`${this.adminUrl}/search`, { params }).pipe(
+      catchError(this.handleError)
+    );
   }
 
-  isCurrentUserAdmin(): Observable<boolean> {
-    return this.http.get<boolean>(`${this.apiUrl}/isAdmin`)
-      .pipe(catchError(error => this.handleError(error)));
-  }
-
-  private handleError(error: any): Observable<never> {
+  // Error handler for HTTP requests
+  private handleError(error: HttpErrorResponse): Observable<never> {
     let errorMessage = 'An error occurred';
-
     if (error.error instanceof ErrorEvent) {
       // Client-side error
       errorMessage = `Error: ${error.error.message}`;
     } else {
       // Server-side error
       errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
-
-      // Add more detail if available
-      if (error.error) {
-        try {
-          const serverError = typeof error.error === 'string' ? JSON.parse(error.error) : error.error;
-          if (serverError.message) {
-            errorMessage += `\nDetails: ${serverError.message}`;
-          }
-        } catch (e) {
-          console.error('Could not parse error response', e);
-        }
+      // Add more specific error messages based on status codes
+      if (error.status === 404) {
+        errorMessage = 'Resource not found';
+      } else if (error.status === 401) {
+        errorMessage = 'Unauthorized access';
+      } else if (error.status === 403) {
+        errorMessage = 'Access forbidden';
+      } else if (error.status === 400) {
+        errorMessage = 'Bad request. Please check the data sent.';
       }
     }
-
-    console.error('API Error:', errorMessage, error);
+    console.error(errorMessage);
     return throwError(() => new Error(errorMessage));
   }
 }

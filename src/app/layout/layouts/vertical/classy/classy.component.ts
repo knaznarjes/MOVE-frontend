@@ -8,7 +8,6 @@ import { NavigationService } from 'app/core/navigation/navigation.service';
 import { UserService } from 'app/core/user/user.service';
 import { User } from 'app/core/models/models';
 import { User as UserTypes } from 'app/core/user/user.types';
-
 @Component({
     selector     : 'classy-layout',
     templateUrl  : './classy.component.html',
@@ -69,27 +68,27 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
                     // Définir une navigation par défaut pour éviter les erreurs
                 }
             });
-
-        // Subscribe to the user service
-        this._userService.user$
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((userFromService: UserTypes) => {
-                console.log('User reçu:', userFromService); // Ajout de log
-                if (userFromService) {
-                    // Convertir du type User de user.types vers le type User de models
-                    this.user = {
-                        id: userFromService.id,
-                        fullName: userFromService.fullName || '',
-                        email: userFromService.email,
-                        role: userFromService.role || 'TRAVELER',
-                        photoProfile: null  // Use photoProfile instead of profilePhotoUrl
-                    };
-
-                    // If you need to use the avatar from userFromService elsewhere, you can store it in a separate property
-                    // this.userAvatar = userFromService.avatar;
+// In classy.component.ts ngOnInit()
+this._userService.user$
+    .pipe(takeUntil(this._unsubscribeAll))
+    .subscribe((userFromService: UserTypes) => {
+        console.log('User reçu:', userFromService);
+        if (userFromService) {
+            // Convertir du type User de user.types vers le type User de models
+            const user: User = {
+                id: userFromService.id,
+                fullName: userFromService.fullName,
+                role: userFromService.role,
+                // Use optional chaining and nullish coalescing to handle missing properties
+                photoProfile: (userFromService as any).photoProfile || null,
+                account: {
+                    email: (userFromService as any).account?.email || ''
                 }
-            });
+            };
 
+            this.user = user;
+        }
+    });
         // Subscribe to media changes
         this._fuseMediaWatcherService.onMediaChange$
             .pipe(takeUntil(this._unsubscribeAll))

@@ -6,7 +6,7 @@ import { AuthService } from '../services/auth.service';
 import { AccountService } from '../services/account.service';
 import { PreferenceService } from '../services/preference.service';
 import { UserService } from '../services/user.service';
-import { User, Preference, Account } from '../models/models';
+import { User, Preference, Account, UserDTO } from '../models/models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { catchError, finalize } from 'rxjs/operators';
@@ -137,32 +137,36 @@ export class TravelerProfileComponent implements OnInit {
       if (userData) {
         if ('fullName' in userData) {
           this.currentUser = userData as User;
+          // Corrected access to email through account object
+          const email = this.currentUser.account?.email || '';
+
           this.profileForm.patchValue({
-            fullName: userData.fullName || '',
-            email: userData.email
+            fullName: this.currentUser.fullName || '',
+            email: email
           });
 
           // Process the profile image URL properly
-          this.setProfileImage((userData as User).photoProfile);
-        } else {
+          this.setProfileImage(this.currentUser.photoProfile);
+        } else if ('email' in userData) {
+          // This is an Account object
           const account = userData as Account;
+
+          // Create a User object with the account information
           this.currentUser = {
             id: account.id,
-            fullName: account.fullName || '',
-            email: account.email,
-            photoProfile: account.profilePhotoUrl || null,
+            fullName: '', // Account model no longer has fullName
+            role: 'TRAVELER', // Setting default role
+            account: account,
             preferences: []
           };
+
           this.profileForm.patchValue({
-            fullName: account.fullName || '',
+            fullName: this.currentUser.fullName || '',
             email: account.email
           });
-
-          // Process the profile image URL properly
-          this.setProfileImage(account.profilePhotoUrl);
         }
 
-        if (this.currentUser) {
+        if (this.currentUser && this.currentUser.id) {
           this.loadPreferences(this.currentUser.id);
         }
       }
@@ -210,7 +214,7 @@ export class TravelerProfileComponent implements OnInit {
       };
 
       // Update user with base64 image instead of file upload
-      await firstValueFrom(this.userService.updateUser(this.currentUser.id, updatedUser));
+      await firstValueFrom(this.userService.updateUser(this.currentUser.id, this.convertToUserDTO(updatedUser)));
 
       this.snackBar.open('Profile photo uploaded successfully', 'Close', { duration: 3000 });
       this.selectedFile = null;
@@ -269,7 +273,6 @@ export class TravelerProfileComponent implements OnInit {
         return;
       }
       const reader = new FileReader();
-      // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
       reader.onload = (e) => {
         const result = e.target?.result as string;
         this.profileImageSrc = this.sanitizer.bypassSecurityTrustUrl(result);
@@ -321,15 +324,20 @@ export class TravelerProfileComponent implements OnInit {
     this.formState = 'loading';
 
     try {
+      // Make sure we maintain account structure
       const updatedUser: User = {
         id: this.currentUser.id,
         fullName: this.profileForm.get('fullName')?.value,
-        email: this.profileForm.get('email')?.value,
+        role: this.currentUser.role || 'TRAVELER',
         photoProfile: this.currentUser.photoProfile || null,
-        preferences: this.currentUser.preferences || []
+        preferences: this.currentUser.preferences || [],
+        account: this.currentUser.account || {
+          id: this.currentUser.id,
+          email: this.profileForm.get('email')?.value
+        }
       };
 
-      await firstValueFrom(this.userService.updateUser(this.currentUser.id, updatedUser));
+      await firstValueFrom(this.userService.updateUser(this.currentUser.id, this.convertToUserDTO(updatedUser)));
       this.snackBar.open('Profile updated successfully', 'Close', { duration: 3000 });
 
       // Reload the data to see the changes
@@ -354,7 +362,15 @@ export class TravelerProfileComponent implements OnInit {
   }
 
   async deleteAccount(): Promise<void> {
-    if (!this.currentUser?.id || !this.currentUser?.email) {
+    if (!this.currentUser?.id) {
+      return;
+    }
+
+    // Get email from account object
+    const email = this.currentUser.account?.email;
+
+    if (!email) {
+      this.snackBar.open('Account email not found.', 'Close', { duration: 3000 });
       return;
     }
 
@@ -371,7 +387,7 @@ export class TravelerProfileComponent implements OnInit {
       ));
 
       // 2. Delete account using email instead of ID
-      await firstValueFrom(this.accountService.deleteAccountByEmail(this.currentUser.email).pipe(
+      await firstValueFrom(this.accountService.deleteAccountByEmail(email).pipe(
         catchError((error) => {
           console.error('Error deleting account:', error);
           this.snackBar.open('Error deleting account: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
@@ -406,6 +422,28 @@ export class TravelerProfileComponent implements OnInit {
     } else if (direction === 'next' && this.activeCardIndex < 2) {
       this.activeCardIndex++;
     }
-  }
 
+}
+private convertToUserDTO(user: User): UserDTO {
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      role: user.role,
+      creationDate: user.creationDate ?? new Date(), // valeur par défaut si undefined
+      photoProfile: user.photoProfile ?? '',
+      accountDTO: user.account
+        ? {
+            id: user.account.id ?? '',
+            email: user.account.email,
+            password: user.account.password
+          }
+        : undefined,
+      preferences: user.preferences?.map(pref => ({
+        id: pref.id ?? '',
+        userId: pref.userId ?? user.id,
+        category: pref.category,
+        priority: pref.priority
+      })) ?? []
+    };
+  }
 }

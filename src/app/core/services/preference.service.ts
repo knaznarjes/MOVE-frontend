@@ -14,7 +14,6 @@ export class PreferenceService {
   constructor(private http: HttpClient) { }
 
   getUserPreferences(userId: string): Observable<Preference[]> {
-    // Fixed: Changed to use the correct endpoint with userId
     return this.http.get<Preference[]>(`${this.apiUrl}/user/${userId}`)
       .pipe(catchError(this.handleError));
   }

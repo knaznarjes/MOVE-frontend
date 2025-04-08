@@ -24,13 +24,7 @@ import { AdminProfileModule } from './profile-admin/admin-profile.module';
     ]
 })
 export class CoreModule {
-    /**
-     * Constructor
-     */
-    constructor(
-        @Optional() @SkipSelf() parentModule?: CoreModule
-    ) {
-        // Do not allow multiple injections
+    constructor(@Optional() @SkipSelf() parentModule?: CoreModule) {
         if (parentModule) {
             throw new Error('CoreModule has already been loaded. Import this module in the AppModule only.');
         }

@@ -16,6 +16,8 @@ export class AuthService {
   private apiUrl = `${environment.apiUrl}/api/auth`;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  private userRoleSubject = new BehaviorSubject<string>('');
+  public userRole$ = this.userRoleSubject.asObservable();
   private refreshTokenTimeout: any;
 
   constructor(
@@ -28,9 +30,21 @@ export class AuthService {
   private loadUserFromStorage() {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
+    const role = localStorage.getItem('userRole');
 
     if (token && user) {
-      this.currentUserSubject.next(JSON.parse(user));
+      const userData = JSON.parse(user);
+      this.currentUserSubject.next(userData);
+
+      // Charger le rôle depuis localStorage ou depuis l'objet user, en privilégiant l'objet user
+      const userRole = userData.role || role || '';
+      this.userRoleSubject.next(userRole);
+
+      // S'assurer que le rôle est synchronisé dans le localStorage
+      if (userRole) {
+        localStorage.setItem('userRole', userRole);
+      }
+
       this.startRefreshTokenTimer();
     }
   }
@@ -71,11 +85,13 @@ export class AuthService {
     return this.http.get<User>(`${this.apiUrl}/me`)
       .pipe(
         tap((user) => {
+          // Mettre à jour l'utilisateur actuel
           this.currentUserSubject.next(user);
           localStorage.setItem('user', JSON.stringify(user));
 
-          // Si l'utilisateur a un rôle dans l'objet user, le stocker également
+          // Mettre à jour le rôle si présent
           if (user && user.role) {
+            this.userRoleSubject.next(user.role);
             localStorage.setItem('userRole', user.role);
           }
         }),
@@ -91,6 +107,7 @@ export class AuthService {
     localStorage.removeItem('userId');
     localStorage.removeItem('userRole');
     this.currentUserSubject.next(null);
+    this.userRoleSubject.next('');
     this.stopRefreshTokenTimer();
     this.router.navigate(['/login']);
   }
@@ -105,19 +122,22 @@ export class AuthService {
   }
 
   getUserRole(): string {
-    // Essayer d'abord de récupérer du localStorage
-    const storedRole = localStorage.getItem('userRole');
-    if (storedRole) {
-      return storedRole;
-    }
+    return this.userRoleSubject.value;
+  }
 
-    // Si non disponible, vérifier l'utilisateur courant
-    const currentUser = this.currentUserSubject.value;
-    if (currentUser && currentUser.role) {
-      return currentUser.role;
-    }
+  updateUserRole(role: string): void {
+    if (role) {
+      this.userRoleSubject.next(role);
+      localStorage.setItem('userRole', role);
 
-    return '';
+      // Mettre également à jour l'objet utilisateur si disponible
+      const currentUser = this.currentUserSubject.value;
+      if (currentUser) {
+        currentUser.role = role;
+        this.currentUserSubject.next({...currentUser});
+        localStorage.setItem('user', JSON.stringify(currentUser));
+      }
+    }
   }
 
   isAdmin(): boolean {
@@ -133,6 +153,7 @@ export class AuthService {
 
     // Stocker le rôle s'il est présent dans la réponse
     if (authResponse.role) {
+      this.userRoleSubject.next(authResponse.role);
       localStorage.setItem('userRole', authResponse.role);
     }
 

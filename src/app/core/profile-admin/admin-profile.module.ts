@@ -16,14 +16,16 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatDialogModule } from '@angular/material/dialog';
 import { AdminProfileComponent } from './admin-profile.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
 @NgModule({
     declarations: [
        AdminProfileComponent
     ],
     imports: [
         CommonModule,
-        RouterModule, // Important pour les routerLinks
-        FormsModule, // Ajouté
+        RouterModule,
+        FormsModule,
         ReactiveFormsModule,
         MatCardModule,
         MatFormFieldModule,
@@ -37,10 +39,11 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
         MatPaginatorModule,
         MatSortModule,
         MatDialogModule,
-        MatProgressBarModule // Ajouté pour mat-progress-bar
+        MatProgressBarModule,
+        BrowserAnimationsModule // Add this for animations
     ],
     exports: [
-        AdminProfileComponent // Important pour rendre le composant disponible
+        AdminProfileComponent
     ]
 })
 export class AdminProfileModule { }

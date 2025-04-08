@@ -13,10 +13,11 @@
       <button class="tab-button" [class.active]="activeCardIndex === 3" (click)="setActiveCard(3)" *ngIf="selectedUser">
         <span class="material-icons">account_circle</span> User Details
       </button>
+      <!-- Ajout du bouton pour la carte de changement de mot de passe -->
+      <button class="tab-button" [class.active]="activeCardIndex === 4" (click)="setActiveCard(4)">
+        <span class="material-icons">lock</span> Change Password
+      </button>
     </div>
-
-
-
 
     <!-- Profile Card -->
     <div class="mat-card profile-card" *ngIf="activeCardIndex === 0">
@@ -169,10 +170,41 @@
         </div>
 
         <div class="user-content" *ngIf="!isLoadingUsers">
-          <div class="search-field">
-            <span class="material-icons">search</span>
-            <input placeholder="Search users" (keyup)="applyFilter($event)">
-          </div>
+          <!-- Advanced Search Form -->
+          <form [formGroup]="userManagementForm" class="search-form">
+            <div class="search-fields">
+              <div class="form-field">
+                <label for="name">Name</label>
+                <input id="name" formControlName="name" placeholder="Search by name">
+              </div>
+
+              <div class="form-field">
+                <label for="email">Email</label>
+                <input id="email" formControlName="email" placeholder="Search by email">
+              </div>
+
+              <div class="form-field">
+                <label for="role">Role</label>
+                <select id="role" formControlName="role">
+                  <option value="">All Roles</option>
+                  <option value="ADMIN">Admin</option>
+                  <option value="TRAVELER">Traveler</option>
+                  <!-- Add other roles as needed -->
+                </select>
+              </div>
+            </div>
+
+            <div class="search-actions">
+              <button color="primary" (click)="search()">
+                <span class="material-icons">search</span>
+                Search
+              </button>
+              <button color="accent" (click)="resetSearch()">
+                <span class="material-icons">refresh</span>
+                Reset
+              </button>
+            </div>
+          </form>
 
           <div class="table-container">
             <table class="user-table">
@@ -180,6 +212,7 @@
                 <tr>
                   <th>Full Name</th>
                   <th>Email</th>
+                  <th>Role</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -187,6 +220,7 @@
                 <tr *ngFor="let user of users">
                   <td>{{ user.fullName }}</td>
                   <td>{{ user.email }}</td>
+                  <td>{{ user.role }}</td>
                   <td>
                     <button color="primary" title="View Details" (click)="viewUserDetails(user)">
                       <span class="material-icons">visibility</span>
@@ -201,7 +235,7 @@
                 </tr>
                 <tr *ngIf="users?.length === 0">
                   <td colspan="4" class="no-data">
-                    No users found matching "{{ searchTerm }}"
+                    No users found matching your criteria
                   </td>
                 </tr>
               </tbody>
@@ -240,7 +274,7 @@
           </div>
 
           <div class="user-info-section">
-            
+
             <div class="info-row">
               <span class="info-label">Full Name:</span>
               <span class="info-value">{{ selectedUser.fullName }}</span>
@@ -248,6 +282,10 @@
             <div class="info-row">
               <span class="info-label">Email:</span>
               <span class="info-value">{{ selectedUser.email }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Role:</span>
+              <span class="info-value">{{ selectedUser.role }}</span>
             </div>
 
             <div class="user-actions">
@@ -268,181 +306,109 @@
         </div>
       </div>
     </div>
+
+    <!-- Password Change Card -->
+    <div class="mat-card password-card" *ngIf="activeCardIndex === 4">
+        <div class="mat-card-header">
+          <div>
+            <div class="mat-card-title">Change Password</div>
+            <div class="mat-card-subtitle">Update your account password</div>
+          </div>
+        </div>
+
+        <div class="mat-card-content">
+          <form [formGroup]="passwordForm" class="password-form">
+            <div class="form-field">
+              <label for="currentPassword">Current Password</label>
+              <input id="currentPassword" type="password" formControlName="currentPassword" placeholder="Enter your current password">
+              <div class="error" *ngIf="passwordForm.get('currentPassword')?.hasError('required') && passwordForm.get('currentPassword')?.touched">
+                Current password is required
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="newPassword">New Password</label>
+              <input id="newPassword" type="password" formControlName="newPassword" placeholder="Enter your new password">
+              <div class="error" *ngIf="passwordForm.get('newPassword')?.hasError('required') && passwordForm.get('newPassword')?.touched">
+                New password is required
+              </div>
+              <div class="error" *ngIf="passwordForm.get('newPassword')?.hasError('minlength') && passwordForm.get('newPassword')?.touched">
+                New password must be at least 8 characters
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="confirmPassword">Confirm New Password</label>
+              <input id="confirmPassword" type="password" formControlName="confirmPassword" placeholder="Confirm your new password">
+              <div class="error" *ngIf="passwordForm.get('confirmPassword')?.hasError('required') && passwordForm.get('confirmPassword')?.touched">
+                Password confirmation is required
+              </div>
+            </div>
+
+            <div class="error" *ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched">
+              Passwords do not match
+            </div>
+
+            <div class="form-actions">
+              <button (click)="setActiveCard(0)">
+                <span class="material-icons">arrow_back</span>
+                Cancel
+              </button>
+
+              <button color="primary" [disabled]="passwordForm.invalid || isUpdating" (click)="changePassword()">
+                <span class="material-icons" *ngIf="isUpdating">sync</span>
+                <span class="material-icons" *ngIf="!isUpdating">lock</span>
+                Change Password
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    <!-- Template for Role Update Dialog -->
+    <ng-template #userRoleUpdateDialog>
+      <h2 mat-dialog-title>Update User Role</h2>
+      <mat-dialog-content>
+        <form [formGroup]="userRoleForm">
+          <div class="form-field">
+            <label for="role">New Role</label>
+            <select id="role" formControlName="role">
+              <option value="ADMIN">Admin</option>
+              <option value="TRAVELER">Traveler</option>
+              <!-- Add other roles as needed -->
+            </select>
+          </div>
+        </form>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button mat-dialog-close>Cancel</button>
+        <button mat-button [mat-dialog-close]="userRoleForm.get('role')?.value">Update</button>
+      </mat-dialog-actions>
+    </ng-template>
+
+    <!-- Template for User Delete Confirmation Dialog -->
+    <ng-template #userDeleteConfirmationDialog>
+      <h2 mat-dialog-title>Confirm Deletion</h2>
+      <mat-dialog-content>
+        <p>Are you sure you want to delete user: <strong>{{ selectedUser?.fullName }}</strong>?</p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button mat-dialog-close>Cancel</button>
+        <button mat-button [mat-dialog-close]="true" color="warn">Delete</button>
+      </mat-dialog-actions>
+    </ng-template>
+
+    <!-- Template for Account Delete Confirmation Dialog -->
+    <ng-template #deleteConfirmationDialog>
+      <h2 mat-dialog-title>Delete Your Account</h2>
+      <mat-dialog-content>
+        <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+        <p class="warning-text">All your data will be permanently removed.</p>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button mat-dialog-close>Cancel</button>
+        <button mat-button [mat-dialog-close]="true" color="warn">Delete</button>
+      </mat-dialog-actions>
+    </ng-template>
   </div>
-
-  <!-- Add these styles inline to ensure they're applied -->
-  <style>
-    /* Spinner style */
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255, 0, 153, 0.1);
-      border-radius: 50%;
-      border-top-color: #ff0099;
-      animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Error messages */
-    .error {
-      color: #ff0099;
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    /* Table styles */
-    .table-container {
-      overflow-x: auto;
-      margin-bottom: 24px;
-    }
-
-    .user-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .user-table th, .user-table td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid rgba(0, 184, 169, 0.1);
-    }
-
-    .user-table th {
-      background-color: rgba(230, 247, 255, 0.4);
-      color: #004d66;
-      font-weight: 600;
-    }
-
-    .user-table tr:nth-child(even) {
-      background-color: rgba(230, 247, 255, 0.1);
-    }
-
-    .user-table tr:hover {
-      background-color: rgba(230, 247, 255, 0.3);
-    }
-
-    .user-table button {
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      margin: 0 4px;
-    }
-
-    .user-table button[color="primary"] .material-icons {
-      color: #ff0099;
-    }
-
-    .user-table button[color="accent"] .material-icons {
-      color: #00b8a9;
-    }
-
-    .user-table button[color="warn"] .material-icons {
-      color: #8080ff;
-    }
-
-    /* Pagination */
-    .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 16px;
-    }
-
-    .pagination button {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-    }
-
-    .pagination button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .pagination span {
-      margin: 0 16px;
-      color: #004d66;
-    }
-
-    /* Search field */
-    .search-field {
-      display: flex;
-      align-items: center;
-      background-color: rgba(230, 247, 255, 0.1);
-      border-radius: 12px;
-      padding: 8px 16px;
-      margin-bottom: 24px;
-      border: 1px solid rgba(0, 184, 169, 0.1);
-    }
-
-    .search-field input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 8px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 16px;
-    }
-
-    .search-field input:focus {
-      outline: none;
-    }
-
-    .search-field .material-icons {
-      color: #00b8a9;
-      margin-right: 8px;
-    }
-
-    /* Preferences styles */
-    .preference-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 24px;
-      padding: 16px;
-      background-color: rgba(230, 247, 255, 0.1);
-      border-radius: 12px;
-      border: 1px solid rgba(0, 184, 169, 0.1);
-    }
-
-    .preference-fields {
-      display: flex;
-      flex: 1;
-      gap: 16px;
-    }
-
-    .add-preference {
-      margin-bottom: 24px;
-    }
-
-    .add-preference button {
-      background-color: rgba(0, 184, 169, 0.1);
-      border: 1px solid rgba(0, 184, 169, 0.3);
-      border-radius: 20px;
-      padding: 8px 16px;
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    .add-preference button .material-icons {
-      margin-right: 8px;
-    }
-
-    select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid rgba(0, 184, 169, 0.3);
-      background-color: white;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    select:focus {
-      outline: none;
-      border-color: #ff0099;
-    }
-  </style>
