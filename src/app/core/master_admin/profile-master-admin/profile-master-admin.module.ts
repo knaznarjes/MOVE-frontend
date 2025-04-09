@@ -14,13 +14,13 @@ import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
 import { MatDialogModule } from '@angular/material/dialog';
-import { AdminProfileComponent } from './admin-profile.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MasterAdminProfileComponent } from './profile-master-admin.component';
 
 @NgModule({
     declarations: [
-       AdminProfileComponent
+        MasterAdminProfileComponent
     ],
     imports: [
         CommonModule,
@@ -40,10 +40,10 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
         MatSortModule,
         MatDialogModule,
         MatProgressBarModule,
-        BrowserAnimationsModule // Add this for animations
+        BrowserAnimationsModule
     ],
     exports: [
-        AdminProfileComponent
+        MasterAdminProfileComponent
     ]
 })
-export class AdminProfileModule { }
+export class MasterAdminProfileModule { }

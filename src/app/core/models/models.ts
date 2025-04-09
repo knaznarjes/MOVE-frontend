@@ -20,8 +20,8 @@ export interface Account {
     photoProfile?: string | null;
     account?: Account;
     preferences?: Preference[];
-
-
+    email?: string;
+    accountDTO?: AccountDTO;
   }
 
   export interface RegisterRequest {
@@ -50,17 +50,18 @@ export interface Account {
 
   export enum Role {
     ADMIN = 'ADMIN',
-    TRAVELER = 'TRAVELER'
+    TRAVELER = 'TRAVELER',
+    MASTERADMIN  ='MASTERADMIN'
   }
 
   export interface AccountDTO {
     id: string;
-    email: string;
+    email?: string;
     password?: string;
-
   }
 
   export interface UserDTO {
+    account: any;
     id: string;
     fullName: string;
     role: string;

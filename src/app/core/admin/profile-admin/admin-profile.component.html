@@ -1,99 +1,110 @@
 <div class="admin-profile-container">
     <!-- Main container with tabs navigation -->
     <div class="tabs-container">
-      <button class="tab-button" [class.active]="activeCardIndex === 0" (click)="setActiveCard(0)">
+      <button type="button" class="tab-button" [class.active]="activeCardIndex === 0" (click)="setActiveCard(0)">
         <span class="material-icons">person</span> Profile
       </button>
-      <button class="tab-button" [class.active]="activeCardIndex === 1" (click)="setActiveCard(1)">
+      <button type="button" class="tab-button" [class.active]="activeCardIndex === 1" (click)="setActiveCard(1)">
         <span class="material-icons">settings</span> Preferences
       </button>
-      <button class="tab-button" [class.active]="activeCardIndex === 2" (click)="setActiveCard(2)">
+      <button type="button" class="tab-button" [class.active]="activeCardIndex === 2" (click)="setActiveCard(2)">
         <span class="material-icons">group</span> User Management
       </button>
-      <button class="tab-button" [class.active]="activeCardIndex === 3" (click)="setActiveCard(3)" *ngIf="selectedUser">
+      <button type="button" class="tab-button" [class.active]="activeCardIndex === 3" (click)="setActiveCard(3)" *ngIf="selectedUser">
         <span class="material-icons">account_circle</span> User Details
       </button>
-      <!-- Ajout du bouton pour la carte de changement de mot de passe -->
-      <button class="tab-button" [class.active]="activeCardIndex === 4" (click)="setActiveCard(4)">
+      <button type="button" class="tab-button" [class.active]="activeCardIndex === 4" (click)="setActiveCard(4)">
         <span class="material-icons">lock</span> Change Password
       </button>
     </div>
+ <!-- Profile Card -->
+ <div class="mat-card profile-card" *ngIf="activeCardIndex === 0">
+    <div class="mat-card-header">
+      <div>
+        <div class="mat-card-title">Master Admin Profile</div>
+        <div class="mat-card-subtitle">Update your personal information</div>
+      </div>
+    </div>
 
-    <!-- Profile Card -->
-    <div class="mat-card profile-card" *ngIf="activeCardIndex === 0">
-      <div class="mat-card-header">
-        <div>
-          <div class="mat-card-title">Admin Profile</div>
-          <div class="mat-card-subtitle">Update your personal information</div>
-        </div>
+    <div class="mat-card-content">
+      <div class="loading-indicator" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Loading profile data...</p>
       </div>
 
-      <div class="mat-card-content">
-        <div class="loading-indicator" *ngIf="isLoading">
-          <div class="spinner"></div>
-          <p>Loading profile data...</p>
-        </div>
+      <div class="profile-content" *ngIf="!isLoading">
+        <div class="profile-photo-section">
+          <div class="profile-photo-container">
+            <img [src]="profileImageSrc || 'assets/images/default-profile.png'"
+                 alt="Profile photo"
+                 class="profile-photo"
+                 (error)="handleImageError($event)">
 
-        <div class="profile-content" *ngIf="!isLoading">
-          <div class="profile-photo-section">
-            <div class="profile-photo-container">
-              <img [src]="profileImageSrc || 'assets/images/default-profile.png'"
-                   alt="Profile photo"
-                   class="profile-photo"
-                   (error)="handleImageError($event)">
-
-              <div class="photo-upload-overlay" *ngIf="isPhotoUploading">
-                <div class="spinner"></div>
-                <span class="upload-percentage">{{ uploadProgress }}%</span>
-              </div>
-            </div>
-
-            <div class="photo-actions">
-              <button color="primary" (click)="fileInput.click()">
-                <span class="material-icons">add_photo_alternate</span>
-                Select Photo
-              </button>
-              <input hidden type="file" #fileInput (change)="onFileSelected($event)" accept="image/*">
-
-              <button color="accent" [disabled]="!selectedFile || isPhotoUploading" (click)="uploadProfilePhoto()">
-                <span class="material-icons">cloud_upload</span>
-                Upload
-              </button>
+            <div class="photo-upload-overlay" *ngIf="isPhotoUploading">
+              <div class="spinner"></div>
+              <span class="upload-percentage">{{ uploadProgress }}%</span>
             </div>
           </div>
 
-          <form [formGroup]="profileForm" class="profile-form">
-            <div class="form-field">
-              <label for="fullName">Full Name</label>
-              <input id="fullName" formControlName="fullName" placeholder="Enter your full name">
-              <div class="error" *ngIf="profileForm.get('fullName')?.hasError('required') && profileForm.get('fullName')?.touched">
-                Full name is required
-              </div>
-              <div class="error" *ngIf="profileForm.get('fullName')?.hasError('minlength') && profileForm.get('fullName')?.touched">
-                Full name must be at least 3 characters
-              </div>
-            </div>
+          <div class="photo-actions">
+            <button color="primary" (click)="fileInput.click()">
+              <span class="material-icons">add_photo_alternate</span>
+              Select Photo
+            </button>
+            <input hidden type="file" #fileInput (change)="onFileSelected($event)" accept="image/*">
 
-            <div class="form-field">
-              <label for="email">Email</label>
-              <input id="email" formControlName="email" placeholder="Email" readonly>
-            </div>
-
-            <div class="form-actions">
-              <button color="warn" (click)="openDeleteConfirmation()">
-                <span class="material-icons">delete_forever</span>
-                Delete Account
-              </button>
-
-              <button color="primary" [disabled]="profileForm.invalid || isUpdating" (click)="updateProfile()">
-                <span class="material-icons">save</span>
-                Save Profile
-              </button>
-            </div>
-          </form>
+            <button color="accent" [disabled]="!selectedFile || isPhotoUploading" (click)="uploadProfilePhoto()">
+              <span class="material-icons">cloud_upload</span>
+              Upload
+            </button>
+          </div>
         </div>
+
+        <form [formGroup]="profileForm" class="profile-form">
+          <div class="form-field">
+            <label for="fullName">Full Name</label>
+            <input id="fullName" formControlName="fullName" placeholder="Enter your full name">
+            <div class="error" *ngIf="profileForm.get('fullName')?.hasError('required') && profileForm.get('fullName')?.touched">
+              Full name is required
+            </div>
+            <div class="error" *ngIf="profileForm.get('fullName')?.hasError('minlength') && profileForm.get('fullName')?.touched">
+              Full name must be at least 3 characters
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input type="email" [value]="currentUser?.email || ''" placeholder="Email" readonly>
+          </div>
+
+          <div class="form-actions">
+            <button color="primary" [disabled]="profileForm.invalid || isUpdating" (click)="updateProfile()">
+              <span class="material-icons">save</span>
+              Save Profile
+            </button>
+
+            <!-- Added Delete Account Button -->
+            <button color="warn" (click)="openDeleteConfirmation()">
+              <span class="material-icons">delete_forever</span>
+              Delete Account
+            </button>
+          </div>
+        </form>
       </div>
     </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <ng-template #deleteConfirmationDialog>
+    <h2 mat-dialog-title>Delete Your Account</h2>
+    <mat-dialog-content>
+      <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button mat-dialog-close="false">Cancel</button>
+      <button mat-button [mat-dialog-close]="true" color="warn">Delete</button>
+    </mat-dialog-actions>
+  </ng-template>
 
     <!-- Preferences Card -->
     <div class="mat-card preferences-card" *ngIf="activeCardIndex === 1">
@@ -145,7 +156,7 @@
           </div>
 
           <div class="form-actions">
-            <button color="primary" type="submit" [disabled]="preferencesForm.invalid || isUpdating">
+            <button type="submit" color="primary" [disabled]="preferencesForm.invalid || isUpdating">
               <span class="material-icons">save</span>
               Save Preferences
             </button>
@@ -171,7 +182,7 @@
 
         <div class="user-content" *ngIf="!isLoadingUsers">
           <!-- Advanced Search Form -->
-          <form [formGroup]="userManagementForm" class="search-form">
+          <form [formGroup]="userManagementForm" (ngSubmit)="search()">
             <div class="search-fields">
               <div class="form-field">
                 <label for="name">Name</label>
@@ -189,17 +200,16 @@
                   <option value="">All Roles</option>
                   <option value="ADMIN">Admin</option>
                   <option value="TRAVELER">Traveler</option>
-                  <!-- Add other roles as needed -->
                 </select>
               </div>
             </div>
 
             <div class="search-actions">
-              <button color="primary" (click)="search()">
+              <button type="submit" color="primary">
                 <span class="material-icons">search</span>
                 Search
               </button>
-              <button color="accent" (click)="resetSearch()">
+              <button type="button" color="accent" (click)="resetSearch()">
                 <span class="material-icons">refresh</span>
                 Reset
               </button>
@@ -222,14 +232,8 @@
                   <td>{{ user.email }}</td>
                   <td>{{ user.role }}</td>
                   <td>
-                    <button color="primary" title="View Details" (click)="viewUserDetails(user)">
+                    <button type="button" color="primary" title="View Details" (click)="viewUserDetails(user)">
                       <span class="material-icons">visibility</span>
-                    </button>
-                    <button color="accent" title="Change Role" (click)="openUpdateRoleDialog(user)">
-                      <span class="material-icons">security</span>
-                    </button>
-                    <button color="warn" title="Delete User" (click)="openUserDeleteConfirmation(user)">
-                      <span class="material-icons">delete</span>
                     </button>
                   </td>
                 </tr>
@@ -243,11 +247,11 @@
           </div>
 
           <div class="pagination">
-            <button [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
+            <button type="button" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
               <span class="material-icons">chevron_left</span>
             </button>
             <span>Page {{ currentPage }} of {{ totalPages }}</span>
-            <button [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
+            <button type="button" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
               <span class="material-icons">chevron_right</span>
             </button>
           </div>
@@ -274,7 +278,6 @@
           </div>
 
           <div class="user-info-section">
-
             <div class="info-row">
               <span class="info-label">Full Name:</span>
               <span class="info-value">{{ selectedUser.fullName }}</span>
@@ -289,15 +292,16 @@
             </div>
 
             <div class="user-actions">
-              <button color="primary" (click)="openUpdateRoleDialog(selectedUser)">
-                <span class="material-icons">security</span>
-                Change Role
+              <button
+                type="button"
+                mat-icon-button
+                color="warn"
+                (click)="openUserDeleteConfirmation(user)"
+                [disabled]="isMasterAdmin(user)"
+                matTooltip="{{ isMasterAdmin(user) ? 'Master admin cannot be deleted' : 'Delete user' }}">
+                <mat-icon>delete</mat-icon>
               </button>
-              <button color="warn" (click)="openUserDeleteConfirmation(selectedUser)">
-                <span class="material-icons">delete</span>
-                Delete User
-              </button>
-              <button (click)="setActiveCard(2)">
+              <button type="button" (click)="setActiveCard(2)">
                 <span class="material-icons">keyboard_return</span>
                 Back to List
               </button>
@@ -307,85 +311,81 @@
       </div>
     </div>
 
-    <!-- Password Change Card -->
+<div class="card-container">
     <div class="mat-card password-card" *ngIf="activeCardIndex === 4">
-        <div class="mat-card-header">
-          <div>
-            <div class="mat-card-title">Change Password</div>
-            <div class="mat-card-subtitle">Update your account password</div>
-          </div>
-        </div>
-
-        <div class="mat-card-content">
-          <form [formGroup]="passwordForm" class="password-form">
-            <div class="form-field">
-              <label for="currentPassword">Current Password</label>
-              <input id="currentPassword" type="password" formControlName="currentPassword" placeholder="Enter your current password">
-              <div class="error" *ngIf="passwordForm.get('currentPassword')?.hasError('required') && passwordForm.get('currentPassword')?.touched">
-                Current password is required
-              </div>
-            </div>
-
-            <div class="form-field">
-              <label for="newPassword">New Password</label>
-              <input id="newPassword" type="password" formControlName="newPassword" placeholder="Enter your new password">
-              <div class="error" *ngIf="passwordForm.get('newPassword')?.hasError('required') && passwordForm.get('newPassword')?.touched">
-                New password is required
-              </div>
-              <div class="error" *ngIf="passwordForm.get('newPassword')?.hasError('minlength') && passwordForm.get('newPassword')?.touched">
-                New password must be at least 8 characters
-              </div>
-            </div>
-
-            <div class="form-field">
-              <label for="confirmPassword">Confirm New Password</label>
-              <input id="confirmPassword" type="password" formControlName="confirmPassword" placeholder="Confirm your new password">
-              <div class="error" *ngIf="passwordForm.get('confirmPassword')?.hasError('required') && passwordForm.get('confirmPassword')?.touched">
-                Password confirmation is required
-              </div>
-            </div>
-
-            <div class="error" *ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched">
-              Passwords do not match
-            </div>
-
-            <div class="form-actions">
-              <button (click)="setActiveCard(0)">
-                <span class="material-icons">arrow_back</span>
-                Cancel
-              </button>
-
-              <button color="primary" [disabled]="passwordForm.invalid || isUpdating" (click)="changePassword()">
-                <span class="material-icons" *ngIf="isUpdating">sync</span>
-                <span class="material-icons" *ngIf="!isUpdating">lock</span>
-                Change Password
-              </button>
-            </div>
-          </form>
+      <div class="mat-card-header">
+        <div>
+          <h2 class="mat-card-title">Change Password</h2>
+          <p class="mat-card-subtitle">Update your account password</p>
         </div>
       </div>
 
-    <!-- Template for Role Update Dialog -->
-    <ng-template #userRoleUpdateDialog>
-      <h2 mat-dialog-title>Update User Role</h2>
-      <mat-dialog-content>
-        <form [formGroup]="userRoleForm">
+      <div class="mat-card-content">
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
           <div class="form-field">
-            <label for="role">New Role</label>
-            <select id="role" formControlName="role">
-              <option value="ADMIN">Admin</option>
-              <option value="TRAVELER">Traveler</option>
-              <!-- Add other roles as needed -->
-            </select>
+            <label for="currentPassword">Current Password</label>
+            <input
+              id="currentPassword"
+              type="password"
+              formControlName="currentPassword"
+              placeholder="Enter your current password">
+            <div class="error" *ngIf="passwordForm.get('currentPassword')?.hasError('required') &&
+                                      passwordForm.get('currentPassword')?.touched">
+              Current password is required
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="newPassword">New Password</label>
+            <input
+              id="newPassword"
+              type="password"
+              formControlName="newPassword"
+              placeholder="Enter your new password">
+            <div class="error" *ngIf="passwordForm.get('newPassword')?.hasError('required') &&
+                                      passwordForm.get('newPassword')?.touched">
+              New password is required
+            </div>
+            <div class="error" *ngIf="passwordForm.get('newPassword')?.hasError('minlength') &&
+                                      passwordForm.get('newPassword')?.touched">
+              New password must be at least 8 characters
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="confirmPassword">Confirm New Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              formControlName="confirmPassword"
+              placeholder="Confirm your new password">
+            <div class="error" *ngIf="passwordForm.get('confirmPassword')?.hasError('required') &&
+                                      passwordForm.get('confirmPassword')?.touched">
+              Password confirmation is required
+            </div>
+          </div>
+
+          <div class="error password-mismatch" *ngIf="passwordForm.hasError('mismatch') &&
+                                                     passwordForm.get('confirmPassword')?.touched">
+            Passwords do not match
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" (click)="setActiveCard(0)">
+              <span class="material-icons">arrow_back</span>
+              Cancel
+            </button>
+
+            <button type="submit" class="btn-primary" [disabled]="passwordForm.invalid || isUpdating">
+              <span class="material-icons" *ngIf="isUpdating">sync</span>
+              <span class="material-icons" *ngIf="!isUpdating">lock</span>
+              Change Password
+            </button>
           </div>
         </form>
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Cancel</button>
-        <button mat-button [mat-dialog-close]="userRoleForm.get('role')?.value">Update</button>
-      </mat-dialog-actions>
-    </ng-template>
-
+      </div>
+    </div>
+  </div>
     <!-- Template for User Delete Confirmation Dialog -->
     <ng-template #userDeleteConfirmationDialog>
       <h2 mat-dialog-title>Confirm Deletion</h2>
@@ -411,4 +411,4 @@
         <button mat-button [mat-dialog-close]="true" color="warn">Delete</button>
       </mat-dialog-actions>
     </ng-template>
-  </div>
+</div>

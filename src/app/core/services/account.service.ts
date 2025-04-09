@@ -1,140 +1,63 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-/* eslint-disable @typescript-eslint/quotes */
-/* eslint-disable arrow-parens */
-/* eslint-disable @typescript-eslint/member-ordering */
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from 'environments/environment';
-import { Account, User, Preference } from '../models/models';
+import { Account } from '../models/models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AccountService {
-  private accountsApiUrl = `${environment.apiUrl}/api/accounts`;
-  private usersApiUrl = `${environment.apiUrl}/api/users`;
-  private preferencesApiUrl = `${environment.apiUrl}/api/preferences`;
+  private apiUrl = `${environment.apiUrl}/api/accounts`;
 
   constructor(private http: HttpClient) { }
 
-  updateUserProfile(id: string, userData: {
-    fullName?: string;
-    email?: string;
-    photoProfile?: string;
-    preferences?: Preference[];
-  }): Observable<User> {
-    return this.http.put<User>(`${this.usersApiUrl}/${id}`, userData)
-      .pipe(catchError((error) => this.handleError(error)));
-  }
-
-  uploadProfilePhoto(userId: string, file: File): Observable<User> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    return this.http.post<User>(`${this.usersApiUrl}/${userId}/uploadPhoto`, formData)
-      .pipe(catchError((error) => this.handleError(error)));
-  }
-
-  getUserById(id: string): Observable<User> {
-    return this.http.get<User>(`${this.usersApiUrl}/${id}`)
-      .pipe(catchError((error) => this.handleError(error)));
-  }
-
-  getCurrentUserProfile(): Observable<User> {
-    return this.http.get<User>(`${this.usersApiUrl}/me`)
-      .pipe(catchError((error) => this.handleError(error)));
+  createAccount(email: string, password: string): Observable<Account> {
+    const payload = { email, password };
+    return this.http.post<Account>(this.apiUrl, payload)
+      .pipe(catchError(this.handleError));
   }
 
   getAccountById(id: string): Observable<Account> {
-    return this.http.get<Account>(`${this.accountsApiUrl}/${id}`)
-      .pipe(
-        catchError((error) => {
-          console.error(`Error fetching account with ID ${id}:`, error);
-          return throwError(() => new Error(`Account with ID ${id} not found`));
-        })
-      );
+    return this.http.get<Account>(`${this.apiUrl}/${id}`)
+      .pipe(catchError(this.handleError));
   }
 
-  // Get account by email
   getAccountByEmail(email: string): Observable<Account> {
-    return this.http.get<Account>(`${this.accountsApiUrl}/email/${email}`)
-      .pipe(catchError((error) => this.handleError(error)));
+    return this.http.get<Account>(`${this.apiUrl}/email/${email}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getAllAccounts(): Observable<Account[]> {
+    return this.http.get<Account[]>(this.apiUrl)
+      .pipe(catchError(this.handleError));
+  }
+
+  updateAccount(id: string, updatedAccount: Account): Observable<Account> {
+    return this.http.put<Account>(`${this.apiUrl}/${id}`, updatedAccount)
+      .pipe(catchError(this.handleError));
   }
 
   updatePassword(id: string, currentPassword: string, newPassword: string): Observable<string> {
-    const payload = {
-      currentPassword,
-      newPassword
-    };
-
-    return this.http.put(`${this.accountsApiUrl}/${id}/password`, payload, {
-      responseType: 'text'  // Ceci est crucial pour éviter l'erreur de parsing
-    }).pipe(
-      catchError(error => {
-        console.error('Password update error:', error);
-        return throwError(() => error);
-      })
-    );
+    const payload = { currentPassword, newPassword };
+    return this.http.put(`${this.apiUrl}/${id}/password`, payload, { responseType: 'text' })
+      .pipe(catchError(this.handleError));
   }
-  // Delete an account but preserve the user profile
+
   deleteAccount(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.accountsApiUrl}/${id}`)
-      .pipe(catchError((error) => this.handleError(error)));
+    return this.http.delete<void>(`${this.apiUrl}/${id}`)
+      .pipe(catchError(this.handleError));
   }
 
-  // Delete account by email but preserve the user profile
-  deleteAccountByEmail(email: string): Observable<void> {
-    return this.http.delete<void>(`${this.accountsApiUrl}/email/${email}`)
-      .pipe(catchError((error) => this.handleError(error)));
-  }
-
-  // Delete a user profile
-  deleteUser(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.usersApiUrl}/${id}`)
-      .pipe(catchError((error) => this.handleError(error)));
-  }
-
-  // Get user preferences
-  getUserPreferences(userId: string): Observable<Preference[]> {
-    return this.http.get<Preference[]>(`${this.preferencesApiUrl}/user/${userId}`)
-      .pipe(catchError((error) => this.handleError(error)));
-  }
-
-  // Create a new preference
-  createPreference(userId: string, preference: { category: string; priority: string }): Observable<Preference> {
-    const preferenceData = { ...preference, userId };
-    return this.http.post<Preference>(`${this.preferencesApiUrl}`, preferenceData)
-      .pipe(catchError((error) => this.handleError(error)));
-  }
-
-  // Delete a preference
-  deletePreference(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.preferencesApiUrl}/${id}`)
-      .pipe(catchError((error) => this.handleError(error)));
-  }
-
-  // Error handler for HTTP requests
   private handleError(error: HttpErrorResponse): Observable<never> {
-    let errorMessage = 'An error occurred';
+    let errorMessage = 'Une erreur est survenue.';
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
-      errorMessage = `Error: ${error.error.message}`;
+      errorMessage = `Erreur client : ${error.error.message}`;
     } else {
-      // Server-side error
-      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
-      // Add more specific error messages based on status codes
-      if (error.status === 404) {
-        errorMessage = 'Resource not found';
-      } else if (error.status === 401) {
-        errorMessage = 'Unauthorized access';
-      } else if (error.status === 403) {
-        errorMessage = 'Access forbidden';
-      } else if (error.status === 400) {
-        errorMessage = 'Bad request. Please check the data sent.';
-      }
+      errorMessage = `Erreur serveur [${error.status}] : ${error.message}`;
     }
+
     console.error(errorMessage);
     return throwError(() => new Error(errorMessage));
   }

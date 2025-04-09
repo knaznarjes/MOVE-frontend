@@ -85,7 +85,7 @@ export class AuthService {
     return this.http.get<User>(`${this.apiUrl}/me`)
       .pipe(
         tap((user) => {
-          // Mettre à jour l'utilisateur actuel
+          // Mettre à jour l'utilisateur actuel avec toutes ses données
           this.currentUserSubject.next(user);
           localStorage.setItem('user', JSON.stringify(user));
 
@@ -94,11 +94,15 @@ export class AuthService {
             this.userRoleSubject.next(user.role);
             localStorage.setItem('userRole', user.role);
           }
+
+          // Stocker l'ID utilisateur s'il existe
+          if (user && user.id) {
+            localStorage.setItem('userId', user.id);
+          }
         }),
         catchError(this.handleError)
       );
   }
-
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
@@ -142,9 +146,12 @@ export class AuthService {
 
   isAdmin(): boolean {
     const role = this.getUserRole();
-    return role?.toUpperCase() === 'ADMIN';
+    return role?.toUpperCase() === 'ADMIN' || role?.toUpperCase() === 'MASTERADMIN';
   }
-
+  isMasterAdmin(): boolean {
+    const role = this.getUserRole();
+    return role?.toUpperCase() === 'MASTERADMIN';
+  }
   private setSession(authResponse: AuthResponse): void {
     localStorage.setItem('token', authResponse.token);
     localStorage.setItem('refreshToken', authResponse.refreshToken);

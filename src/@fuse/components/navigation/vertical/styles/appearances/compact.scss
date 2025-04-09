@@ -1,7 +1,18 @@
 /* Variables */
 $fuse-vertical-navigation-compact-width: 112px;
+$primary: #ff0099;         // Rose comme couleur principale
+$secondary: #ffffff;       // Bleu indigo comme accent secondaire
+$accent:#4754c5;          // Teal comme accent tertiaire
+$light-bg: #f5f7ff;        // Fond clair
+$dark-text: #004d66;       // Texte foncé
+$card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
 fuse-vertical-navigation {
+    background-color: $secondary; // Applique la couleur secondaire comme fond principal
+
+    // Ajoute un subtil dégradé pour un effet plus élégant
+    background-image: linear-gradient(to bottom, lighten($secondary, 5%), $secondary);
+    box-shadow: $card-shadow;
 
     /* Compact appearance overrides */
     &.fuse-vertical-navigation-appearance-compact {
@@ -60,9 +71,21 @@ fuse-vertical-navigation {
                             justify-content: center;
                             padding: 12px;
                             border-radius: 6px;
+                            color: white; // Assure un contraste avec le fond bleu
+                            transition: background-color 0.2s ease;
+
+                            &:hover {
+                                background-color: rgba(white, 0.1);
+                            }
+
+                            &.active {
+                                background-color: $primary; // Utilise la couleur primaire pour l'élément actif
+                                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+                            }
 
                             .fuse-vertical-navigation-item-icon {
                                 margin-right: 0;
+                                color: rgba(white, 0.9);
                             }
 
                             .fuse-vertical-navigation-item-title-wrapper {
@@ -73,6 +96,7 @@ fuse-vertical-navigation {
                                     font-weight: 500;
                                     text-align: center;
                                     line-height: 16px;
+                                    color: white;
                                 }
 
                                 .fuse-vertical-navigation-item-subtitle {
@@ -84,6 +108,8 @@ fuse-vertical-navigation {
                                 position: absolute;
                                 top: 12px;
                                 left: 64px;
+                                background-color: $primary; // Utilise la couleur primaire pour le badge
+                                color: white;
                             }
                         }
                     }
@@ -105,6 +131,44 @@ fuse-vertical-navigation {
         /* Aside wrapper */
         .fuse-vertical-navigation-aside-wrapper {
             left: $fuse-vertical-navigation-compact-width;
+            background-color: darken($secondary, 5%);
+
+            .fuse-vertical-navigation-aside {
+                box-shadow: $card-shadow;
+
+                .fuse-vertical-navigation-item {
+                    &.active {
+                        background-color: $primary;
+                    }
+
+                    &:hover:not(.active) {
+                        background-color: rgba(white, 0.08);
+                    }
+                }
+            }
+        }
+    }
+
+    // Styles pour les autres états de navigation (non-compact)
+    &:not(.fuse-vertical-navigation-appearance-compact) {
+        .fuse-vertical-navigation-item {
+            color: white;
+
+            &.active {
+                background-color: $primary;
+            }
+
+            &:hover:not(.active) {
+                background-color: rgba(white, 0.1);
+            }
+
+            .fuse-vertical-navigation-item-icon {
+                color: rgba(white, 0.9);
+            }
+        }
+
+        .fuse-vertical-navigation-group-title {
+            color: rgba(white, 0.6);
         }
     }
 }

@@ -5,17 +5,20 @@ import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
 import { FuseNavigationService, FuseVerticalNavigationComponent } from '@fuse/components/navigation';
 import { Navigation } from 'app/core/navigation/navigation.types';
 import { NavigationService } from 'app/core/navigation/navigation.service';
-import { UserService } from 'app/core/user/user.service';
 import { User } from 'app/core/models/models';
-import { User as UserTypes } from 'app/core/user/user.types';
+import { AccountService } from 'app/core/services/account.service';
+import { UserService } from 'app/core/services/user.service';
+import { AuthService } from 'app/core/services/auth.service';
+
 @Component({
     selector     : 'classy-layout',
     templateUrl  : './classy.component.html',
-    encapsulation: ViewEncapsulation.None
+    encapsulation: ViewEncapsulation.None,
+    styleUrls    : ['./classy.component.scss']
 })
 export class ClassyLayoutComponent implements OnInit, OnDestroy {
     isScreenSmall: boolean = false;
-    // Initialiser navigation avec une valeur par défaut
+    // Initialize navigation with a default value
     navigation: Navigation = {
         default: [],
         compact: [],
@@ -33,14 +36,13 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         private _router: Router,
         private _navigationService: NavigationService,
         private _userService: UserService,
+        private _accountService: AccountService,
         private _fuseMediaWatcherService: FuseMediaWatcherService,
-        private _fuseNavigationService: FuseNavigationService
+        private _fuseNavigationService: FuseNavigationService,
+        private _authService: AuthService
+
     )
     {
-        // Vous pouvez également initialiser ici si nécessaire
-        // this._navigationService.get().then(navigation => {
-        //    this.navigation = navigation;
-        // });
     }
 
     /**
@@ -60,35 +62,42 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         this._navigationService.navigation$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((navigation: Navigation) => {
-                console.log('Navigation reçue:', navigation); // Ajout de log
+                console.log('Navigation received:', navigation);
                 if (navigation) {
                     this.navigation = navigation;
                 } else {
-                    console.warn('Navigation est undefined ou null');
-                    // Définir une navigation par défaut pour éviter les erreurs
+                    console.warn('Navigation is undefined or null');
+                    // Define a default navigation to avoid errors
                 }
             });
-// In classy.component.ts ngOnInit()
-this._userService.user$
-    .pipe(takeUntil(this._unsubscribeAll))
-    .subscribe((userFromService: UserTypes) => {
-        console.log('User reçu:', userFromService);
-        if (userFromService) {
-            // Convertir du type User de user.types vers le type User de models
-            const user: User = {
-                id: userFromService.id,
-                fullName: userFromService.fullName,
-                role: userFromService.role,
-                // Use optional chaining and nullish coalescing to handle missing properties
-                photoProfile: (userFromService as any).photoProfile || null,
-                account: {
-                    email: (userFromService as any).account?.email || ''
-                }
-            };
 
-            this.user = user;
-        }
-    });
+        // Get current user from UserService
+        this._userService.getCurrentUser()
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                next: (userDTO) => {
+                    console.log('User received:', userDTO);
+                    if (userDTO) {
+                        // Map the UserDTO to User model correctly
+                        this.user = {
+                            id: userDTO.id,
+                            fullName: userDTO.fullName || 'User',
+                            role: userDTO.role || '',
+                            photoProfile: userDTO.photoProfile || null,
+                            creationDate: userDTO.creationDate || new Date(),
+                            account: {
+                                id: userDTO.account?.id || '',
+                                email: userDTO.account?.email || ''
+                            }
+                        };
+                        console.log('User mapped:', this.user);
+                    }
+                },
+                error: (error) => {
+                    console.error('Error fetching user:', error);
+                }
+            });
+
         // Subscribe to media changes
         this._fuseMediaWatcherService.onMediaChange$
             .pipe(takeUntil(this._unsubscribeAll))
@@ -123,5 +132,8 @@ this._userService.user$
             // Toggle the opened status
             navigation.toggle();
         }
+    }
+    logout(): void {
+        this._authService.logout();
     }
 }

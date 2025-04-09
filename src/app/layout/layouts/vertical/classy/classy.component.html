@@ -8,42 +8,37 @@
     [name]="'mainNavigation'"
     [navigation]="navigation.default"
     [opened]="!isScreenSmall">
-    <!-- Navigation header hook -->
-    <ng-container fuseVerticalNavigationContentHeader>
-        <div class="flex items-center w-full p-4 pl-6">
-            <!-- Logo -->
-            <div class="flex items-center justify-center">
-                <img
-                    class="w-8"
-                    src="assets/images/logo/logo.png">
-            </div>
-            <!-- Components -->
-            <div class="flex items-center ml-auto">
-                <notifications></notifications>
-                <user [showAvatar]="false"></user>
-            </div>
-        </div>
-        <!-- User -->
-        <div class="user-info">
-            <div class="user-avatar">
-              <img [src]="user?.photoProfile || 'assets/images/default-profile.png'" alt="User Avatar">
-            </div>
-            <div class="user-details">
-              <div class="user-name">{{user?.fullName}}</div>
-              <div class="user-email">{{user?.account?.email}}</div> <!-- Fixed: access email via account -->
-            </div>
-        </div>
-    </ng-container>
 
-    <!-- Navigation footer hook -->
-    <ng-container fuseVerticalNavigationContentFooter>
-        <div class="flex flex-0 items-center justify-center h-16 pr-6 pl-2 mt-2 mb-4 opacity-12">
+ <!-- Navigation header hook -->
+<ng-container fuseVerticalNavigationContentHeader>
+   <div class="logo-container">
+      <div class="flex items-center justify-center">
+         <img src="assets/images/logo/logo.png" class="w-[100px]" alt="Logo" />
+      </div>
+   </div>
+
+   <!-- User -->
+   <div class="user-info">
+      <div class="flex items-center">
+         <div class="user-avatar">
             <img
-                class="max-w-36"
-                src="assets/images/logo/logo.png">
-        </div>
-    </ng-container>
+               [src]="user?.photoProfile || 'assets/images/default-profile.png'"
+               alt="User Avatar"
+               onerror="this.src='assets/images/default-profile.png'; this.classList.add('error-img');">
+         </div>
+         <div class="user-details">
+            <div class="user-name">{{ user?.fullName || 'User' }}</div>
+            <div class="user-role">{{ user?.role || 'No role' }}</div>
+         </div>
+      </div>
+      <!-- Logout Button -->
+      <button (click)="logout()" class="btn-logout" matTooltip="Logout">
+         <span class="material-icons">logout</span>
+      </button>
+   </div>
+</ng-container>
 </fuse-vertical-navigation>
+
 
 <!-- Wrapper -->
 <div class="flex flex-col flex-auto w-full min-w-0">
@@ -77,11 +72,6 @@
              Otherwise, layout changes won't be registered and the view won't be updated! -->
         <router-outlet *ngIf="true"></router-outlet>
     </div>
-
-    <!-- Footer -->
-    <!--<div class="relative flex flex-0 items-center justify-start w-full h-14 px-4 md:px-6 z-49 border-t bg-card dark:bg-transparent print:hidden">
-        <span class="font-medium text-secondary">Fuse &copy; {{currentYear}}</span>
-    </div>-->
 </div>
 
 <!-- Quick chat -->

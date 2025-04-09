@@ -1,0 +1,465 @@
+// Variables harmonisées pour le fichier profile
+$primary: #ff0099;         // Rose comme couleur principale (basé sur le design de l'admin)
+$secondary: #4754c5;       // Bleu indigo comme accent secondaire
+$accent: #00b8a9;          // Teal comme accent tertiaire
+$light-bg: #f5f7ff;        // Fond clair
+$dark-text: #004d66;       // Texte foncé
+$card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+// Import de police Pacifico
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
+.profile-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+
+  p {
+    margin-top: 12px;
+    color: #666;
+    font-size: 16px;
+    font-weight: 500;
+  }
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+}
+
+// Tab Navigation
+.profile-tabs {
+  display: flex;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: $card-shadow;
+  margin-bottom: 20px;
+  overflow: hidden;
+  padding: 0;
+
+  .tab-button {
+    display: flex;
+    align-items: center;
+    padding: 16px 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: $dark-text;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    flex: 1;
+    justify-content: center;
+    border-bottom: 3px solid transparent;
+
+    &:hover {
+      background-color: rgba($primary, 0.05);
+    }
+
+    &.active {
+      color: $primary;
+      border-bottom: 3px solid $primary;
+      background-color: rgba($primary, 0.05);
+    }
+
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Profile Section Styling
+.profile-section {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: $card-shadow;
+  padding: 24px;
+
+  .section-title {
+    color: $primary;
+    font-size: 24px;
+    margin: 0 0 8px 0;
+    font-weight: 500;
+  }
+
+  .section-subtitle {
+    color: $dark-text;
+    margin: 0 0 24px 0;
+    font-size: 16px;
+  }
+}
+
+.profile-content-wrapper {
+  display: flex;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+// Profile Photo
+.profile-photo-container {
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 40px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 24px;
+  }
+}
+
+.profile-photo-wrapper {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid $primary;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba($primary, 0.2);
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  .photo-btn {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+
+    &.select {
+      background-color: $secondary;
+      color: white;
+
+      &:hover {
+        background-color: darken($secondary, 10%);
+      }
+    }
+
+    &.upload {
+      background-color: $primary;
+      color: white;
+
+      &:hover {
+        background-color: darken($primary, 10%);
+      }
+    }
+
+    mat-icon {
+      margin-right: 4px;
+      font-size: 18px;
+    }
+  }
+}
+
+.upload-progress {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 5px;
+}
+
+// Form Styling
+.profile-form-container {
+  flex: 1;
+}
+
+.form-field {
+  margin-bottom: 16px;
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    color: $dark-text;
+    font-weight: 500;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba($primary, 0.2);
+    }
+
+    &:read-only {
+      background-color: #f9f9f9;
+    }
+  }
+}
+
+// Action Buttons
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  gap: 16px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &.save {
+    background-color: $primary;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: darken($primary, 10%);
+      transform: translateY(-2px);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &.delete {
+    background-color: #f44336;
+    color: white;
+
+    &:hover {
+      background-color: darken(#f44336, 10%);
+    }
+  }
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+// Preferences Styling
+.preference-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  background-color: $light-bg;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid $accent;
+}
+
+.preference-fields {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: #f44336;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(#f44336, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.preference-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+.add-preference-btn {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 20px;
+  background: none;
+  border: 2px solid $accent;
+  color: $accent;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: rgba($accent, 0.1);
+  }
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+.save-preferences-btn {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  background-color: $primary;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background-color: darken($primary, 10%);
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+// Account Actions
+.account-actions {
+  display: flex;
+  justify-content: center;
+  margin: 24px 0;
+}
+
+.delete-account-btn {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 20px;
+  border: none;
+  background-color: #f44336;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: darken(#f44336, 10%);
+    transform: translateY(-2px);
+  }
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+// Password Form
+.password-form {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.password-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.change-password-btn {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 20px;
+  border: none;
+  background-color: $primary;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background-color: darken($primary, 10%);
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+// Responsive Adjustments
+@media (max-width: 768px) {
+  .profile-tabs {
+    flex-wrap: wrap;
+
+    .tab-button {
+      flex: 0 0 50%;
+      border-bottom: none;
+      border-right: 3px solid transparent;
+
+      &.active {
+        border-bottom: none;
+        border-right: 3px solid $primary;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-container {
+    padding: 12px;
+  }
+
+  .profile-tabs {
+    .tab-button {
+      flex: 0 0 100%;
+      padding: 12px;
+
+      mat-icon {
+        margin-right: 12px;
+      }
+    }
+  }
+}

@@ -3,8 +3,9 @@ import { NgModule, Optional, SkipSelf } from '@angular/core';
 import { AuthModule } from './auth/auth.module';
 import { IconsModule } from './icons/icons.module';
 import { TranslocoCoreModule } from './transloco/transloco.module';
-import { TravelerProfileModule } from './profile/traveler-profile.module';
-import { AdminProfileModule } from './profile-admin/admin-profile.module';
+import { TravelerProfileModule } from './traveler/profile/traveler-profile.module';
+import { AdminProfileModule } from './admin/profile-admin/admin-profile.module';
+import { MasterAdminProfileModule } from './master_admin/profile-master-admin/profile-master-admin.module';
 
 @NgModule({
     imports: [
@@ -13,14 +14,17 @@ import { AdminProfileModule } from './profile-admin/admin-profile.module';
         IconsModule,
         TranslocoCoreModule,
         TravelerProfileModule,
-        AdminProfileModule
+        AdminProfileModule,
+        MasterAdminProfileModule
     ],
     exports: [
         AuthModule,
         IconsModule,
         TranslocoCoreModule,
         TravelerProfileModule,
-        AdminProfileModule
+        AdminProfileModule,
+        MasterAdminProfileModule
+
     ]
 })
 export class CoreModule {

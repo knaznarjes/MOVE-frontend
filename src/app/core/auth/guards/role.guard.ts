@@ -1,4 +1,3 @@
-// role.guard.ts
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -27,26 +26,31 @@ export class RoleGuard implements CanActivate {
     // Get allowed roles from route data
     const allowedRoles: string[] = route.data['allowedRoles'] || [];
 
-    // Default to empty array if no roles specified
-    if (!allowedRoles.length) {
-      return true; // If no roles specified, allow access
-    }
-
     // Check if user role is in allowed roles
     const isAuthorized = allowedRoles.map(role => role.toUpperCase()).includes(userRole);
 
-    // Allow admins to access all routes
-    if (userRole === 'ADMIN') {
+    // Special case: MASTERADMIN can access everything
+    if (userRole === 'MASTERADMIN') {
       return true;
     }
 
     // If not authorized
     if (!isAuthorized) {
       // Redirect based on role
-      if (userRole === 'ADMIN') {
-        this.router.navigate(['/admin']);
-      } else {
-        this.router.navigate(['/profile']);
+      switch (userRole) {
+        case 'MASTERADMIN':
+          this.router.navigate(['/master/admin/profile']);
+          break;
+        case 'ADMIN':
+          this.router.navigate(['/admin/profile']);
+          break;
+        case 'TRAVELER':
+        case 'USER':
+          this.router.navigate(['/profile']);
+          break;
+        default:
+          this.router.navigate(['/home']);
+          break;
       }
       return false;
     }

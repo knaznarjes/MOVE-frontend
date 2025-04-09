@@ -1,0 +1,164 @@
+<div class="profile-container">
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading your profile...</p>
+    </div>
+
+    <div *ngIf="!isLoading" class="profile-content">
+      <!-- Tab Navigation -->
+      <div class="profile-tabs">
+        <button class="tab-button" [class.active]="activeTab === 'profile'" (click)="setActiveTab('profile')">
+          <mat-icon>person</mat-icon> Profile
+        </button>
+        <button class="tab-button" [class.active]="activeTab === 'preferences'" (click)="setActiveTab('preferences')">
+          <mat-icon>settings</mat-icon> Preferences
+        </button>
+        <button class="tab-button" [class.active]="activeTab === 'management'" (click)="setActiveTab('management')">
+          <mat-icon>group</mat-icon> User Management
+        </button>
+      </div>
+
+      <!-- Profile Section -->
+      <div class="profile-section" *ngIf="activeTab === 'profile'">
+        <h2 class="section-title">Traveler Profile</h2>
+        <p class="section-subtitle">Update your personal information</p>
+
+        <div class="profile-content-wrapper">
+          <div class="profile-photo-container">
+            <div class="profile-photo-wrapper">
+              <img [src]="profileImageSrc || 'assets/images/default-profile.png'"
+                  alt="Profile photo"
+                  (error)="handleImageError($event)"
+                  class="profile-image">
+            </div>
+
+            <div class="photo-buttons">
+              <button class="photo-btn select" (click)="fileInput.click()">
+                <mat-icon>photo_library</mat-icon> Select Photo
+              </button>
+              <button class="photo-btn upload" *ngIf="selectedFile" (click)="uploadProfilePhoto()">
+                <mat-icon>cloud_upload</mat-icon> Upload
+              </button>
+            </div>
+            <input #fileInput type="file" hidden (change)="onFileSelected($event)" accept="image/*">
+
+            <mat-progress-bar *ngIf="isPhotoUploading" [value]="uploadProgress" mode="determinate"
+                            class="upload-progress" aria-label="Upload progress"></mat-progress-bar>
+          </div>
+
+          <div class="profile-form-container">
+            <div class="form-field">
+              <label>Full Name</label>
+              <input type="text" [formControl]="profileForm.controls.fullName" placeholder="Enter your full name">
+            </div>
+
+            <div class="form-field">
+              <label>Email</label>
+              <input type="email" [value]="currentUser?.email || ''" placeholder="Email" readonly>
+            </div>
+
+            <div class="profile-actions">
+              <button class="action-btn save" (click)="updateProfile()" [disabled]="profileForm.invalid || isUpdating">
+                <mat-icon>save</mat-icon> Save Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preferences Section -->
+      <div class="profile-section" *ngIf="activeTab === 'preferences'">
+        <h2 class="section-title">Travel Preferences</h2>
+        <p class="section-subtitle">Configure your travel preferences</p>
+
+        <form [formGroup]="preferencesForm" (ngSubmit)="updatePreferences()">
+          <div formArrayName="preferences">
+            <div *ngFor="let preference of preferencesArray.controls; let i = index" [formGroupName]="i" class="preference-item">
+              <div class="preference-fields">
+                <div class="form-field">
+                  <label>Category</label>
+                  <select [formControl]="preferencesArray.at(i).get('category')">
+                    <option value="accommodation">Accommodation</option>
+                    <option value="transportation">Transportation</option>
+                    <option value="activities">Activities</option>
+                    <option value="food">Food</option>
+                    <option value="budget">Budget</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label>Priority</label>
+                  <select [formControl]="preferencesArray.at(i).get('priority')">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="button" class="remove-btn" (click)="removePreferenceField(i)"
+                      [disabled]="preferencesArray.length <= 1">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="preference-actions">
+            <button type="button" class="add-preference-btn" (click)="addPreferenceField()">
+              <mat-icon>add</mat-icon> Add Preference
+            </button>
+            <button type="submit" class="save-preferences-btn" [disabled]="preferencesForm.invalid || isUpdating">
+              <mat-icon>save</mat-icon> Save Preferences
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="profile-section" *ngIf="activeTab === 'management'">
+
+        <!-- Password Change Section moved here -->
+        <div class="management-card">
+          <h2 class="card-title">Change Password</h2>
+          <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()" class="password-form">
+            <div class="form-field">
+              <label>Current Password</label>
+              <input type="password" formControlName="currentPassword" placeholder="Enter current password">
+            </div>
+
+            <div class="form-field">
+              <label>New Password</label>
+              <input type="password" formControlName="newPassword" placeholder="Enter new password">
+            </div>
+
+            <div class="form-field">
+              <label>Confirm Password</label>
+              <input type="password" formControlName="confirmPassword" placeholder="Confirm new password">
+            </div>
+
+            <div class="password-actions">
+              <button type="submit" class="change-password-btn" [disabled]="passwordForm.invalid || isUpdating">
+                <mat-icon>lock</mat-icon> Change Password
+              </button>
+            </div>
+          </form>
+        </div>
+        <div class="management-card account-deletion">
+            <div class="account-actions">
+              <button mat-raised-button color="warn" (click)="openDeleteConfirmation()" class="delete-account-btn">
+                <mat-icon>delete_forever</mat-icon>
+                Delete My Account
+              </button>
+            </div>
+          </div>
+
+          <!-- Confirmation Dialog -->
+          <ng-template #deleteConfirmationDialog>
+            <h2 mat-dialog-title>Delete Your Account</h2>
+            <mat-dialog-content>
+              <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+            </mat-dialog-content>
+            <mat-dialog-actions align="end">
+              <button mat-button mat-dialog-close="false">Cancel</button>
+              <button mat-button [mat-dialog-close]="true" color="warn">Delete</button>
+            </mat-dialog-actions>
+          </ng-template>

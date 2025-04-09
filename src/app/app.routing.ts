@@ -3,9 +3,10 @@
 import { Route } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
 import { AuthGuard } from './core/auth/guards/auth.guard';
-import { TravelerProfileComponent } from './core/profile/traveler-profile.component';
+import { TravelerProfileComponent } from './core/traveler/profile/traveler-profile.component';
 import { RoleGuard } from './core/auth/guards/role.guard';
-import { AdminProfileComponent } from './core/profile-admin/admin-profile.component';
+import { AdminProfileComponent } from './core/admin/profile-admin/admin-profile.component';
+import { MasterAdminProfileComponent } from './core/master_admin/profile-master-admin/profile-master-admin.component';
 
 export const appRoutes: Route[] = [
     // Rediriger le chemin vide vers 'home'
@@ -58,6 +59,14 @@ export const appRoutes: Route[] = [
                 canActivate: [RoleGuard],
                 data: {
                     allowedRoles: ['ADMIN']
+                }
+            },
+            {
+                path: 'master/admin/profile',
+                component: MasterAdminProfileComponent,
+                canActivate: [RoleGuard],
+                data: {
+                    allowedRoles: ['MASTERADMIN']
                 }
             }
         ]

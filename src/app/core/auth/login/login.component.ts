@@ -72,15 +72,30 @@ export class LoginComponent implements OnInit {
 
   private redirectBasedOnRole(): void {
     // Get user role from the auth service
-    const userRole = this.authService.getUserRole();
+    const userRole = this.authService.getUserRole().toUpperCase();
 
-    // Lowercase comparison to ensure case-insensitivity
-    if (userRole.toLowerCase() === 'admin') {
-      // Redirect admin to the admin page
-      this.router.navigate(['/admin/profile']);
-    } else {
-      // Redirect traveler to profile page
-      this.router.navigate(['/profile']);
+    // If there's a stored redirect URL, use that first
+    if (this.redirectUrl) {
+      this.router.navigate([this.redirectUrl]);
+      return;
+    }
+
+    // Otherwise, redirect based on role
+    switch (userRole) {
+      case 'MASTERADMIN':
+        this.router.navigate(['/master/admin/profile']);
+        break;
+      case 'ADMIN':
+        this.router.navigate(['/admin/profile']);
+        break;
+      case 'TRAVELER':
+      case 'USER':
+        this.router.navigate(['/profile']);
+        break;
+      default:
+        // Fallback to home page if role doesn't match any expected values
+        this.router.navigate(['/home']);
+        break;
     }
   }
 }

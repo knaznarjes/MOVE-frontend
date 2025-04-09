@@ -1,5 +1,11 @@
 /* Variables */
 $fuse-drawer-width: 320;
+$primary: #ff0099;         // Rose comme couleur principale
+$secondary: #4754c5;       // Bleu indigo comme accent secondaire
+$accent: #00b8a9;          // Teal comme accent tertiaire
+$light-bg: #f5f7ff;        // Fond clair
+$dark-text: #004d66;       // Texte foncé
+$card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
 fuse-drawer {
     position: relative;
@@ -10,8 +16,8 @@ fuse-drawer {
     min-width: #{$fuse-drawer-width}px;
     max-width: #{$fuse-drawer-width}px;
     z-index: 300;
-    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, .35);
-    @apply bg-card;
+    box-shadow: $card-shadow;
+    background-color: white;
 
     /* Animations */
     &.fuse-drawer-animations-enabled {
@@ -44,6 +50,7 @@ fuse-drawer {
         /* Side mode */
         &.fuse-drawer-mode-side {
             margin-left: -#{$fuse-drawer-width}px;
+            border-right: 1px solid rgba($secondary, 0.2);
 
             &.fuse-drawer-opened {
                 margin-left: 0;
@@ -72,6 +79,7 @@ fuse-drawer {
         /* Side mode */
         &.fuse-drawer-mode-side {
             margin-right: -#{$fuse-drawer-width}px;
+            border-left: 1px solid rgba($secondary, 0.2);
 
             &.fuse-drawer-opened {
                 margin-right: 0;
@@ -104,7 +112,35 @@ fuse-drawer {
         width: 100%;
         height: 100%;
         overflow: hidden;
-        @apply bg-card;
+        background-color: white;
+
+        // Éléments d'en-tête du drawer
+        .drawer-header {
+            background-color: $secondary;
+            color: white;
+            padding: 16px;
+        }
+
+        // Boutons d'action dans le drawer
+        .drawer-actions {
+            .mat-button, .mat-raised-button, .mat-flat-button {
+                &.primary-action {
+                    background-color: $primary;
+                    color: white;
+                }
+
+                &.accent-action {
+                    background-color: $accent;
+                    color: white;
+                }
+            }
+        }
+
+        // Contenu principal du drawer
+        .drawer-main-content {
+            background-color: $light-bg;
+            color: $dark-text;
+        }
     }
 }
 

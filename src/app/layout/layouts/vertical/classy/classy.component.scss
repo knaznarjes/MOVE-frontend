@@ -1,0 +1,198 @@
+/* User info section */
+.user-info {
+    display: flex;
+    padding: 15px 16px;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to right, rgba(25, 25, 35, 0.3), rgba(0, 184, 169, 0.08)); /* Subtle gradient background */
+    margin: 8px 12px 12px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+
+    /* Creative accent */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to bottom, #00b8a9, #ff0099);
+    }
+
+    /* User avatar container */
+    .user-avatar {
+      margin-right: 14px;
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 10px;
+        height: 10px;
+        background-color: #00b8a9; /* Online indicator */
+        border-radius: 50%;
+        border: 2px solid rgba(25, 25, 35, 0.8);
+      }
+
+      img {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: scale(1.05);
+          border-color: #00b8a9;
+        }
+
+        &.error-img {
+          border-color: rgba(255, 255, 255, 0.05);
+        }
+      }
+    }
+
+    /* User details container */
+    .user-details {
+      display: flex;
+      flex-direction: column;
+
+      .user-name {
+        font-weight: 500;
+        font-size: 14px;
+        color: #ffffff;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+      }
+
+      .user-role {
+        font-size: 11px;
+        background: linear-gradient(90deg, #00b8a9, #1c98ad);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+      }
+    }
+}
+
+/* Logout button */
+.btn-logout {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 32px;
+    height: 32px;
+    color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(25, 25, 35, 0.5);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255, 0, 153, 0.5), transparent);
+    }
+
+    &:focus {
+      outline: none;
+    }
+
+    &:hover {
+      background-color: rgba(255, 0, 153, 0.15);
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+
+    .material-icons {
+      font-size: 18px;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 599px) {
+    .user-info {
+      padding: 12px;
+      margin: 6px 8px 8px;
+
+      .user-avatar {
+        &::after {
+          width: 8px;
+          height: 8px;
+        }
+
+        img {
+          width: 36px;
+          height: 36px;
+        }
+      }
+
+      .user-details {
+        .user-name {
+          font-size: 13px;
+          max-width: 110px;
+        }
+
+        .user-role {
+          font-size: 10px;
+        }
+      }
+    }
+
+    .btn-logout {
+      width: 28px;
+      height: 28px;
+
+      .material-icons {
+        font-size: 16px;
+      }
+    }
+}
+
+/* Logo container styling - without the border line */
+.logo-container {
+    padding: 16px 0;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+
+    /* Creative accent below logo instead of border */
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 2px;
+      background: linear-gradient(to right, #00b8a9, #ff0099);
+      border-radius: 2px;
+    }
+
+    img {
+      transition: all 0.3s ease;
+
+      &:hover {
+        filter: drop-shadow(0 0 3px rgba(0, 184, 169, 0.6));
+      }
+    }
+}
