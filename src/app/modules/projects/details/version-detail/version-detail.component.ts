@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, OnInit, ViewChild } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { MatDrawer } from '@angular/material/sidenav';
 import { VersionProjet, Tache, Personnel } from 'app/modules/projects/projet.model';
 import { AddTaskModalComponent } from 'app/modules/projects/details/task/add-task-modal/add-task-modal.component';

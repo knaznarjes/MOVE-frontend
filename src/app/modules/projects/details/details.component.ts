@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, UntypedFormArray, Validators } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { ProjectService } from '../services/project.service';
 import { VersionProjet, Projet } from '../projet.model';
 import { AddTaskModalComponent } from 'app/modules/projects/details/task/add-task-modal/add-task-modal.component';

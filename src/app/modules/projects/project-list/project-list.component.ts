@@ -4,7 +4,7 @@ import { takeUntil } from 'rxjs/operators';
 import { ProjectService } from 'app/modules/projects/services/project.service';
 import { Projet } from '../projet.model';
 import { Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 @Component({

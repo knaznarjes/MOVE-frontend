@@ -7,11 +7,11 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, UntypedFormArray } from '@angular/forms';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatLegacyTableDataSource as MatTableDataSource } from '@angular/material/legacy-table';
+import { MatLegacyPaginator as MatPaginator } from '@angular/material/legacy-paginator';
 import { MatSort } from '@angular/material/sort';
-import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatLegacySnackBar as MatSnackBar } from '@angular/material/legacy-snack-bar';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { catchError, finalize, switchMap, map, tap } from 'rxjs/operators';
 import { of, firstValueFrom, Observable, throwError } from 'rxjs';

@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnInit, Output, EventEmitter, SimpleChange
 import { Projet, VersionProjet, Personnel } from 'app/modules/projects/projet.model';
 import { ProjectService } from 'app/modules/projects/services/project.service';
 import { VersionProjetService } from 'app/modules/projects/services/version-projet.service'; // Import the new service
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { ConfirmDialogComponent } from 'app/modules/projects/confirm-dialog/confirm-dialog.component';
 import { catchError, finalize } from 'rxjs/operators';
 import { of } from 'rxjs';

@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, Inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatLegacyDialogRef as MatDialogRef, MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA } from '@angular/material/legacy-dialog';
 import { VersionProjet } from 'app/modules/projects/projet.model';
 import { VersionProjetService } from 'app/modules/projects/services/version-projet.service';
 

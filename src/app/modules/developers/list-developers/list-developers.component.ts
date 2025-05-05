@@ -3,7 +3,7 @@ import { PersonnelService } from 'app/modules/developers/developers.service';
 import { Personnel } from 'app/modules/developers/developers.model';
 import { MatDrawer } from '@angular/material/sidenav';
 import { UntypedFormControl } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { AddDeveloperDialogComponent } from 'app/modules/developers/developer-dialog/add-developer-dialog.component';
 import { EditDeveloperDialogComponent } from 'app/modules/developers/EditDeveloperDialog/edit-developer-dialog.component';
 import { ConfirmDialogComponent } from 'app/modules/developers/confirm-dialog/confirm-dialog.component';

@@ -8,7 +8,7 @@ import { ContentService } from 'app/core/services/content.service';
 import { MediaService } from 'app/core/services/media.service';
 import { DayProgramService } from 'app/core/services/day-program.service';
 import { LocationService } from 'app/core/services/location.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatLegacySnackBar as MatSnackBar } from '@angular/material/legacy-snack-bar';
 import { forkJoin, Subject } from 'rxjs';
 import { takeUntil, finalize } from 'rxjs/operators';
 
