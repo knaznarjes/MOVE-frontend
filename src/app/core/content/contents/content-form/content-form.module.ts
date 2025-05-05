@@ -15,7 +15,6 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
-import { NgSelectModule } from '@ng-select/ng-select';
 
 import { ContentFormComponent } from './content-form.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -50,9 +49,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
     ReactiveFormsModule,
     HttpClientModule,
     MatAutocompleteModule,
-    MatSelectModule ,
-    NgSelectModule // ✅ AJOUT ICI
-
+    MatSelectModule 
   ],
   exports: [
     ContentFormComponent
