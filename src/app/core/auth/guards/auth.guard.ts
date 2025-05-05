@@ -1,4 +1,3 @@
-// src/app/guards/auth.guard.ts
 import { Injectable } from '@angular/core';
 import {
   CanActivate,
@@ -35,10 +34,10 @@ export class AuthGuard implements CanActivate, CanActivateChild {
       return true;
     }
 
-    // Store the attempted URL for redirecting after login
+    // Store the attempted URL for redirection after login
     localStorage.setItem('redirectUrl', url);
 
-    // Navigate to the login page
+    // Redirect to login page
     this.router.navigate(['/login']);
     return false;
   }

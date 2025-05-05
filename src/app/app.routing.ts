@@ -1,4 +1,3 @@
-// app.routes.ts
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { Route } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
@@ -7,39 +6,43 @@ import { TravelerProfileComponent } from './core/traveler/profile/traveler-profi
 import { RoleGuard } from './core/auth/guards/role.guard';
 import { AdminProfileComponent } from './core/admin/profile-admin/admin-profile.component';
 import { MasterAdminProfileComponent } from './core/master_admin/profile-master-admin/profile-master-admin.component';
+import { ContentDetailsComponent } from './core/content/contents/content-details/content-details.component';
+import { ContentFormComponent } from './core/content/contents/content-form/content-form.component';
+import { ContentHomeComponent } from './core/content/contents/content-home/content-home.component';
 
 export const appRoutes: Route[] = [
-    // Rediriger le chemin vide vers 'home'
+    // Redirection par défaut vers /home
     {
         path: '',
         pathMatch: 'full',
         redirectTo: 'home'
     },
 
-    // Routes pour les invités (non authentifiés)
+    // Routes publiques (pas besoin d'être connecté)
     {
         path: '',
         component: LayoutComponent,
-        data: {
-            layout: 'empty'
-        },
+        data: { layout: 'empty' },
         children: [
             {
                 path: 'home',
-                loadChildren: () => import('./core/home/home.module').then(m => m.HomeModule)
+                loadChildren: () =>
+                    import('./core/home/home.module').then(m => m.HomeModule)
             },
             {
                 path: 'register',
-                loadChildren: () => import('./core/auth/register/register.module').then(m => m.RegisterModule)
+                loadChildren: () =>
+                    import('./core/auth/register/register.module').then(m => m.RegisterModule)
             },
             {
                 path: 'login',
-                loadChildren: () => import('./core/auth/login/login.module').then(m => m.LoginModule)
+                loadChildren: () =>
+                    import('./core/auth/login/login.module').then(m => m.LoginModule)
             }
         ]
     },
 
-    // Routes authentifiées
+    // Routes privées (nécessitent authentification)
     {
         path: '',
         canActivate: [AuthGuard],
@@ -49,30 +52,49 @@ export const appRoutes: Route[] = [
                 path: 'profile',
                 component: TravelerProfileComponent,
                 canActivate: [RoleGuard],
-                data: {
-                    allowedRoles: ['TRAVELER', 'USER'] // Permettre les rôles de voyageur/utilisateur
-                }
+                data: { allowedRoles: ['TRAVELER'] }
             },
             {
                 path: 'admin/profile',
                 component: AdminProfileComponent,
                 canActivate: [RoleGuard],
-                data: {
-                    allowedRoles: ['ADMIN']
-                }
+                data: { allowedRoles: ['ADMIN'] }
             },
             {
                 path: 'master/admin/profile',
                 component: MasterAdminProfileComponent,
                 canActivate: [RoleGuard],
-                data: {
-                    allowedRoles: ['MASTERADMIN']
-                }
+                data: { allowedRoles: ['MASTERADMIN'] }
+            },
+            {
+                path: 'homecontent',
+                component: ContentHomeComponent,
+                canActivate: [RoleGuard],
+                data: { allowedRoles: ['MASTERADMIN', 'ADMIN', 'TRAVELER'] }
+            },
+            {
+                path: 'add/content',
+                component: ContentFormComponent,
+                canActivate: [RoleGuard],
+                data: { allowedRoles: ['MASTERADMIN', 'ADMIN', 'TRAVELER'] }
+            },
+            {
+                path: 'edit/:id',
+                component: ContentFormComponent,
+                canActivate: [RoleGuard],
+                data: { allowedRoles: ['MASTERADMIN', 'ADMIN', 'TRAVELER'] }
+            },
+            {
+                // ✅ Changement ici : path plus explicite pour éviter de capter des routes inattendues
+                path: 'content/:id',
+                component: ContentDetailsComponent,
+                canActivate: [RoleGuard],
+                data: { allowedRoles: ['MASTERADMIN', 'ADMIN', 'TRAVELER'] }
             }
         ]
     },
 
-    // Route wildcard pour 404
+    // Wildcard pour 404 (redirige vers home)
     {
         path: '**',
         redirectTo: 'home'

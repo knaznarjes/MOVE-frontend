@@ -5,7 +5,7 @@ import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
 import { FuseNavigationService, FuseVerticalNavigationComponent } from '@fuse/components/navigation';
 import { Navigation } from 'app/core/navigation/navigation.types';
 import { NavigationService } from 'app/core/navigation/navigation.service';
-import { User } from 'app/core/models/models';
+import { Role, User } from 'app/core/models/models';
 import { AccountService } from 'app/core/services/account.service';
 import { UserService } from 'app/core/services/user.service';
 import { AuthService } from 'app/core/services/auth.service';
@@ -72,31 +72,32 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             });
 
         // Get current user from UserService
-        this._userService.getCurrentUser()
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe({
-                next: (userDTO) => {
-                    console.log('User received:', userDTO);
-                    if (userDTO) {
-                        // Map the UserDTO to User model correctly
-                        this.user = {
-                            id: userDTO.id,
-                            fullName: userDTO.fullName || 'User',
-                            role: userDTO.role || '',
-                            photoProfile: userDTO.photoProfile || null,
-                            creationDate: userDTO.creationDate || new Date(),
-                            account: {
-                                id: userDTO.account?.id || '',
-                                email: userDTO.account?.email || ''
-                            }
-                        };
-                        console.log('User mapped:', this.user);
-                    }
-                },
-                error: (error) => {
-                    console.error('Error fetching user:', error);
-                }
-            });
+        // Get current user from UserService
+this._userService.getCurrentUser()
+.pipe(takeUntil(this._unsubscribeAll))
+.subscribe({
+    next: (userDTO) => {
+        console.log('User received:', userDTO);
+        if (userDTO) {
+            // Map the UserDTO to User model correctly
+            this.user = {
+                id: userDTO.id,
+                fullName: userDTO.fullName,
+                role: userDTO.role,
+                photoProfile: userDTO.photoProfile,
+                creationDate: userDTO.creationDate,
+                accountId: userDTO.account?.id,
+                preferences: userDTO.preferences || [],
+                accountLocked: userDTO.accountLocked || false,
+                enabled: userDTO.enabled || true
+            };
+            console.log('User mapped:', this.user);
+        }
+    },
+    error: (error) => {
+        console.error('Error fetching user:', error);
+    }
+});
 
         // Subscribe to media changes
         this._fuseMediaWatcherService.onMediaChange$

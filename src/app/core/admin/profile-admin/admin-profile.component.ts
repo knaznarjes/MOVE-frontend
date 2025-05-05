@@ -1,3 +1,6 @@
+/* eslint-disable arrow-body-style */
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/adjacent-overload-signatures */
 /* eslint-disable arrow-parens */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
@@ -10,15 +13,15 @@ import { MatSort } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { catchError, finalize, switchMap } from 'rxjs/operators';
-import { of, firstValueFrom, Observable } from 'rxjs';
+import { catchError, finalize, switchMap, tap } from 'rxjs/operators';
+import { of, firstValueFrom, Observable, throwError } from 'rxjs';
 
 import { AuthService } from '../../services/auth.service';
 import { AccountService } from '../../services/account.service';
 import { PreferenceService } from '../../services/preference.service';
 import { UserService } from '../../services/user.service';
 import { trigger, state, style, animate, transition } from '@angular/animations';
-import { Account, Preference, Role, User, UserDTO } from '../../models/models';
+import { Account, Preference, PreferenceDTO, Role, User, UserDTO } from '../../models/models';
 
 @Component({
     selector: 'app-admin-profile',
@@ -43,7 +46,7 @@ import { Account, Preference, Role, User, UserDTO } from '../../models/models';
     ]
   })
 export class AdminProfileComponent implements OnInit {
-  profileForm: FormGroup;
+    profileForm: FormGroup;
   preferencesForm: FormGroup;
   passwordForm: FormGroup;
   userRoleForm: FormGroup;
@@ -52,6 +55,7 @@ export class AdminProfileComponent implements OnInit {
   users: User[] = [];
   filteredUsers: User[] = [];
   selectedUser: User | null = null;
+  selectedUserForRoleUpdate: User | null = null;
   selectedUserCurrentRole: string = '';
   displayedColumns: string[] = ['id', 'fullName', 'email', 'role', 'actions'];
   dataSource = new MatTableDataSource<User>();
@@ -69,14 +73,15 @@ export class AdminProfileComponent implements OnInit {
   photoState: string = 'default';
   formState: string = 'default';
   searchTerm: string = '';
+  private emailCache: Map<string, string> = new Map();
 
-  availableRoles: string[] = ['user', 'admin', 'moderator', 'editor'];
-
+  availableRoles: string[] = ['TRAVELER', 'ADMIN', 'MASTERADMIN'];
   @ViewChild('deleteConfirmationDialog') deleteConfirmationDialog!: TemplateRef<any>;
   @ViewChild('userRoleUpdateDialog') userRoleUpdateDialog!: TemplateRef<any>;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-  isMasterAdminSelected: boolean = false;
+    router: any;
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
@@ -107,6 +112,9 @@ export class AdminProfileComponent implements OnInit {
   }
 
   private initForms(): void {
+    this.userRoleForm = this.fb.group({
+      role: ['']
+    });
 
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
@@ -122,7 +130,6 @@ export class AdminProfileComponent implements OnInit {
     const confirmPassword = form.get('confirmPassword')?.value;
     return newPassword === confirmPassword ? null : { passwordMismatch: true };
   }
-
 
   ngOnInit(): void {
     console.log('AdminProfileComponent initialized');
@@ -152,6 +159,14 @@ export class AdminProfileComponent implements OnInit {
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;
         console.log('Paginator and sort attached to dataSource');
+
+        this.dataSource.filterPredicate = (user: User, filter: string) => {
+          return (
+            user.fullName?.toLowerCase().includes(filter) ||
+            (user.id?.toLowerCase().includes(filter)) ||
+            (this.emailCache.get(user.accountId || '')?.toLowerCase().includes(filter))
+          );
+        };
       });
     } else {
       console.warn('Paginator or Sort view child not initialized');
@@ -162,25 +177,6 @@ export class AdminProfileComponent implements OnInit {
     return this.preferencesForm.get('preferences') as FormArray;
   }
 
-  createPreferenceFormGroup(): FormGroup {
-    return this.fb.group({
-      id: [''],
-      category: ['', Validators.required],
-      priority: ['', Validators.required]
-    });
-  }
-
-  addPreferenceField(): void {
-    console.log('Adding new preference field');
-    this.preferencesArray.push(this.createPreferenceFormGroup());
-    console.log('Preference fields count:', this.preferencesArray.length);
-  }
-
-  removePreferenceField(index: number): void {
-    console.log('Removing preference field at index:', index);
-    this.preferencesArray.removeAt(index);
-    console.log('Preference fields count after removal:', this.preferencesArray.length);
-  }
 
   loadUserData(userId: string): void {
     this.isLoading = true;
@@ -208,42 +204,49 @@ export class AdminProfileComponent implements OnInit {
       (userData) => {
         console.log('User data received:', userData);
         if (userData) {
-          console.log('User data type:', typeof userData);
-          console.log('Has fullName property:', 'fullName' in userData);
-
           if ('fullName' in userData) {
             this.currentUser = userData as User;
-            console.log('Processed as User, fullName:', this.currentUser.fullName);
-            this.profileForm.patchValue({
-              fullName: userData.fullName || '',
-              email: this.getEmailFromUser(userData as User) // Use helper method
-            });
-            console.log('Form patched with user data:', this.profileForm.value);
 
-            this.setProfileImage((userData as User).photoProfile);
+            if (!this.currentUser.accountId && userData.account && userData.account.id) {
+              this.currentUser.accountId = userData.account.id;
+              console.log('Setting accountId from account object:', this.currentUser.accountId);
+            }
+
+            if (this.currentUser.accountId) {
+              this.fetchAndSetEmail(this.currentUser.accountId);
+            }
+
+            this.profileForm.patchValue({
+              fullName: this.currentUser.fullName || ''
+            });
+
+            console.log('Form patched with user data:', this.profileForm.value);
+            console.log('Current user accountId:', this.currentUser.accountId);
+            this.setProfileImage(this.currentUser.photoProfile);
           } else {
             const account = userData as Account;
             this.currentUser = {
-              id: account.id,
+              id: account.id!,
               fullName: '',
-              role: '',
+              role: Role.MASTERADMIN,
               photoProfile: null,
-              account: account,
-              preferences: []
+              accountId: account.id,
+              preferences: [],
+              accountLocked: false,
+              enabled: true
             };
-            console.log('Created User from Account:', this.currentUser);
+            console.log('Current user accountId from account:', this.currentUser.accountId);
             this.profileForm.patchValue({
               fullName: '',
               email: account.email
             });
             console.log('Form patched with account data:', this.profileForm.value);
-
             this.setProfileImage(null);
           }
 
           if (this.currentUser) {
             console.log('Loading preferences for current user:', this.currentUser.id);
-            this.loadPreferences(this.currentUser.id);
+            this.loadPreferences(this.currentUser.id!);
           } else {
             console.error('Current user is null after processing userData');
           }
@@ -258,11 +261,21 @@ export class AdminProfileComponent implements OnInit {
   }
 
   loadAllUsers(): void {
-    this.isLoading = true;
+    this.isLoadingUsers = true;
     this.userService.getAllUsers().subscribe({
       next: (users) => {
-        this.users = users;
-        this.isLoading = false;
+        this.users = users.map(userDTO => this.convertDTOToUser(userDTO));
+        this.filteredUsers = [...this.users];
+        this.dataSource.data = this.users;
+        this.isLoadingUsers = false;
+
+        this.users.forEach(user => {
+          if (user.accountId) {
+            this.fetchAndSetEmail(user.accountId);
+          }
+        });
+
+        this.calculateTotalPages();
       },
       error: (error) => {
         console.error('Error loading users:', error);
@@ -271,64 +284,57 @@ export class AdminProfileComponent implements OnInit {
           'Close',
           { duration: 3000 }
         );
-        this.isLoading = false;
-      }
-    });
-  }
-
-  searchUsers(): void {
-    console.log('Searching users');
-    const name = this.userManagementForm.get('name')?.value;
-    const email = this.userManagementForm.get('email')?.value;
-    const role = this.userManagementForm.get('role')?.value;
-
-    console.log('Search criteria:', { name, email, role });
-
-    if (!name && !email && !role) {
-      this.loadAllUsers();
-      return;
-    }
-
-    this.isLoadingUsers = true;
-
-    this.userService.searchUsers(name, email, role).pipe(
-      catchError((error) => {
-        console.error('Error searching users:', error);
-        this.snackBar.open('Error searching users: ' + error.message, 'Close', { duration: 3000 });
-        return of([]);
-      }),
-      finalize(() => {
         this.isLoadingUsers = false;
-      })
-    ).subscribe(users => {
-      console.log('Search results:', users);
-      this.filteredUsers = users || [];
-      this.dataSource.data = this.filteredUsers;
-
-      if (this.dataSource.paginator) {
-        this.dataSource.paginator.firstPage();
+      }
+    });
+  }
+  private prefetchEmails(users: User[]): void {
+    users.forEach(user => {
+      if (user.accountId && !this.emailCache.has(user.accountId)) {
+        this.accountService.getAccountById(user.accountId).subscribe({
+          next: (account) => {
+            if (account && account.email) {
+              this.emailCache.set(user.accountId!, account.email);
+            }
+          },
+          error: (error) => {
+            console.error(`Error fetching email for user ${user.id}:`, error);
+          }
+        });
       }
     });
   }
 
-  applyFilter(event: Event): void {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.searchTerm = filterValue.trim().toLowerCase();
-    console.log('Filtering users with search term:', this.searchTerm);
-
-    this.filteredUsers = this.users.filter(user =>
-      user.fullName?.toLowerCase().includes(this.searchTerm) ||
-      this.getEmailFromUser(user)?.toLowerCase().includes(this.searchTerm) ||
-      user.id?.toLowerCase().includes(this.searchTerm)
-    );
-    console.log('Filtered users count:', this.filteredUsers.length);
-
-    this.dataSource.data = this.filteredUsers;
-
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  private convertDTOToUser(userDTO: any): User {
+    if ('account' in userDTO && userDTO.account && 'id' in userDTO.account) {
+      return {
+        id: userDTO.id,
+        fullName: userDTO.fullName,
+        role: userDTO.role,
+        photoProfile: userDTO.photoProfile,
+        accountId: userDTO.account.id,
+        preferences: userDTO.preferences || [],
+        accountLocked: userDTO.accountLocked || false,
+        enabled: userDTO.enabled || true,
+        creationDate: userDTO.creationDate,
+        modifiedAt: userDTO.modifiedAt
+      };
     }
+
+    return {
+      id: userDTO.id,
+      fullName: userDTO.fullName,
+      role: userDTO.role,
+      photoProfile: userDTO.photoProfile,
+      accountId: userDTO.accountId || (userDTO.account?.id),
+      preferences: userDTO.preferences || [],
+      accountLocked: userDTO.accountLocked || false,
+      enabled: userDTO.enabled || true,
+      creationDate: userDTO.creationDate,
+      modifiedAt: userDTO.modifiedAt
+    };
   }
+
   private setProfileImage(url: string | null): void {
     console.log('Setting profile image with URL:', url);
 
@@ -377,7 +383,6 @@ export class AdminProfileComponent implements OnInit {
       console.log('Created updated user object with new photo');
 
       console.log('Sending update user request');
-      // Fix: Use the correct method name convertUserToDTO instead of convertToUserDTO
       await firstValueFrom(this.userService.updateUser(this.currentUser.id, this.convertUserToDTO(updatedUser)));
       this.snackBar.open('Profile photo uploaded successfully', 'Close', { duration: 3000 });
       this.selectedFile = null;
@@ -412,44 +417,29 @@ export class AdminProfileComponent implements OnInit {
   }
 
   loadPreferences(userId: string): void {
-    console.log('Loading preferences for user ID:', userId);
-
-    this.preferenceService.getUserPreferences(userId).pipe(
-      catchError((error) => {
+    this.preferenceService.getCurrentUserPreferences().pipe(
+        catchError((error) => {
         console.error('Error loading preferences:', error);
         this.snackBar.open('Error loading preferences: ' + error.message, 'Close', { duration: 3000 });
         return of([]);
       })
-    ).subscribe(
-      (preferences) => {
-        console.log('Preferences loaded:', preferences);
-        this.userPreferences = preferences || [];
-        this.preferencesArray.clear();
-        console.log('Cleared preferences array');
+    ).subscribe((preferences) => {
+      this.userPreferences = preferences || [];
+      this.preferencesArray.clear();
 
-        if (preferences && preferences.length > 0) {
-          console.log('Adding', preferences.length, 'preferences to form array');
-          preferences.forEach(pref => {
-            const group = this.fb.group({
-              id: [pref.id || ''], // Ensure ID is included for existing preferences
-              category: [pref.category, Validators.required],
-              priority: [pref.priority, Validators.required]
-            });
-            this.preferencesArray.push(group);
-            console.log('Added preference to form array:', group.value);
-          });
-        } else {
-          console.log('No preferences found, adding empty field');
-          this.addPreferenceField();
-        }
-
-        console.log('Final preferences form value:', this.preferencesForm.value);
-      },
-      (error) => {
-        console.error('Error in preferences subscribe callback:', error);
+      if (preferences && preferences.length > 0) {
+        preferences.forEach(pref => this.preferencesArray.push(this.fb.group({
+          id: [pref.id || ''],
+          category: [pref.category, Validators.required],
+          priority: [pref.priority, Validators.required]
+        })));
+      } else {
+        this.addPreferenceField();
       }
-    );
+    });
   }
+
+
   onFileSelected(event: Event): void {
     console.log('File selection event triggered');
     const element = event.target as HTMLInputElement;
@@ -479,76 +469,7 @@ export class AdminProfileComponent implements OnInit {
   }
 
 
-async updatePreferences(): Promise<void> {
-    console.log('Update preferences requested');
-    console.log('Current preferences form value:', this.preferencesForm.value);
-    console.log('Form valid:', this.preferencesForm.valid);
 
-    if (this.preferencesForm.invalid || !this.currentUser?.id) {
-      console.error('Form invalid or no current user');
-      this.snackBar.open('Please fill in all required preference fields.', 'Close', { duration: 3000 });
-      return;
-    }
-
-    this.isUpdating = true;
-    this.formState = 'loading';
-    console.log('Starting preferences update');
-
-    try {
-      const preferencesFromForm = this.preferencesArray.value;
-      const originalPreferences = [...this.userPreferences];
-
-      const updatedPreferences: Preference[] = [];
-
-      for (const pref of preferencesFromForm) {
-        if (pref.id) {
-          console.log('Updating existing preference:', pref);
-          const updatedPref = await firstValueFrom(
-            this.preferenceService.updatePreference(pref.id, {
-              id: pref.id,
-              userId: this.currentUser.id,
-              category: pref.category,
-              priority: pref.priority
-            })
-          );
-          updatedPreferences.push(updatedPref);
-        } else {
-          console.log('Creating new preference:', pref);
-          const newPref = await firstValueFrom(
-            this.preferenceService.createPreference({
-              userId: this.currentUser.id,
-              category: pref.category,
-              priority: pref.priority
-            })
-          );
-          updatedPreferences.push(newPref);
-        }
-      }
-
-      for (const originalPref of originalPreferences) {
-        const stillExists = preferencesFromForm.some(p => p.id === originalPref.id);
-        if (!stillExists && originalPref.id) {
-          console.log('Deleting removed preference:', originalPref);
-          await firstValueFrom(
-            this.preferenceService.deletePreference(originalPref.id)
-          );
-        }
-      }
-
-      console.log('All preferences saved successfully');
-      this.snackBar.open('Preferences updated successfully', 'Close', { duration: 3000 });
-
-      console.log('Reloading preferences');
-      this.loadPreferences(this.currentUser.id);
-    } catch (error: any) {
-      console.error('Error updating preferences:', error);
-      this.snackBar.open('Error updating preferences: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
-    } finally {
-      console.log('Update completed, resetting update state');
-      this.isUpdating = false;
-      this.formState = 'default';
-    }
-  }
   async updateProfile(): Promise<void> {
     console.log('Update profile requested');
     console.log('Current profile form value:', this.profileForm.value);
@@ -565,19 +486,21 @@ async updatePreferences(): Promise<void> {
     console.log('Starting profile update');
 
     try {
+      const email = this.profileForm.get('email')?.value ||
+                    (this.currentUser.accountId ? this.emailCache.get(this.currentUser.accountId) : '');
+
       const updatedUser: User = {
-        id: this.currentUser.id,
+        ...this.currentUser,
         fullName: this.profileForm.get('fullName')?.value,
-        role: this.currentUser.role || '',
-        photoProfile: this.currentUser.photoProfile || null,
-        account: this.currentUser.account,
-        preferences: this.currentUser.preferences || []
       };
 
       console.log('Updating profile with data:', updatedUser);
 
-      // Use the correct method name
       const userToUpdate = this.convertUserToDTO(updatedUser);
+
+      // Log what's being sent to the API
+      console.log('Data being sent to API:', userToUpdate);
+
       await firstValueFrom(this.userService.updateUser(this.currentUser.id, userToUpdate));
 
       console.log('Profile updated successfully');
@@ -594,7 +517,6 @@ async updatePreferences(): Promise<void> {
       this.formState = 'default';
     }
   }
-
   async changePassword(): Promise<void> {
     console.log('Password change requested');
 
@@ -604,33 +526,18 @@ async updatePreferences(): Promise<void> {
       return;
     }
 
-    if (!this.currentUser) {
+    if (!this.currentUser?.accountId) {
       console.error('No current user available');
       this.snackBar.open('User data not available. Please refresh and try again.', 'Close', { duration: 3000 });
       return;
     }
 
-    // Get account ID with proper null checking
-    let accountId: string | undefined;
-
-    if (this.currentUser.account && this.currentUser.account.id) {
-      accountId = this.currentUser.account.id;
-    } else if (this.currentUser.accountDTO && this.currentUser.accountDTO.id) {
-      accountId = this.currentUser.accountDTO.id;
-    }
-
-    if (!accountId) {
-      console.error('Cannot change password: No valid account ID available');
-      this.snackBar.open('Error: No valid account data available', 'Close', { duration: 3000 });
-      return;
-    }
-
-    const currentPassword = this.passwordForm.get('currentPassword')?.value;
+    const accountId = this.currentUser.accountId;
     const newPassword = this.passwordForm.get('newPassword')?.value;
 
-    if (!currentPassword || !newPassword) {
-      console.error('Password values are missing');
-      this.snackBar.open('Password fields cannot be empty', 'Close', { duration: 3000 });
+    if (!newPassword) {
+      console.error('New password value is missing');
+      this.snackBar.open('New password field cannot be empty', 'Close', { duration: 3000 });
       return;
     }
 
@@ -639,83 +546,238 @@ async updatePreferences(): Promise<void> {
 
     try {
       await firstValueFrom(
-        this.accountService.updatePassword(accountId, currentPassword, newPassword).pipe(
+        this.accountService.updatePassword(accountId, newPassword).pipe(
           catchError(error => {
-            console.error('Password update request failed:', error);
-            // Check for specific error types
-            if (error.status === 401 || error.status === 403) {
-              this.snackBar.open('Current password is incorrect', 'Close', { duration: 3000 });
-            } else {
-              this.snackBar.open('Error changing password: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
-            }
+            const errorMsg = error.error?.message || error.message || 'Unknown error';
+            console.error('Password update error:', error);
+            this.snackBar.open(`Error: ${errorMsg}`, 'Close', { duration: 3000 });
+            this.isUpdating = false;
+            this.formState = 'default';
             throw error;
           })
         )
       );
 
       console.log('Password updated successfully');
-      this.snackBar.open('Password changed successfully', 'Close', { duration: 3000 });
+      this.snackBar.open('Password changed successfully. Please log in with your new password.', 'Close', { duration: 5000 });
       this.passwordForm.reset();
       this.setActiveCard(0);
-    } catch (error: any) {
-      console.error('Error changing password:', error);
-      // Error already displayed in the catchError operator
+
+      setTimeout(() => {
+        this.router.navigate(['/login']);
+      }, 3000);
+    } catch (error) {
+      console.log('Error caught in main try/catch block:', error);
     } finally {
       this.isUpdating = false;
       this.formState = 'default';
     }
   }
-private getEmailFromUser(user: User): string {
-    return user.account?.email || '';
+
+  openUpdateRoleDialog(user: User): void {
+    // Don't allow changing Master Admin roles
+    if (this.isMasterAdmin(user)) {
+      this.snackBar.open(
+        'Master Admin roles cannot be modified for security reasons.',
+        'Close',
+        { duration: 3000 }
+      );
+      return;
+    }
+
+    // Don't allow changing Admin roles
+    if (this.isAdmin(user)) {
+      this.snackBar.open(
+        'Admin roles cannot be modified. Only travelers can be promoted.',
+        'Close',
+        { duration: 3000 }
+      );
+      return;
+    }
+
+    // If user is already an Admin, don't allow changing
+    this.userRoleForm.get('role')?.setValue(user.role);
+    this.selectedUserCurrentRole = user.role;
+    this.selectedUserForRoleUpdate = user;
+
+    const dialogRef = this.dialog.open(this.userRoleUpdateDialog, {
+      width: '400px'
+    });
+
+    dialogRef.afterClosed().subscribe(newRole => {
+      if (newRole && newRole !== user.role) {
+        this.updateUserRole(user.id!, newRole);
+      }
+    });
+  }
+  updateUserRole(userId: string, roleStr: string): void {
+    if (this.selectedUserForRoleUpdate) {
+      // Don't allow changing Master Admin roles
+      if (this.isMasterAdmin(this.selectedUserForRoleUpdate)) {
+        this.snackBar.open(
+          'Cannot change role: User has Master Admin status.',
+          'Close',
+          { duration: 3000 }
+        );
+        return;
+      }
+
+      // Don't allow changing Admin roles
+      if (this.isAdmin(this.selectedUserForRoleUpdate)) {
+        this.snackBar.open(
+          'Cannot change role: User already has Admin status.',
+          'Close',
+          { duration: 3000 }
+        );
+        return;
+      }
+
+      // Only allow promotion from TRAVELER to ADMIN (not demotion)
+      if (this.selectedUserForRoleUpdate.role === 'TRAVELER' && roleStr !== 'ADMIN') {
+        this.snackBar.open(
+          'Travelers can only be promoted to Admin role.',
+          'Close',
+          { duration: 3000 }
+        );
+        return;
+      }
+    }
+
+    console.log(`Updating user ${userId} role from ${this.selectedUserCurrentRole} to ${roleStr}`);
+    this.isUpdating = true;
+
+    const role = roleStr as Role;
+
+    this.userService.updateUserRole(userId, role).subscribe({
+      next: (updatedUserDTO: UserDTO) => {
+        this.snackBar.open(
+          `User role updated from ${this.selectedUserCurrentRole} to ${role}`,
+          'Close',
+          { duration: 3000 }
+        );
+
+        this.loadAllUsers();
+
+        if (this.selectedUser?.id === userId) {
+          this.selectedUser = this.convertDTOToUser(updatedUserDTO);
+          this.selectedUserCurrentRole = updatedUserDTO.role;
+        }
+      },
+      error: (error) => {
+        console.error('Error updating user role:', error);
+        this.snackBar.open(
+          `Error updating user role: ${error.message || 'Unknown error'}`,
+          'Close',
+          { duration: 3000 }
+        );
+      },
+      complete: () => {
+        this.isUpdating = false;
+      }
+    });
+  }
+  isMasterAdmin(user: User): boolean {
+    return user.role === Role.MASTERADMIN;
   }
 
-  viewUserDetails(user: User): void {
-    console.log('Viewing user details:', user);
-    this.selectedUser = user;
-    this.activeCardIndex = 3;
-    // Add flag to disable delete button for master admin
-    this.isMasterAdminSelected = this.isMasterAdmin(user);
+  isAdmin(user: User): boolean {
+    return user.role === Role.ADMIN;
   }
   openDeleteConfirmation(): void {
-    console.log('🔔 Opening account deletion confirmation dialog');
-    const dialogRef = this.dialog.open(this.deleteConfirmationDialog);
+    console.log('Opening account deletion confirmation dialog');
+    const dialogRef = this.dialog.open(this.deleteConfirmationDialog, {
+      width: '400px',
+      disableClose: true
+    });
 
     dialogRef.afterClosed().subscribe((result) => {
-      console.log('✅ Dialog closed with result:', result);
+      console.log('Dialog closed with result:', result);
       if (result === true) {
         this.deleteAccount();
       } else {
-        console.log('❌ Deletion cancelled');
+        console.log('Deletion cancelled');
       }
     });
   }
 
   deleteAccount(): void {
-    console.log('🔴 Deleting user account');
-    if (!this.currentUser?.accountDTO?.id) {
-      console.error('User not found');
-      this.snackBar.open('User not found. Please log in again.', 'Close', { duration: 3000 });
-      return;
+    console.log('Deleting user account');
+
+    if (!this.currentUser) {
+        console.error('No current user available');
+        this.snackBar.open('User data not available. Please refresh and try again.', 'Close', { duration: 3000 });
+        return;
     }
 
-    this.isLoading = true;
-    this.isUpdating = true;
+    let accountId = this.currentUser.accountId;
 
-    this.accountService.deleteAccount(this.currentUser?.accountDTO?.id).pipe(
-      catchError((error) => {
-        console.error('Error while deleting account:', error);
-        this.snackBar.open('Error while deleting account: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
-        return of(null);
-      }),
-      finalize(() => {
-        this.isLoading = false;
-        this.isUpdating = false;
-      })
-    ).subscribe(() => {
-      this.snackBar.open('Account successfully deleted', 'Close', { duration: 3000 });
-      this.authService.logout();
-    });
-  }
+    if (!accountId) {
+        console.warn('No accountId found in currentUser, trying to use user ID instead');
+        accountId = this.currentUser.id;
+
+        if (!accountId) {
+            console.error('Missing both accountId and userId, cannot delete account');
+            this.snackBar.open('User account ID missing. Cannot delete account.', 'Close', { duration: 3000 });
+            return;
+        }
+    }
+
+    console.log('About to delete account with ID:', accountId);
+
+    this.isUpdating = true;
+    this.formState = 'loading';
+
+    console.log('Calling accountService.deleteAccount()');
+
+    this.accountService.deleteAccount(accountId)
+        .pipe(
+            tap(() => console.log('Delete request successful')),
+            catchError((error) => {
+                console.error('Error while deleting account:', error);
+                this.snackBar.open('Failed to delete account: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
+                return throwError(() => error);
+            }),
+            finalize(() => {
+                console.log('Delete request finalized');
+                this.isLoading = false;
+                this.isUpdating = false;
+                this.formState = 'default';
+            })
+        )
+        .subscribe({
+            next: async () => {
+                console.log('Account deleted successfully, now updating accountLocked to true');
+
+                if (this.currentUser?.id) {
+                  const updatedUser: User = {
+                    ...this.currentUser,
+                    accountLocked: true
+                  };
+
+                  try {
+                    await firstValueFrom(this.userService.updateUser(this.currentUser.id, this.convertUserToDTO(updatedUser)));
+                    console.log('accountLocked updated to true');
+                  } catch (updateError) {
+                    console.error('Failed to update accountLocked:', updateError);
+                  }
+                }
+
+                this.snackBar.open('Account successfully deleted', 'Close', { duration: 3000 });
+
+                setTimeout(() => {
+                  console.log('Logging out...');
+                  this.authService.logout();
+                }, 1500);
+              },
+
+            error: (error) => {
+                console.error('Delete account error in subscribe:', error);
+            },
+            complete: () => {
+                console.log('Delete account subscription completed');
+            }
+        });
+}
   handleImageError(event: any): void {
     console.log('Image loading error, using default');
     console.log('Failed image src:', event.target.src);
@@ -737,27 +799,52 @@ private getEmailFromUser(user: User): string {
     console.log(`Navigated ${direction} to card: from ${previousIndex} to ${this.activeCardIndex}`);
   }
 
+  private convertUserToDTO(user: User): UserDTO {
+    const email = this.profileForm.get('email')?.value ||
+                  (user.accountId ? this.emailCache.get(user.accountId) : '');
+
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      role: user.role,
+      photoProfile: user.photoProfile,
+      creationDate: user.creationDate,
+      modifiedAt: user.modifiedAt,
+      email: email,
+      account: user.accountId ? {
+        id: user.accountId,
+        email: email
+      } : undefined,
+      accountLocked: user.accountLocked || false,
+      enabled: user.enabled || true
+    };
+  }
 search(): void {
-    const formValues = this.userManagementForm.value;
-    const name = formValues.name?.trim() || undefined;
-    const email = formValues.email?.trim() || undefined;
-    const role = formValues.role || undefined;
+    console.log('Searching users with criteria:', this.userManagementForm.value);
+    this.isLoadingUsers = true;
 
-    this.isLoading = true;
+    const name = this.userManagementForm.get('name')?.value || '';
+    const email = this.userManagementForm.get('email')?.value || '';
+    const role = this.userManagementForm.get('role')?.value || undefined;
 
-    this.userService.searchUsers(name, email, role)
-      .pipe(finalize(() => this.isLoading = false))
+    this.userService.searchUsers(name, email, role as Role)
+      .pipe(
+        finalize(() => {
+          this.isLoadingUsers = false;
+        })
+      )
       .subscribe({
-        next: (users) => {
-          this.users = users;
-          if (users.length === 0) {
-            this.snackBar.open('No users found matching your criteria', 'Close', { duration: 3000 });
-          }
+        next: (users: UserDTO[]) => {
+          console.log('Search results:', users);
+          this.users = users.map(userDTO => this.convertDTOToUser(userDTO));
+          this.dataSource.data = this.users;
+
+          this.prefetchEmails(this.users);
         },
         error: (error) => {
           console.error('Error searching users:', error);
           this.snackBar.open(
-            'Error searching users: ' + (error.message || 'Unknown error'),
+            `Error searching users: ${error.message || 'Unknown error'}`,
             'Close',
             { duration: 3000 }
           );
@@ -766,36 +853,259 @@ search(): void {
   }
 
   resetSearch(): void {
+    console.log('Resetting search form');
     this.userManagementForm.reset();
-
-    this.selectedUser = null;
-    this.selectedUserCurrentRole = null;
-
-    this.isLoading = true;
-
     this.loadAllUsers();
   }
-  private convertUserToDTO(user: User): UserDTO {
-    return {
-      id: user.id,
-      fullName: user.fullName,
-      role: user.role,
-      creationDate: user.creationDate || new Date(),
-      photoProfile: user.photoProfile || null,
-      account: user.account ? {
-        id: user.account.id,
-        email: user.account.email
-      } : null, // Or an appropriate default value
-      preferences: user.preferences ? user.preferences.map(pref => ({
-        id: pref.id || '',
-        userId: pref.userId || user.id,
-        category: pref.category,
-        priority: pref.priority
-      })) : []
-    };
+
+  applyFilter(event: Event): void {
+    const filterValue = (event.target as HTMLInputElement).value;
+    console.log('Applying filter:', filterValue);
+
+    if (this.dataSource) {
+      this.dataSource.filter = filterValue.trim().toLowerCase();
+
+      if (this.dataSource.paginator) {
+        this.dataSource.paginator.firstPage();
+      }
+    }
   }
-  private isMasterAdmin(user: User): boolean {
-    const protectedRoles = ['masteradmin', 'admin'];
-    return user.role ? protectedRoles.includes(user.role.toLowerCase()) : false;
+
+  currentPage: number = 1;
+  pageSize: number = 10;
+  totalPages: number = 1;
+
+  changePage(page: number): void {
+    console.log('Changing to page:', page);
+    if (page < 1 || page > this.totalPages) {
+      return;
+    }
+
+    this.currentPage = page;
+
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+
+    if (this.filteredUsers.length > 0) {
+      const paginatedUsers = this.filteredUsers.slice(startIndex, endIndex);
+      this.dataSource.data = paginatedUsers;
+    }
+
+    this.calculateTotalPages();
+  }
+
+  private calculateTotalPages(): void {
+    this.totalPages = Math.ceil(this.filteredUsers.length / this.pageSize);
+  }
+getEmailForUser(user: User): string {
+    if (!user || !user.accountId) return 'Email not available';
+
+    if (this.emailCache.has(user.accountId)) {
+      return this.emailCache.get(user.accountId) || '';
+    }
+
+    this.fetchAndSetEmail(user.accountId);
+    return 'Loading...';
+  }
+
+  viewUserDetails(user: User): void {
+    console.log('Viewing user details:', user);
+    this.selectedUser = user;
+
+    if (user.accountId && !this.emailCache.has(user.accountId)) {
+      this.fetchAndSetEmail(user.accountId);
+    }
+
+    this.activeCardIndex = 3;
+  }
+
+  private fetchAndSetEmail(accountId: string): void {
+    this.accountService.getAccountById(accountId).subscribe({
+      next: (account) => {
+        if (account && account.email) {
+          this.emailCache.set(accountId, account.email);
+
+          if (this.selectedUser && this.selectedUser.accountId === accountId) {
+            setTimeout(() => {}, 0);
+          }
+        }
+      },
+      error: (error) => {
+        console.error(`Error fetching email for account ${accountId}:`, error);
+        this.emailCache.set(accountId, 'Email unavailable');
+      }
+    });
+  }
+
+updatePreferences(): void {
+    if (this.preferencesForm.invalid || !this.currentUser?.id) {
+      this.snackBar.open('Please fill in all required fields correctly.', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.isUpdating = true;
+    this.formState = 'loading';
+
+    const preferences = this.preferencesArray.value;
+
+    const updates: Observable<PreferenceDTO>[] = [];
+
+    preferences.forEach(pref => {
+      if (pref.id) {
+        updates.push(this.preferenceService.updatePreference(pref.id, pref));
+      } else {
+        pref.userId = this.currentUser!.id;
+        updates.push(this.preferenceService.createPreference(pref));
+      }
+    });
+
+    if (updates.length > 0) {
+      import('rxjs').then(({forkJoin}) => {
+        forkJoin(updates).pipe(
+          finalize(() => {
+            this.isUpdating = false;
+            this.formState = 'default';
+          })
+        ).subscribe({
+          next: (updatedPrefs) => {
+            console.log('Preferences updated successfully:', updatedPrefs);
+            this.snackBar.open('Preferences updated successfully', 'Close', { duration: 3000 });
+            this.loadPreferences(this.currentUser!.id!);
+          },
+          error: (error) => {
+            console.error('Error updating preferences:', error);
+            this.snackBar.open(
+              `Error updating preferences: ${error.message || 'Unknown error'}`,
+              'Close',
+              { duration: 3000 }
+            );
+          }
+        });
+      });
+    } else {
+      this.isUpdating = false;
+      this.formState = 'default';
+      this.snackBar.open('No preferences to update', 'Close', { duration: 3000 });
+    }
+  }
+
+
+  removePreferenceField(index: number): void {
+    console.log('Removing preference field at index:', index);
+
+    this.formState = 'loading';
+
+    setTimeout(() => {
+      const preference = this.preferencesArray.at(index);
+      const preferenceId = preference.get('id')?.value;
+
+      if (preferenceId) {
+        this.preferenceService.deletePreference(preferenceId).subscribe({
+          next: () => {
+            console.log('Preference deleted on server successfully');
+            this.snackBar.open('Preference deleted', 'Close', { duration: 2000 });
+          },
+          error: (error) => {
+            console.error('Error deleting preference:', error);
+            this.snackBar.open('Error deleting preference', 'Close', { duration: 3000 });
+          }
+        });
+      }
+
+      this.preferencesArray.removeAt(index);
+
+      if (this.preferencesArray.length === 0) {
+        this.addPreferenceField();
+      }
+
+      console.log('Preference fields count after removal:', this.preferencesArray.length);
+
+      setTimeout(() => {
+        this.formState = 'default';
+      }, 100);
+    }, 200);
+  }
+  addPreferenceField(): void {
+    this.preferencesArray.push(this.createPreferenceFormGroup());
+  }
+
+  createPreferenceFormGroup(): FormGroup {
+    return this.fb.group({
+      id: [''],
+      category: ['', [Validators.required]],
+      priority: ['', [Validators.required]],
+      userId: [this.currentUser?.id || '']
+    });
+  }
+  getAdminCount(): number {
+    if (!this.users || this.users.length === 0) {
+      return 0;
+    }
+
+    return this.users.filter(user =>
+      user.role === Role.ADMIN || user.role === Role.MASTERADMIN
+    ).length;
+  }
+
+  getTravelerCount(): number {
+    if (!this.users || this.users.length === 0) {
+      return 0;
+    }
+
+    return this.users.filter(user =>
+      user.role === Role.TRAVELER
+    ).length;
+  }
+
+  getActiveUserCount(): number {
+    if (!this.users || this.users.length === 0) {
+      return 0;
+    }
+
+    return this.users.filter(user =>
+      user.enabled === true
+    ).length;
+  }
+  toggleEnabled(user: User): void {
+    const updatedUser = { ...user, enabled: !user.enabled };
+    this.isUpdating = true;
+
+    this.userService.updateUser(user.id!, this.convertUserToDTO(updatedUser)).subscribe({
+      next: () => {
+        this.snackBar.open(`User ${updatedUser.enabled ? 'enabled' : 'disabled'}`, 'Close', { duration: 3000 });
+        this.loadAllUsers();
+      },
+      error: (error) => {
+        console.error('Error toggling enabled status:', error);
+        this.snackBar.open('Failed to update user status', 'Close', { duration: 3000 });
+      },
+      complete: () => this.isUpdating = false
+    });
+  }
+
+  toggleAccountLock(user: User): void {
+    const updatedUser = { ...user, accountLocked: !user.accountLocked };
+    this.isUpdating = true;
+
+    this.userService.updateUser(user.id!, this.convertUserToDTO(updatedUser)).subscribe({
+      next: () => {
+        this.snackBar.open(`User account ${updatedUser.accountLocked ? 'locked' : 'unlocked'}`, 'Close', { duration: 3000 });
+        this.loadAllUsers();
+      },
+      error: (error) => {
+        console.error('Error toggling account lock:', error);
+        this.snackBar.open('Failed to update account lock status', 'Close', { duration: 3000 });
+      },
+      complete: () => this.isUpdating = false
+    });
+  }
+  getUnlockedUserCount(): number {
+    if (!this.users || this.users.length === 0) {
+      return 0;
+    }
+
+    return this.users.filter(user =>
+      !user.accountLocked
+    ).length;
   }
 }

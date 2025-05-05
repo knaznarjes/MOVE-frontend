@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormsModule,ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -16,6 +16,11 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
+// ✅ modules manquants :
+import { MatChipsModule } from '@angular/material/chips';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+
 import { MasterAdminProfileComponent } from './profile-master-admin.component';
 
 @NgModule({
@@ -40,7 +45,10 @@ import { MasterAdminProfileComponent } from './profile-master-admin.component';
         MatSortModule,
         MatDialogModule,
         MatProgressBarModule,
-        BrowserAnimationsModule
+        BrowserAnimationsModule,
+        // ✅ modules ajoutés ici :
+        MatChipsModule,
+        MatAutocompleteModule
     ],
     exports: [
         MasterAdminProfileComponent

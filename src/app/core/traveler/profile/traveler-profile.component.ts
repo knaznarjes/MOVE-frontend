@@ -1,35 +1,43 @@
+/* eslint-disable @typescript-eslint/adjacent-overload-signatures */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable arrow-parens */
+/* eslint-disable curly */
 /* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/member-ordering */
-// Here are the fixed methods for the TravelerProfileComponent
-
 import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { AccountService } from '../../services/account.service';
 import { PreferenceService } from '../../services/preference.service';
 import { UserService } from '../../services/user.service';
-import { User, Preference, Account, UserDTO } from '../../models/models';
+import { User, Preference, Role, UserDTO, AccountDTO, Account, PreferenceDTO } from '../../models/models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
-import { catchError, finalize } from 'rxjs/operators';
-import { of, firstValueFrom } from 'rxjs';
+import { catchError, finalize, map, tap } from 'rxjs/operators';
+import { of, firstValueFrom, Observable, throwError } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 
 @Component({
-  selector: 'app-traveler-profile',
-  templateUrl: './traveler-profile.component.html',
-  styleUrls: ['./traveler-profile.component.scss'],
-  animations: [
-    trigger('fadeIn', [
-      transition(':enter', [
-        style({ opacity: 0 }),
-        animate('300ms ease-out', style({ opacity: 1 }))
+    selector: 'app-traveler-profile',
+    templateUrl: './traveler-profile.component.html',
+    styleUrls: ['./traveler-profile.component.scss'],
+    animations: [
+      trigger('fadeIn', [
+        transition(':enter', [
+          style({ opacity: 0 }),
+          animate('300ms ease-out', style({ opacity: 1 }))
+        ])
+      ]),
+      // Add the missing formAnimation trigger
+      trigger('formAnimation', [
+        state('default', style({ opacity: 1 })),
+        state('loading', style({ opacity: 0.7 })),
+        transition('default <=> loading', animate('200ms ease-in-out'))
       ])
-    ])
-  ]
-})
+    ]
+  })
 export class TravelerProfileComponent implements OnInit {
   profileForm: FormGroup;
   preferencesForm: FormGroup;
@@ -37,6 +45,7 @@ export class TravelerProfileComponent implements OnInit {
   isLoading = true;
   isUpdating = false;
   currentUser: User | null = null;
+  userEmail: string = '';
   profileImageSrc: string | SafeUrl | null = null;
   selectedFile: File | null = null;
   userPreferences: Preference[] = [];
@@ -48,6 +57,8 @@ export class TravelerProfileComponent implements OnInit {
   photoState: string = 'default';
 
   @ViewChild('deleteConfirmationDialog') deleteConfirmationDialog!: TemplateRef<any>;
+  private emailCache: Map<string, string> = new Map();
+  router: any;
 
   constructor(
     private fb: FormBuilder,
@@ -93,7 +104,8 @@ export class TravelerProfileComponent implements OnInit {
 
   loadUserData(userId: string): void {
     this.isLoading = true;
-    console.log('Loading user data for ID:', userId);
+    this.formState = 'loading';
+    console.log('Loading admin data for ID:', userId);
 
     this.userService.getUserById(userId).pipe(
       catchError((userError) => {
@@ -101,34 +113,138 @@ export class TravelerProfileComponent implements OnInit {
         return this.accountService.getAccountById(userId).pipe(
           catchError((accountError) => {
             console.error('Account not found either:', accountError);
-            this.snackBar.open('User profile not found. Please log in again.', 'Close', { duration: 3000 });
+            this.snackBar.open('Admin profile not found. Please log in again.', 'Close', { duration: 3000 });
             this.authService.logout();
             return of(null);
           })
         );
       }),
       finalize(() => {
+        console.log('Finished loading user data, loading state:', this.isLoading);
         this.isLoading = false;
+        this.formState = 'default';
       })
-    ).subscribe((userData) => {
-      if (userData) {
-        this.currentUser = userData as User;
-        this.profileForm.patchValue({
-          fullName: this.currentUser.fullName || '',
-          email: this.currentUser?.email
-        });
+    ).subscribe(
+      (userData) => {
+        console.log('User data received:', userData);
+        if (userData) {
+          if ('fullName' in userData) {
+            this.currentUser = userData as User;
 
-        // Process the profile image URL properly
-        this.setProfileImage(this.currentUser.photoProfile);
-        if (this.currentUser && this.currentUser.id) {
-          this.loadPreferences(this.currentUser.id);
+            if (!this.currentUser.accountId && userData.account && userData.account.id) {
+              this.currentUser.accountId = userData.account.id;
+              console.log('Setting accountId from account object:', this.currentUser.accountId);
+            }
+
+            if (this.currentUser.accountId) {
+              this.fetchAndSetEmail(this.currentUser.accountId);
+            }
+
+            this.profileForm.patchValue({
+              fullName: this.currentUser.fullName || ''
+            });
+
+            console.log('Form patched with user data:', this.profileForm.value);
+            console.log('Current user accountId:', this.currentUser.accountId);
+            this.setProfileImage(this.currentUser.photoProfile);
+          } else {
+            const account = userData as Account;
+            this.currentUser = {
+              id: account.id!,
+              fullName: '',
+              role: Role.MASTERADMIN,
+              photoProfile: null,
+              accountId: account.id,
+              preferences: [],
+              accountLocked: false,
+              enabled: true
+            };
+            console.log('Current user accountId from account:', this.currentUser.accountId);
+            this.profileForm.patchValue({
+              fullName: '',
+              email: account.email
+            });
+            console.log('Form patched with account data:', this.profileForm.value);
+            this.setProfileImage(null);
+          }
+
+          if (this.currentUser) {
+            console.log('Loading preferences for current user:', this.currentUser.id);
+            this.loadPreferences(this.currentUser.id!);
+          } else {
+            console.error('Current user is null after processing userData');
+          }
+        } else {
+          console.error('userData is null or undefined');
         }
+      },
+      (error) => {
+        console.error('Error in subscribe callback:', error);
+      }
+    );
+}
+ private fetchAndSetEmail(accountId: string): void {
+    this.accountService.getAccountById(accountId).subscribe({
+      next: (account) => {
+        if (account && account.email) {
+          this.emailCache.set(accountId, account.email);
+          this.profileForm.patchValue({
+            email: account.email
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching email for account:', error);
       }
     });
   }
+
+
+  isUserDTO(userData: any): userData is UserDTO {
+    return userData && (userData.role !== undefined || userData.account !== undefined);
+  }
+
+  isAccountDTO(userData: any): userData is AccountDTO {
+    return userData && userData.email !== undefined && userData.role === undefined;
+  }
+
+  fetchEmailFromAccount(accountId: string): void {
+    this.accountService.getAccountById(accountId).pipe(
+      map(account => {
+        if (account && typeof account === 'object' && 'email' in account) {
+          return account.email;
+        }
+        return '';
+      }),
+      catchError(error => {
+        console.error('Error fetching email:', error);
+        return of('');
+      })
+    ).subscribe(email => {
+      this.userEmail = email;
+      this.profileForm.patchValue({ email: this.userEmail });
+    });
+  }
+
+  adaptUserResponse(userData: any): User {
+    if (!userData) return null as any;
+    return {
+      id: userData.id,
+      fullName: userData.fullName || '',
+      role: userData.role || Role.TRAVELER,
+      photoProfile: userData.photoProfile || null,
+      accountId: this.isUserDTO(userData) && userData.account ? userData.account.id : userData.accountId,
+      preferences: userData.preferences || [],
+      creationDate: userData.creationDate,
+      modifiedAt: userData.modifiedAt,
+      accountLocked: userData.accountLocked,
+      enabled: userData.enabled
+    };
+  }
+
   loadPreferences(userId: string): void {
-    this.preferenceService.getUserPreferences(userId).pipe(
-      catchError((error) => {
+    this.preferenceService.getCurrentUserPreferences().pipe(
+        catchError((error) => {
         console.error('Error loading preferences:', error);
         this.snackBar.open('Error loading preferences: ' + error.message, 'Close', { duration: 3000 });
         return of([]);
@@ -149,39 +265,6 @@ export class TravelerProfileComponent implements OnInit {
     });
   }
 
-  async updatePreferences(): Promise<void> {
-    if (this.preferencesForm.invalid || !this.currentUser?.id) {
-      this.snackBar.open('Please fill in all required preference fields.', 'Close', { duration: 3000 });
-      return;
-    }
-
-    this.isUpdating = true;
-    this.formState = 'loading';
-
-    try {
-      const preferencesToSave: Preference[] = this.preferencesArray.value.map((pref: any) => ({
-        id: pref.id || undefined,
-        userId: this.currentUser?.id,
-        category: pref.category,
-        priority: pref.priority
-      }));
-
-      await Promise.all(preferencesToSave.map(pref => pref.id
-        ? firstValueFrom(this.preferenceService.updatePreference(pref.id, pref))
-        : firstValueFrom(this.preferenceService.createPreference(pref))
-      ));
-
-      this.snackBar.open('Preferences updated successfully', 'Close', { duration: 3000 });
-      this.loadPreferences(this.currentUser.id);
-    } catch (error: any) {
-      console.error('Error updating preferences:', error);
-      this.snackBar.open('Error updating preferences: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
-    } finally {
-      this.isUpdating = false;
-      this.formState = 'default';
-    }
-  }
-
   async updateProfile(): Promise<void> {
     console.log('Update profile requested');
     console.log('Current profile form value:', this.profileForm.value);
@@ -198,18 +281,24 @@ export class TravelerProfileComponent implements OnInit {
     console.log('Starting profile update');
 
     try {
+      const email = this.profileForm.get('email')?.value ||
+                    (this.currentUser.accountId ? this.emailCache.get(this.currentUser.accountId) : '');
+
       const updatedUser: User = {
-        id: this.currentUser.id,
+        ...this.currentUser,
         fullName: this.profileForm.get('fullName')?.value,
-        role: this.currentUser.role || '',
-        photoProfile: this.currentUser.photoProfile || null,
-        account: this.currentUser.account,
-        preferences: this.currentUser.preferences || []
       };
 
       console.log('Updating profile with data:', updatedUser);
 
-      await firstValueFrom(this.userService.updateUser(this.currentUser.id, this.convertUserToDTO(updatedUser)));      this.snackBar.open('Profile updated successfully', 'Close', { duration: 3000 });
+      const userToUpdate = this.convertUserToDTO(updatedUser);
+
+      console.log('Data being sent to API:', userToUpdate);
+
+      await firstValueFrom(this.userService.updateUser(this.currentUser.id, userToUpdate));
+
+      console.log('Profile updated successfully');
+      this.snackBar.open('Profile updated successfully', 'Close', { duration: 3000 });
 
       console.log('Reloading user data');
       this.loadUserData(this.currentUser.id);
@@ -222,7 +311,6 @@ export class TravelerProfileComponent implements OnInit {
       this.formState = 'default';
     }
   }
-
   async uploadProfilePhoto(): Promise<void> {
     if (!this.selectedFile || !this.currentUser?.id) {
       console.warn('Upload attempted with no file selected or no current user');
@@ -247,7 +335,8 @@ export class TravelerProfileComponent implements OnInit {
       console.log('Created updated user object with new photo');
 
       console.log('Sending update user request');
-      await firstValueFrom(this.userService.updateUser(this.currentUser.id, this.convertUserToDTO(updatedUser)));      this.snackBar.open('Profile photo uploaded successfully', 'Close', { duration: 3000 });
+      await firstValueFrom(this.userService.updateUser(this.currentUser.id, this.convertUserToDTO(updatedUser)));
+      this.snackBar.open('Profile photo uploaded successfully', 'Close', { duration: 3000 });
       this.selectedFile = null;
       this.uploadProgress = 100;
 
@@ -263,7 +352,6 @@ export class TravelerProfileComponent implements OnInit {
       this.photoState = 'default';
     }
   }
-
   private fileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -279,77 +367,62 @@ export class TravelerProfileComponent implements OnInit {
     });
   }
 
+  async changePassword(): Promise<void> {
+    console.log('Password change requested');
 
-  async updatePassword(): Promise<void> {
-        console.log('Password change requested');
+    if (this.passwordForm.invalid) {
+      console.error('Password form is invalid');
+      this.snackBar.open('Please fill in all required password fields correctly.', 'Close', { duration: 3000 });
+      return;
+    }
 
-        if (this.passwordForm.invalid) {
-          console.error('Password form is invalid');
-          this.snackBar.open('Please fill in all required password fields correctly.', 'Close', { duration: 3000 });
-          return;
-        }
+    if (!this.currentUser?.accountId) {
+      console.error('No current user available');
+      this.snackBar.open('User data not available. Please refresh and try again.', 'Close', { duration: 3000 });
+      return;
+    }
 
-        if (!this.currentUser) {
-          console.error('No current user available');
-          this.snackBar.open('User data not available. Please refresh and try again.', 'Close', { duration: 3000 });
-          return;
-        }
+    const accountId = this.currentUser.accountId;
+    const newPassword = this.passwordForm.get('newPassword')?.value;
 
-        // Get account ID with proper null checking
-        let accountId: string | undefined;
+    if (!newPassword) {
+      console.error('New password value is missing');
+      this.snackBar.open('New password field cannot be empty', 'Close', { duration: 3000 });
+      return;
+    }
 
-        if (this.currentUser.account && this.currentUser.account.id) {
-          accountId = this.currentUser.account.id;
-        } else if (this.currentUser.accountDTO && this.currentUser.accountDTO.id) {
-          accountId = this.currentUser.accountDTO.id;
-        }
+    this.isUpdating = true;
+    this.formState = 'loading';
 
-        if (!accountId) {
-          console.error('Cannot change password: No valid account ID available');
-          this.snackBar.open('Error: No valid account data available', 'Close', { duration: 3000 });
-          return;
-        }
+    try {
+      await firstValueFrom(
+        this.accountService.updatePassword(accountId, newPassword).pipe(
+          catchError(error => {
+            const errorMsg = error.error?.message || error.message || 'Unknown error';
+            console.error('Password update error:', error);
+            this.snackBar.open(`Error: ${errorMsg}`, 'Close', { duration: 3000 });
+            this.isUpdating = false;
+            this.formState = 'default';
+            throw error;
+          })
+        )
+      );
 
-        const currentPassword = this.passwordForm.get('currentPassword')?.value;
-        const newPassword = this.passwordForm.get('newPassword')?.value;
+      console.log('Password updated successfully');
+      this.snackBar.open('Password changed successfully. Please log in with your new password.', 'Close', { duration: 5000 });
+      this.passwordForm.reset();
+      this.setActiveCard(0);
 
-        if (!currentPassword || !newPassword) {
-          console.error('Password values are missing');
-          this.snackBar.open('Password fields cannot be empty', 'Close', { duration: 3000 });
-          return;
-        }
-
-        this.isUpdating = true;
-        this.formState = 'loading';
-
-        try {
-          await firstValueFrom(
-            this.accountService.updatePassword(accountId, currentPassword, newPassword).pipe(
-              catchError((error) => {
-                console.error('Password update request failed:', error);
-                // Check for specific error types
-                if (error.status === 401 || error.status === 403) {
-                  this.snackBar.open('Current password is incorrect', 'Close', { duration: 3000 });
-                } else {
-                  this.snackBar.open('Error changing password: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
-                }
-                throw error;
-              })
-            )
-          );
-
-          console.log('Password updated successfully');
-          this.snackBar.open('Password changed successfully', 'Close', { duration: 3000 });
-          this.passwordForm.reset();
-          this.setActiveCard(0);
-        } catch (error: any) {
-          console.error('Error changing password:', error);
-          // Error already displayed in the catchError operator
-        } finally {
-          this.isUpdating = false;
-          this.formState = 'default';
-        }
-      }
+      setTimeout(() => {
+        this.router.navigate(['/login']);
+      }, 3000);
+    } catch (error) {
+      console.log('Error caught in main try/catch block:', error);
+    } finally {
+      this.isUpdating = false;
+      this.formState = 'default';
+    }
+  }
   private setProfileImage(url: string | null | undefined): void {
     if (!url) {
       this.profileImageSrc = 'assets/images/default-profile.png';
@@ -368,22 +441,6 @@ export class TravelerProfileComponent implements OnInit {
 
   get preferencesArray(): FormArray {
     return this.preferencesForm.get('preferences') as FormArray;
-  }
-
-  createPreferenceFormGroup(): FormGroup {
-    return this.fb.group({
-      id: [''],
-      category: ['', Validators.required],
-      priority: ['', Validators.required]
-    });
-  }
-
-  addPreferenceField(): void {
-    this.preferencesArray.push(this.createPreferenceFormGroup());
-  }
-
-  removePreferenceField(index: number): void {
-    this.preferencesArray.removeAt(index);
   }
 
   setActiveTab(tab: string): void {
@@ -423,32 +480,83 @@ export class TravelerProfileComponent implements OnInit {
   }
 
   deleteAccount(): void {
-    console.log('🔴 Deleting user account');
-    if (!this.currentUser?.accountDTO?.id) {
-      console.error('User not found');
-      this.snackBar.open('User not found. Please log in again.', 'Close', { duration: 3000 });
-      return;
+    console.log('Deleting user account');
+
+    if (!this.currentUser) {
+        console.error('No current user available');
+        this.snackBar.open('User data not available. Please refresh and try again.', 'Close', { duration: 3000 });
+        return;
     }
 
-    this.isLoading = true;
+    let accountId = this.currentUser.accountId;
+
+    if (!accountId) {
+        console.warn('No accountId found in currentUser, trying to use user ID instead');
+        accountId = this.currentUser.id;
+
+        if (!accountId) {
+            console.error('Missing both accountId and userId, cannot delete account');
+            this.snackBar.open('User account ID missing. Cannot delete account.', 'Close', { duration: 3000 });
+            return;
+        }
+    }
+
+    console.log('About to delete account with ID:', accountId);
+
     this.isUpdating = true;
+    this.formState = 'loading';
 
-    this.accountService.deleteAccount(this.currentUser?.accountDTO?.id).pipe(
-      catchError((error) => {
-        console.error('Error while deleting account:', error);
-        this.snackBar.open('Error while deleting account: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
-        return of(null);
-      }),
-      finalize(() => {
-        this.isLoading = false;
-        this.isUpdating = false;
-      })
-    ).subscribe(() => {
-      this.snackBar.open('Account successfully deleted', 'Close', { duration: 3000 });
-      this.authService.logout();
-    });
-  }
+    console.log('Calling accountService.deleteAccount()');
 
+    this.accountService.deleteAccount(accountId)
+        .pipe(
+            tap(() => console.log('Delete request successful')),
+            catchError((error) => {
+                console.error('Error while deleting account:', error);
+                this.snackBar.open('Failed to delete account: ' + (error.message || 'Unknown error'), 'Close', { duration: 3000 });
+                return throwError(() => error);
+            }),
+            finalize(() => {
+                console.log('Delete request finalized');
+                this.isLoading = false;
+                this.isUpdating = false;
+                this.formState = 'default';
+            })
+        )
+        .subscribe({
+            next: async () => {
+                console.log('Account deleted successfully, now updating accountLocked to true');
+
+                if (this.currentUser?.id) {
+                  const updatedUser: User = {
+                    ...this.currentUser,
+                    accountLocked: true
+                  };
+
+                  try {
+                    await firstValueFrom(this.userService.updateUser(this.currentUser.id, this.convertUserToDTO(updatedUser)));
+                    console.log('accountLocked updated to true');
+                  } catch (updateError) {
+                    console.error('Failed to update accountLocked:', updateError);
+                  }
+                }
+
+                this.snackBar.open('Account successfully deleted', 'Close', { duration: 3000 });
+
+                setTimeout(() => {
+                  console.log('Logging out...');
+                  this.authService.logout();
+                }, 1500);
+              },
+
+            error: (error) => {
+                console.error('Delete account error in subscribe:', error);
+            },
+            complete: () => {
+                console.log('Delete account subscription completed');
+            }
+        });
+}
   handleImageError(event: any): void {
     event.target.src = 'assets/images/default-profile.png';
   }
@@ -466,22 +574,161 @@ export class TravelerProfileComponent implements OnInit {
   }
 
   private convertUserToDTO(user: User): UserDTO {
+    const email = this.profileForm.get('email')?.value ||
+                  (user.accountId ? this.emailCache.get(user.accountId) : '');
+
     return {
       id: user.id,
       fullName: user.fullName,
       role: user.role,
-      creationDate: user.creationDate || new Date(),
-      photoProfile: user.photoProfile || null,
-      account: user.account ? {
-        id: user.account.id,
-        email: user.account.email
-      } : null, // Or an appropriate default value
-      preferences: user.preferences ? user.preferences.map(pref => ({
-        id: pref.id || '',
-        userId: pref.userId || user.id,
-        category: pref.category,
-        priority: pref.priority
-      })) : []
+      photoProfile: user.photoProfile,
+      creationDate: user.creationDate,
+      modifiedAt: user.modifiedAt,
+      email: email,
+      account: user.accountId ? {
+        id: user.accountId,
+        email: email
+      } : undefined,
+      accountLocked: user.accountLocked || false,
+      enabled: user.enabled || true
     };
   }
+
+    updatePreferences(): void {
+        if (this.preferencesForm.invalid || !this.currentUser?.id) {
+          this.snackBar.open('Please fill in all required fields correctly.', 'Close', { duration: 3000 });
+          return;
+        }
+
+        this.isUpdating = true;
+        this.formState = 'loading';
+
+        const preferences = this.preferencesArray.value;
+
+        const updates: Observable<PreferenceDTO>[] = [];
+
+        preferences.forEach(pref => {
+          if (pref.id) {
+            updates.push(this.preferenceService.updatePreference(pref.id, pref));
+          } else {
+            pref.userId = this.currentUser!.id;
+            updates.push(this.preferenceService.createPreference(pref));
+          }
+        });
+
+        if (updates.length > 0) {
+          import('rxjs').then(({forkJoin}) => {
+            forkJoin(updates).pipe(
+              finalize(() => {
+                this.isUpdating = false;
+                this.formState = 'default';
+              })
+            ).subscribe({
+              next: (updatedPrefs) => {
+                console.log('Preferences updated successfully:', updatedPrefs);
+                this.snackBar.open('Preferences updated successfully', 'Close', { duration: 3000 });
+                this.loadPreferences(this.currentUser!.id!);
+              },
+              error: (error) => {
+                console.error('Error updating preferences:', error);
+                this.snackBar.open(
+                  `Error updating preferences: ${error.message || 'Unknown error'}`,
+                  'Close',
+                  { duration: 3000 }
+                );
+              }
+            });
+          });
+        } else {
+          this.isUpdating = false;
+          this.formState = 'default';
+          this.snackBar.open('No preferences to update', 'Close', { duration: 3000 });
+        }
+      }
+
+
+      removePreferenceField(index: number): void {
+        console.log('Removing preference field at index:', index);
+
+        this.formState = 'loading';
+
+        setTimeout(() => {
+          const preference = this.preferencesArray.at(index);
+          const preferenceId = preference.get('id')?.value;
+
+          if (preferenceId) {
+            this.preferenceService.deletePreference(preferenceId).subscribe({
+              next: () => {
+                console.log('Preference deleted on server successfully');
+                this.snackBar.open('Preference deleted', 'Close', { duration: 2000 });
+              },
+              error: (error) => {
+                console.error('Error deleting preference:', error);
+                this.snackBar.open('Error deleting preference', 'Close', { duration: 3000 });
+              }
+            });
+          }
+
+          this.preferencesArray.removeAt(index);
+
+          if (this.preferencesArray.length === 0) {
+            this.addPreferenceField();
+          }
+
+          console.log('Preference fields count after removal:', this.preferencesArray.length);
+
+          setTimeout(() => {
+            this.formState = 'default';
+          }, 100);
+        }, 200);
+      }
+      addPreferenceField(): void {
+        this.preferencesArray.push(this.createPreferenceFormGroup());
+      }
+
+      createPreferenceFormGroup(): FormGroup {
+        return this.fb.group({
+          id: [''],
+          category: ['', [Validators.required]],
+          priority: ['', [Validators.required]],
+          userId: [this.currentUser?.id || '']
+        });
+      }
+      toggleEnabled(user: User): void {
+        const updatedUser = { ...user, enabled: !user.enabled };
+        this.isUpdating = true;
+
+        this.userService.updateUser(user.id!, this.convertUserToDTO(updatedUser)).subscribe({
+          next: () => {
+            this.snackBar.open(`User ${updatedUser.enabled ? 'enabled' : 'disabled'}`, 'Close', { duration: 3000 });
+            this.loadAllUsers();
+          },
+          error: (error) => {
+            console.error('Error toggling enabled status:', error);
+            this.snackBar.open('Failed to update user status', 'Close', { duration: 3000 });
+          },
+          complete: () => this.isUpdating = false
+        });
+      }
+
+      toggleAccountLock(user: User): void {
+        const updatedUser = { ...user, accountLocked: !user.accountLocked };
+        this.isUpdating = true;
+
+        this.userService.updateUser(user.id!, this.convertUserToDTO(updatedUser)).subscribe({
+          next: () => {
+            this.snackBar.open(`User account ${updatedUser.accountLocked ? 'locked' : 'unlocked'}`, 'Close', { duration: 3000 });
+            this.loadAllUsers();
+          },
+          error: (error) => {
+            console.error('Error toggling account lock:', error);
+            this.snackBar.open('Failed to update account lock status', 'Close', { duration: 3000 });
+          },
+          complete: () => this.isUpdating = false
+        });
+      }
+    loadAllUsers() {
+        throw new Error('Method not implemented.');
+    }
+
 }

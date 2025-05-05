@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,7 +15,7 @@ export class RegisterComponent implements OnInit {
   loading = false;
   errorMessage = '';
   successMessage = '';
-  isSubmitting = false; // Ajout d'un flag pour éviter les doubles soumissions
+  isSubmitting = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -38,8 +37,12 @@ export class RegisterComponent implements OnInit {
   }
 
   onSubmit(): void {
-    // Vérifier si le formulaire est valide et n'est pas déjà en cours de soumission
     if (this.registerForm.invalid || this.isSubmitting) {
+      // Mark all fields as touched to trigger validation messages
+      Object.keys(this.registerForm.controls).forEach((key) => {
+        const control = this.registerForm.get(key);
+        control?.markAsTouched();
+      });
       return;
     }
 
@@ -64,6 +67,7 @@ export class RegisterComponent implements OnInit {
         next: () => {
           console.log('Registration successful');
           this.successMessage = 'Inscription réussie! Vous allez être redirigé vers la page de connexion.';
+          this.registerForm.reset(); // Reset form after successful registration
 
           // Delay redirect to show success message
           setTimeout(() => {

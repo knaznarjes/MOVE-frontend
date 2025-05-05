@@ -1,0 +1,112 @@
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .card-header {
+      font-weight: 500;
+      border-bottom: none;
+    }
+
+    .card-body {
+      background-color: #fff;
+    }
+  }
+
+  .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+
+  // Tag chips styles
+  ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
+    background-color: #e9ecef;
+    border-radius: 16px;
+    padding: 4px 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+
+    .ng-value-label {
+      font-size: 0.875rem;
+      color: #212529;
+    }
+
+    .ng-value-icon {
+      font-weight: bold;
+      padding-left: 5px;
+      &:hover {
+        color: #dc3545;
+      }
+    }
+  }
+
+  // Location and day program sections
+  .border-rounded {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+  }
+
+  // Activity section
+  .activity-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  // Custom spinner animation
+  .spinner-border {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  // Progress bar styling
+  .progress {
+    height: 0.75rem;
+    border-radius: 0.75rem;
+
+    .progress-bar {
+      background-color: #007bff;
+      transition: width 0.3s ease;
+    }
+  }
+
+  // Form validation styles
+  .is-invalid {
+    border-color: #dc3545;
+  }
+
+  .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+
+  // Image preview
+  .img-preview {
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    .card-header {
+      flex-direction: column;
+
+      button {
+        margin-top: 0.5rem;
+      }
+    }
+
+    .d-flex.justify-content-between {
+      flex-direction: column;
+      gap: 1rem;
+
+      button {
+        width: 100%;
+      }
+    }
+  }

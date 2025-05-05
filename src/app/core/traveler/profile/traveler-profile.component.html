@@ -56,6 +56,21 @@
               <label>Email</label>
               <input type="email" [value]="currentUser?.email || ''" placeholder="Email" readonly>
             </div>
+<!-- User Status Controls -->
+<div class="form-field" *ngIf="currentUser">
+    <label>Status</label>
+    <div style="display: flex; gap: 12px; align-items: center;">
+
+      <!-- Account Locked status -->
+      <button type="button"
+              class="status-button"
+              [ngClass]="{ 'active': !currentUser.accountLocked, 'inactive': currentUser.accountLocked }"
+              (click)="toggleAccountLock(currentUser)">
+        <span class="material-icons">{{ currentUser.accountLocked ? 'lock' : 'vpn_key' }}</span>
+        {{ currentUser.accountLocked ? 'Locked' : 'Unlocked' }}
+      </button>
+    </div>
+  </div>
 
             <div class="profile-actions">
               <button class="action-btn save" (click)="updateProfile()" [disabled]="profileForm.invalid || isUpdating">
@@ -66,60 +81,86 @@
         </div>
       </div>
 
-      <!-- Preferences Section -->
-      <div class="profile-section" *ngIf="activeTab === 'preferences'">
-        <h2 class="section-title">Travel Preferences</h2>
-        <p class="section-subtitle">Configure your travel preferences</p>
+      <div class="mat-card preferences-card" *ngIf="activeTab === 'preferences'" [@fadeIn]>
+        <div class="mat-card-header">
+          <div>
+            <div class="mat-card-title">Travel Preferences</div>
+            <div class="mat-card-subtitle">Customize your travel settings</div>
+          </div>
+        </div>
 
-        <form [formGroup]="preferencesForm" (ngSubmit)="updatePreferences()">
-          <div formArrayName="preferences">
-            <div *ngFor="let preference of preferencesArray.controls; let i = index" [formGroupName]="i" class="preference-item">
-              <div class="preference-fields">
-                <div class="form-field">
-                  <label>Category</label>
-                  <select [formControl]="preferencesArray.at(i).get('category')">
-                    <option value="accommodation">Accommodation</option>
-                    <option value="transportation">Transportation</option>
-                    <option value="activities">Activities</option>
-                    <option value="food">Food</option>
-                    <option value="budget">Budget</option>
-                  </select>
+        <div class="mat-card-content" [@formAnimation]="formState">
+          <div class="loading-indicator" *ngIf="isLoading">
+            <div class="spinner"></div>
+            <p>Loading preferences...</p>
+          </div>
+
+          <form [formGroup]="preferencesForm" (ngSubmit)="updatePreferences()" *ngIf="!isLoading">
+            <div formArrayName="preferences" class="preferences-list">
+              <div *ngFor="let preference of preferencesArray.controls; let i = index" [formGroupName]="i" class="preference-item">
+                <div class="preference-fields">
+                  <div class="form-field">
+                    <label [for]="'category' + i">Category</label>
+                    <select [id]="'category' + i" formControlName="category" class="select-input">
+                      <option value="accommodation">Accommodation</option>
+                      <option value="transportation">Transportation</option>
+                      <option value="activities">Activities</option>
+                      <option value="food">Food</option>
+                      <option value="budget">Budget</option>
+                    </select>
+                    <span class="error-message" *ngIf="preferencesArray.at(i).get('category')?.invalid && preferencesArray.at(i).get('category')?.touched">
+                      Category is required
+                    </span>
+                  </div>
+
+                  <div class="form-field">
+                    <label [for]="'priority' + i">Priority</label>
+                    <select [id]="'priority' + i" formControlName="priority" class="select-input">
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                    <span class="error-message" *ngIf="preferencesArray.at(i).get('priority')?.invalid && preferencesArray.at(i).get('priority')?.touched">
+                      Priority is required
+                    </span>
+                  </div>
                 </div>
 
-                <div class="form-field">
-                  <label>Priority</label>
-                  <select [formControl]="preferencesArray.at(i).get('priority')">
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
+                <button
+                  type="button"
+                  class="remove-btn"
+                  (click)="removePreferenceField(i)"
+                  aria-label="Remove this preference">
+                  <span class="material-icons">delete_outline</span>
+                </button>
               </div>
+            </div>
 
-              <button type="button" class="remove-btn" (click)="removePreferenceField(i)"
-                      [disabled]="preferencesArray.length <= 1">
-                <mat-icon>delete</mat-icon>
+            <div *ngIf="preferencesArray.length === 0" class="no-preferences-message">
+              <p>No preferences added yet. Click "Add Preference" to create one.</p>
+            </div>
+
+            <div class="card-actions">
+              <button type="button" class="add-preference-btn" (click)="addPreferenceField()">
+                <span class="material-icons">add_circle_outline</span>
+                Add Preference
+              </button>
+
+              <button type="submit" class="save-btn" [disabled]="preferencesForm.invalid || isUpdating">
+                <span class="material-icons" *ngIf="!isUpdating">save</span>
+                <span class="material-icons spin" *ngIf="isUpdating">sync</span>
+                Save Preferences
               </button>
             </div>
-          </div>
-
-          <div class="preference-actions">
-            <button type="button" class="add-preference-btn" (click)="addPreferenceField()">
-              <mat-icon>add</mat-icon> Add Preference
-            </button>
-            <button type="submit" class="save-preferences-btn" [disabled]="preferencesForm.invalid || isUpdating">
-              <mat-icon>save</mat-icon> Save Preferences
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-
       <div class="profile-section" *ngIf="activeTab === 'management'">
 
         <!-- Password Change Section moved here -->
         <div class="management-card">
-          <h2 class="card-title">Change Password</h2>
-          <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()" class="password-form">
+            <h2 class="section-title">Change Password</h2>
+          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="password-form">
             <div class="form-field">
               <label>Current Password</label>
               <input type="password" formControlName="currentPassword" placeholder="Enter current password">

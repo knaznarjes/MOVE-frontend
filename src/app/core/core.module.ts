@@ -6,6 +6,8 @@ import { TranslocoCoreModule } from './transloco/transloco.module';
 import { TravelerProfileModule } from './traveler/profile/traveler-profile.module';
 import { AdminProfileModule } from './admin/profile-admin/admin-profile.module';
 import { MasterAdminProfileModule } from './master_admin/profile-master-admin/profile-master-admin.module';
+import { ContentModule } from './content/content.module';
+import { HomeModule } from './home/home.module';
 
 @NgModule({
     imports: [
@@ -15,7 +17,9 @@ import { MasterAdminProfileModule } from './master_admin/profile-master-admin/pr
         TranslocoCoreModule,
         TravelerProfileModule,
         AdminProfileModule,
-        MasterAdminProfileModule
+        MasterAdminProfileModule,
+        ContentModule,
+        HomeModule
     ],
     exports: [
         AuthModule,
@@ -23,9 +27,11 @@ import { MasterAdminProfileModule } from './master_admin/profile-master-admin/pr
         TranslocoCoreModule,
         TravelerProfileModule,
         AdminProfileModule,
-        MasterAdminProfileModule
-
-    ]
+        MasterAdminProfileModule,
+        ContentModule,
+        HomeModule
+    ],
+    declarations: []
 })
 export class CoreModule {
     constructor(@Optional() @SkipSelf() parentModule?: CoreModule) {

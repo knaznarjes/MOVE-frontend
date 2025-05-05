@@ -1,0 +1,99 @@
+<!-- content-home.component.html -->
+<div class="content-list">
+    <h1>Travel & Discoveries</h1>
+
+    <div *ngIf="loading" class="loading-spinner">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+
+    <div *ngIf="!loading && contents.length === 0" class="no-content">
+      <p>No trips found. Start creating your adventures!</p>
+    </div>
+
+    <div *ngIf="!loading && contents.length > 0" [@listAnimation]="contents.length">
+      <div *ngFor="let content of contents" class="travel-ticket">
+        <div class="ticket-header">
+          <h2>{{ content.title }}</h2>
+          <div class="ticket-type">{{ content.type === 'TRAVEL_STORY' ? 'Story' : 'Itinerary' }}</div>
+        </div>
+
+        <div class="ticket-body">
+          <div class="ticket-cover" *ngIf="content.coverImageId">
+            <img [src]="environment.apiUrl + '/api/media/file/' + content.coverImageId" alt="{{ content.title }}">
+          </div>
+
+          <p class="ticket-description">{{ content.description }}</p>
+
+          <div class="ticket-details">
+            <div class="ticket-info">
+              <p *ngIf="content.budget"><strong>Budget:</strong> {{ content.budget | currency:'EUR' }}</p>
+              <p *ngIf="content.duration"><strong>Duration:</strong> {{ content.duration }} days</p>
+            </div>
+
+            <div class="ticket-dates">
+              <p *ngIf="content.startDate"><strong>Departure:</strong> {{ content.startDate | date:'dd/MM/yyyy' }}</p>
+              <p *ngIf="content.endDate"><strong>Return:</strong> {{ content.endDate | date:'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+
+          <div class="ticket-stats">
+            <span *ngIf="content.likeCount" class="like-count">
+              <mat-icon>favorite</mat-icon> {{ content.likeCount }}
+            </span>
+            <span *ngIf="content.rating" class="rating">
+              <mat-icon>star</mat-icon> {{ content.rating | number:'1.1-1' }}
+            </span>
+            <span *ngIf="content.isPublished" class="published-badge">
+              <mat-icon>public</mat-icon> Published
+            </span>
+          </div>
+
+          <div class="ticket-tags" *ngIf="content.tags">
+            <span *ngFor="let tag of content.tags.split(',')" class="tag-item">
+              {{ tag.trim() }}
+            </span>
+          </div>
+
+          <div class="ticket-itinerary" *ngIf="hasItinerary(content.id)">
+            <h4>Itinerary</h4>
+            <p>{{ getItineraryDaysCount(content.id) }} day trip with {{ getActivitiesCount(content.id) }} activities</p>
+            <div class="itinerary-preview" *ngIf="showItineraryPreview">
+              <button mat-stroked-button class="view-itinerary" (click)="viewItinerary(content.id)">
+                <mat-icon>map</mat-icon> View Full Itinerary
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ticket-separator">
+          <div class="ticket-hole"></div>
+          <div class="ticket-perforation"></div>
+          <div class="ticket-hole"></div>
+        </div>
+
+        <div class="ticket-footer">
+          <div class="ticket-media-count" *ngIf="content.media?.length">
+            <mat-icon>photo_library</mat-icon> {{ content.media.length }} Photos
+          </div>
+          <div class="ticket-actions">
+            <a mat-button color="primary"[routerLink]="['/content', content.id]">
+              <mat-icon>visibility</mat-icon> View
+            </a>
+            <a mat-button color="accent" [routerLink]="['edit', content.id]">
+                <mat-icon>edit</mat-icon> Edit
+            </a>
+
+            <button mat-button color="warn" (click)="deleteContent(content.id)">
+              <mat-icon>delete</mat-icon> Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="add-content-container">
+      <a mat-fab color="accent" routerLink="/add/content" class="add-content-button">
+        <mat-icon>add</mat-icon>
+      </a>
+    </div>
+  </div>

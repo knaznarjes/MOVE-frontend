@@ -1,0 +1,223 @@
+<div class="content-details-container">
+    <!-- Affichage du chargement -->
+    <div class="loading-container" *ngIf="loading">
+      <mat-spinner></mat-spinner>
+      <p>Chargement du contenu...</p>
+    </div>
+
+    <!-- Affichage des erreurs -->
+    <div class="error-container" *ngIf="error">
+      <mat-icon color="warn">error</mat-icon>
+      <p>Une erreur est survenue lors du chargement du contenu.</p>
+      <button mat-raised-button color="primary" (click)="loadContent()">Réessayer</button>
+      <button mat-button (click)="goBack()">Retour</button>
+    </div>
+
+    <!-- Affichage du contenu -->
+    <div class="content-wrapper" *ngIf="content && !loading && !error">
+      <div class="content-header">
+        <div class="header-left">
+          <h1>{{ content.title }}</h1>
+          <div class="content-meta">
+            <span class="content-type">{{ getContentTypeLabel(content.type) }}</span>
+            <span class="content-dates" *ngIf="content.startDate || content.endDate">
+              <mat-icon>calendar_today</mat-icon>
+              {{ formatDate(content.startDate) }} - {{ formatDate(content.endDate) }}
+            </span>
+            <span class="content-duration">
+              <mat-icon>schedule</mat-icon>
+              {{ getDuration() }}
+            </span>
+            <span class="content-status" [ngClass]="content.isPublished ? 'published' : 'draft'">
+              {{ content.isPublished ? 'Publié' : 'Brouillon' }}
+            </span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-raised-button color="primary" (click)="goToEdit()">
+            <mat-icon>edit</mat-icon> Modifier
+          </button>
+          <button mat-raised-button
+            [color]="content.isPublished ? 'warn' : 'accent'"
+            (click)="togglePublishStatus()">
+            <mat-icon>{{ content.isPublished ? 'unpublished' : 'publish' }}</mat-icon>
+            {{ content.isPublished ? 'Dépublier' : 'Publier' }}
+          </button>
+          <button mat-raised-button color="warn" (click)="deleteContent()">
+            <mat-icon>delete</mat-icon> Supprimer
+          </button>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Description -->
+      <div class="content-section">
+        <h2>Description</h2>
+        <p class="content-description">{{ content.description }}</p>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Médias -->
+      <div class="content-section media-section">
+        <h2>
+          Médias
+          <mat-spinner diameter="20" *ngIf="mediaLoading" class="inline-spinner"></mat-spinner>
+        </h2>
+
+        <div class="empty-message" *ngIf="media.length === 0 && !mediaLoading">
+          <p>Aucun média associé à ce contenu.</p>
+        </div>
+
+        <div class="media-grid" *ngIf="media.length > 0">
+          <div class="media-card" *ngFor="let item of media">
+            <div class="media-thumbnail" [ngSwitch]="item.fileType">
+              <img *ngSwitchCase="'image/jpeg' || 'image/png' || 'image/gif'"
+                [src]="'/api/media/file/' + item.id"
+                [alt]="item.title">
+              <div *ngSwitchDefault class="file-icon">
+                <mat-icon>insert_drive_file</mat-icon>
+                <span>{{ item.fileType }}</span>
+              </div>
+            </div>
+            <div class="media-info">
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.description }}</p>
+              <p class="media-details">
+                <small>Taille: {{ item.fileSize }} | Ajouté le: {{ formatDate(item.uploadDate) }}</small>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Lieux -->
+      <div class="content-section locations-section" *ngIf="locations.length > 0">
+        <h2>Lieux</h2>
+        <div class="locations-list">
+          <div class="location-item" *ngFor="let location of locations">
+            <h3>{{ location.nameLocation }}</h3>
+            <p>{{ location.address }}</p>
+            <p>{{ location.city }}, {{ location.country }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Jours d'itinéraire (pour les itinéraires uniquement) -->
+      <div class="content-section itinerary-section" *ngIf="content.type === ContentType.ITINERARY">
+        <h2>
+          Jours d'itinéraire
+          <mat-spinner diameter="20" *ngIf="daysLoading" class="inline-spinner"></mat-spinner>
+        </h2>
+
+        <div class="empty-message" *ngIf="itineraryDays.length === 0 && !daysLoading">
+          <p>Aucun jour d'itinéraire défini.</p>
+        </div>
+
+        <div class="itinerary-days" *ngIf="itineraryDays.length > 0">
+          <mat-accordion>
+            <mat-expansion-panel *ngFor="let day of dayPrograms  ">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Jour {{ day.dayNumber }}
+                </mat-panel-title>
+                <mat-panel-description>
+                  {{ day.activities?.length || 0 }} activité(s)
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <div class="day-description">
+                <p>{{ day.description }}</p>
+              </div>
+
+              <div class="activities-list" *ngIf="day.activities && day.activities.length > 0">
+                <h3>Activités</h3>
+                <mat-list>
+                  <mat-list-item *ngFor="let activity of day.activities" class="activity-item">
+                    <div class="activity-info">
+                      <h4>{{ activity.name }}</h4>
+                      <p>{{ activity.description }}</p>
+                      <div class="activity-details">
+                        <span>
+                          <mat-icon>schedule</mat-icon>
+                          {{ activity.startTime | date:'HH:mm' }} - {{ activity.endTime | date:'HH:mm' }}
+                        </span>
+                        <span *ngIf="activity.cost">
+                          <mat-icon>euro</mat-icon>
+                          {{ activity.cost }}
+                        </span>
+                        <span *ngIf="activity.category">
+                          <mat-icon>category</mat-icon>
+                          {{ activity.category }}
+                        </span>
+                        <span *ngIf="activity.difficulty">
+                          <mat-icon>fitness_center</mat-icon>
+                          Difficulté: {{ activity.difficulty }}
+                        </span>
+                      </div>
+                      <div class="activity-location" *ngIf="activity.location">
+                        <mat-icon>place</mat-icon>
+                        {{ activity.location.nameLocation }}, {{ activity.location.city }}
+                      </div>
+                    </div>
+                  </mat-list-item>
+                </mat-list>
+              </div>
+
+              <div class="empty-activities" *ngIf="!day.activities || day.activities.length === 0">
+                <p>Aucune activité définie pour ce jour.</p>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Informations supplémentaires -->
+      <div class="content-section additional-info">
+        <h2>Informations supplémentaires</h2>
+        <div class="info-grid">
+          <div class="info-item" *ngIf="content.budget">
+            <mat-icon>account_balance_wallet</mat-icon>
+            <div class="info-content">
+              <h3>Budget</h3>
+              <p>{{ content.budget }} €</p>
+            </div>
+          </div>
+          <div class="info-item" *ngIf="content.rating">
+            <mat-icon>star</mat-icon>
+            <div class="info-content">
+              <h3>Note</h3>
+              <p>{{ content.rating }}/5</p>
+            </div>
+          </div>
+          <div class="info-item" *ngIf="content.likeCount">
+            <mat-icon>thumb_up</mat-icon>
+            <div class="info-content">
+              <h3>J'aime</h3>
+              <p>{{ content.likeCount }}</p>
+            </div>
+          </div>
+          <div class="info-item" *ngIf="content.tags">
+            <mat-icon>local_offer</mat-icon>
+            <div class="info-content">
+              <h3>Tags</h3>
+              <div class="tags-list">
+                <span class="tag" *ngFor="let tag of content.tags.split(',')">{{ tag.trim() }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Boutons d'action bas de page -->
+      <div class="footer-actions">
+        <button mat-button (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon> Retour
+        </button>
+      </div>
+    </div>

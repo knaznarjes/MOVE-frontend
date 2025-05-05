@@ -2,7 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { AuthRequest } from 'app/core/models/models';
+import { AuthenticationRequest } from 'app/core/models/models';
 import { AuthService } from 'app/core/services/auth.service';
 import { finalize } from 'rxjs/operators';
 
@@ -47,7 +47,7 @@ export class LoginComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    const request: AuthRequest = {
+    const request: AuthenticationRequest = {
       email: this.loginForm.value.email,
       password: this.loginForm.value.password
     };
@@ -89,7 +89,6 @@ export class LoginComponent implements OnInit {
         this.router.navigate(['/admin/profile']);
         break;
       case 'TRAVELER':
-      case 'USER':
         this.router.navigate(['/profile']);
         break;
       default:
