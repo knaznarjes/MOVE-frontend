@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { PersonnelService } from 'app/modules/developers/developers.service';
 import { Personnel } from 'app/modules/developers/developers.model';
 import { MatDrawer } from '@angular/material/sidenav';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { AddDeveloperDialogComponent } from 'app/modules/developers/developer-dialog/add-developer-dialog.component';
 import { EditDeveloperDialogComponent } from 'app/modules/developers/EditDeveloperDialog/edit-developer-dialog.component';
@@ -18,7 +18,7 @@ export class ListDevelopersComponent implements OnInit {
   personnels: Personnel[] = [];
   selectedPersonnel: Personnel | null = null;
   drawerOpened = false;
-  searchInputControl = new FormControl();
+  searchInputControl = new UntypedFormControl();
 
   constructor(private personnelService: PersonnelService, private dialog: MatDialog) { }
 

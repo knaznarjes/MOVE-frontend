@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { VersionProjet } from '../projet.model';
 import { ProjectService } from '../services/project.service';
@@ -10,13 +10,13 @@ import { ProjectService } from '../services/project.service';
   styleUrls: ['./add-version.component.scss']
 })
 export class AddVersionComponent implements OnInit {
-  versionForm: FormGroup;
+  versionForm: UntypedFormGroup;
   projectId: string | null = null;
   technologies: string[] = [];
   nextVersionNumber: string = '';
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private projectService: ProjectService

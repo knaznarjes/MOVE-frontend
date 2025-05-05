@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ProjectService } from 'app/modules/projects/services/project.service';
 import { PersonnelService } from 'app/modules/projects/services/personnel.service';
@@ -11,7 +11,7 @@ import { TacheService } from 'app/modules/projects/services/tache.service';
   templateUrl: './edit-task-modal.component.html',
 })
 export class EditTaskModalComponent implements OnInit {
-  taskForm: FormGroup;
+  taskForm: UntypedFormGroup;
   allDevelopers: Personnel[] = [];
   displayedDevelopers: Personnel[] = [];
   statuses: string[] = ['Not Started', 'In Progress', 'Completed'];
@@ -19,7 +19,7 @@ export class EditTaskModalComponent implements OnInit {
   error: string | null = null;
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private projectService: ProjectService,
     private personnelService: PersonnelService,
     private tacheService: TacheService,

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, UntypedFormArray, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ProjectService } from '../services/project.service';
 import { VersionProjet, Projet } from '../projet.model';
@@ -12,7 +12,7 @@ import { AddTaskModalComponent } from 'app/modules/projects/details/task/add-tas
   styleUrls: ['./details.component.scss']
 })
 export class DetailsComponent implements OnInit {
-  projetForm: FormGroup;
+  projetForm: UntypedFormGroup;
   showTemplate: 'projectDetail' | 'editProject' | 'versionDetail' | 'editVersion' = 'projectDetail';
   selectedVersion: VersionProjet | null = null;
   errorMessage: string | null = null;
@@ -20,7 +20,7 @@ export class DetailsComponent implements OnInit {
   id: string | null = null;
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private projetService: ProjectService,
     private route: ActivatedRoute,
     private router: Router,
@@ -66,7 +66,7 @@ export class DetailsComponent implements OnInit {
       dateLimite: this.formatDate(data.dateLimite)
     });
 
-    const versions = this.projetForm.get('versions') as FormArray;
+    const versions = this.projetForm.get('versions') as UntypedFormArray;
     versions.clear();
 
     data.versionIds?.forEach(versionId => {
@@ -99,8 +99,8 @@ export class DetailsComponent implements OnInit {
     return d.toISOString().split('T')[0];
   }
 
-  get versions(): FormArray {
-    return this.projetForm.get('versions') as FormArray;
+  get versions(): UntypedFormArray {
+    return this.projetForm.get('versions') as UntypedFormArray;
   }
 
   saveProject(): void {

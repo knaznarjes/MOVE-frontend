@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RegisterRequest, Role } from 'app/core/models/models';
 import { AuthService } from 'app/core/services/auth.service';
@@ -11,14 +11,14 @@ import { finalize } from 'rxjs/operators';
   styleUrls: ['./register.component.scss']
 })
 export class RegisterComponent implements OnInit {
-  registerForm!: FormGroup;
+  registerForm!: UntypedFormGroup;
   loading = false;
   errorMessage = '';
   successMessage = '';
   isSubmitting = false;
 
   constructor(
-    private formBuilder: FormBuilder,
+    private formBuilder: UntypedFormBuilder,
     private authService: AuthService,
     private router: Router
   ) {}

@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators, UntypedFormControl } from '@angular/forms';
 import { PersonnelService } from 'app/modules/developers/developers.service';
 import { Personnel } from 'app/modules/developers/developers.model';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
@@ -15,7 +15,7 @@ import { map, startWith } from 'rxjs/operators';
   styleUrls: ['./add-developer-dialog.component.scss']
 })
 export class AddDeveloperDialogComponent implements OnInit {
-  developerForm: FormGroup;
+  developerForm: UntypedFormGroup;
   availableSkills: string[] = [
     'Angular',
     'SpringBoot',
@@ -42,11 +42,11 @@ export class AddDeveloperDialogComponent implements OnInit {
 
   @ViewChild('skillInput') skillInput: ElementRef<HTMLInputElement>;
 
-  skillCtrl = new FormControl('');
+  skillCtrl = new UntypedFormControl('');
 
   constructor(
     private dialogRef: MatDialogRef<AddDeveloperDialogComponent>,
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private personnelService: PersonnelService
   ) {
     this.developerForm = this.fb.group({

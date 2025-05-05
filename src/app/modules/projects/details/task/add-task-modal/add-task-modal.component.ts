@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ProjectService } from 'app/modules/projects/services/project.service';
 import { PersonnelService } from 'app/modules/projects/services/personnel.service';
@@ -11,12 +11,12 @@ import { Tache, Personnel } from 'app/modules/projects/projet.model';
   styleUrls: ['./add-task-modal.component.scss']
 })
 export class AddTaskModalComponent implements OnInit {
-  taskForm: FormGroup;
+  taskForm: UntypedFormGroup;
   personnels: Personnel[] = [];
   statuses: string[] = ['Not Started', 'In Progress'];
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private projectService: ProjectService,
     private personnelService: PersonnelService,
     public dialogRef: MatDialogRef<AddTaskModalComponent>,

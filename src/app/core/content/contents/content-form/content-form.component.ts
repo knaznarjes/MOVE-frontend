@@ -3,7 +3,7 @@
 /* eslint-disable arrow-parens */
 /* eslint-disable curly */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, UntypedFormArray, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, finalize, switchMap, tap } from 'rxjs/operators';
@@ -27,7 +27,7 @@ selectedTags: any;
 addTag($event: any) {
 throw new Error('Method not implemented.');
 }
-  contentForm: FormGroup;
+  contentForm: UntypedFormGroup;
   contentTypes = Object.values(ContentType);
   isEditing = false;
   contentId: string;
@@ -43,7 +43,7 @@ throw new Error('Method not implemented.');
   private coverImageFile: File;
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private contentService: ContentService,
     private locationService: LocationService,
     private mediaService: MediaService,
@@ -150,12 +150,12 @@ throw new Error('Method not implemented.');
     );
   }
 
-  get locationsArray(): FormArray {
-    return this.contentForm.get('locations') as FormArray;
+  get locationsArray(): UntypedFormArray {
+    return this.contentForm.get('locations') as UntypedFormArray;
   }
 
-  get dayProgramsArray(): FormArray {
-    return this.contentForm.get('dayPrograms') as FormArray;
+  get dayProgramsArray(): UntypedFormArray {
+    return this.contentForm.get('dayPrograms') as UntypedFormArray;
   }
 
   addLocation(): void {
@@ -197,8 +197,8 @@ throw new Error('Method not implemented.');
     }
   }
 
-  getActivitiesArray(dayIndex: number): FormArray {
-    return (this.dayProgramsArray.at(dayIndex) as FormGroup).get('activities') as FormArray;
+  getActivitiesArray(dayIndex: number): UntypedFormArray {
+    return (this.dayProgramsArray.at(dayIndex) as UntypedFormGroup).get('activities') as UntypedFormArray;
   }
 
   addActivity(dayIndex: number): void {
@@ -330,7 +330,7 @@ throw new Error('Method not implemented.');
                 activities: this.fb.array([])
               });
 
-              const activitiesArray = dayGroup.get('activities') as FormArray;
+              const activitiesArray = dayGroup.get('activities') as UntypedFormArray;
 
               // Load activities for this day
               if (day.activities && day.activities.length > 0) {
@@ -505,7 +505,7 @@ throw new Error('Method not implemented.');
     const form = this.contentForm;
     Object.keys(form.controls).forEach(key => {
       const control = form.get(key);
-      if (control instanceof FormGroup) {
+      if (control instanceof UntypedFormGroup) {
         this.validateFormGroup(control);
       } else {
         control.markAsTouched();
@@ -517,30 +517,30 @@ throw new Error('Method not implemented.');
 
     // Validate locations
     this.locationsArray.controls.forEach((control, index) => {
-      this.validateFormGroup(control as FormGroup, `locations[${index}]`);
+      this.validateFormGroup(control as UntypedFormGroup, `locations[${index}]`);
     });
 
     // Validate day programs and activities
     this.dayProgramsArray.controls.forEach((dayControl, dayIndex) => {
-      this.validateFormGroup(dayControl as FormGroup, `dayPrograms[${dayIndex}]`);
+      this.validateFormGroup(dayControl as UntypedFormGroup, `dayPrograms[${dayIndex}]`);
 
       const activitiesArray = this.getActivitiesArray(dayIndex);
       activitiesArray.controls.forEach((activityControl, activityIndex) => {
-        this.validateFormGroup(activityControl as FormGroup, `dayPrograms[${dayIndex}].activities[${activityIndex}]`);
+        this.validateFormGroup(activityControl as UntypedFormGroup, `dayPrograms[${dayIndex}].activities[${activityIndex}]`);
 
         // Validate activity location
-        const locationControl = (activityControl as FormGroup).get('location') as FormGroup;
+        const locationControl = (activityControl as UntypedFormGroup).get('location') as UntypedFormGroup;
         this.validateFormGroup(locationControl, `dayPrograms[${dayIndex}].activities[${activityIndex}].location`);
       });
     });
   }
 
-  validateFormGroup(group: FormGroup, prefix: string = ''): void {
+  validateFormGroup(group: UntypedFormGroup, prefix: string = ''): void {
     Object.keys(group.controls).forEach(key => {
       const control = group.get(key);
       const fieldName = prefix ? `${prefix}.${key}` : key;
 
-      if (control instanceof FormGroup) {
+      if (control instanceof UntypedFormGroup) {
         this.validateFormGroup(control, fieldName);
       } else {
         control.markAsTouched();
@@ -577,11 +577,11 @@ throw new Error('Method not implemented.');
   }
 
   isLocationControlValid(dayIndex: number, activityIndex: number, controlName: string): boolean {
-    const control = ((this.getActivitiesArray(dayIndex).at(activityIndex) as FormGroup).get('location') as FormGroup).get(controlName);
+    const control = ((this.getActivitiesArray(dayIndex).at(activityIndex) as UntypedFormGroup).get('location') as UntypedFormGroup).get(controlName);
     return control ? control.valid || !control.touched : true;
   }
 
-  selectExistingLocation(locationGroup: FormGroup): void {
+  selectExistingLocation(locationGroup: UntypedFormGroup): void {
     const locationId = locationGroup.get('id').value;
     if (locationId) {
       const location = this.existingLocations.find(loc => loc.id === locationId);
@@ -596,7 +596,7 @@ throw new Error('Method not implemented.');
     }
   }
 
-  onCountrySelected(locationGroup: FormGroup, countryName: string): void {
+  onCountrySelected(locationGroup: UntypedFormGroup, countryName: string): void {
     const selectedCountry = this.countries.find(c => c.country === countryName);
     if (selectedCountry) {
       locationGroup.patchValue({

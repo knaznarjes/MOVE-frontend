@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges, Inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { VersionProjet } from 'app/modules/projects/projet.model';
 import { VersionProjetService } from 'app/modules/projects/services/version-projet.service';
@@ -12,11 +12,11 @@ import { VersionProjetService } from 'app/modules/projects/services/version-proj
 export class VersionEditComponent implements OnChanges {
   @Input() version: VersionProjet | null = null;
 
-  versionForm: FormGroup;
+  versionForm: UntypedFormGroup;
   technologies: string[] = [];
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private versionService: VersionProjetService,
     public dialogRef: MatDialogRef<VersionEditComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { version: VersionProjet }

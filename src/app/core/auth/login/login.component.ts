@@ -1,6 +1,6 @@
 // login.component.ts
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthenticationRequest } from 'app/core/models/models';
 import { AuthService } from 'app/core/services/auth.service';
@@ -12,13 +12,13 @@ import { finalize } from 'rxjs/operators';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit {
-  loginForm!: FormGroup;
+  loginForm!: UntypedFormGroup;
   loading = false;
   errorMessage = '';
   redirectUrl: string | null = null;
 
   constructor(
-    private formBuilder: FormBuilder,
+    private formBuilder: UntypedFormBuilder,
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute

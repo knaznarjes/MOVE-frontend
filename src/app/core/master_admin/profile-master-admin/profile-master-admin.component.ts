@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/member-ordering */
 import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators, UntypedFormArray } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -46,12 +46,12 @@ import { Account, Preference, PreferenceDTO, Role, User, UserDTO } from '../../m
     ]
   })
 export class MasterAdminProfileComponent implements OnInit {
-  profileForm: FormGroup;
-  preferencesForm: FormGroup;
-  passwordForm: FormGroup;
-  userRoleForm: FormGroup;
+  profileForm: UntypedFormGroup;
+  preferencesForm: UntypedFormGroup;
+  passwordForm: UntypedFormGroup;
+  userRoleForm: UntypedFormGroup;
 
-  userManagementForm: FormGroup;
+  userManagementForm: UntypedFormGroup;
   users: User[] = [];
   filteredUsers: User[] = [];
   selectedUser: User | null = null;
@@ -83,7 +83,7 @@ export class MasterAdminProfileComponent implements OnInit {
     router: any;
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private authService: AuthService,
     private accountService: AccountService,
     private preferenceService: PreferenceService,
@@ -125,7 +125,7 @@ export class MasterAdminProfileComponent implements OnInit {
     console.log('Forms initialized in initForms');
   }
 
-  private passwordMatchValidator(form: FormGroup): null | object {
+  private passwordMatchValidator(form: UntypedFormGroup): null | object {
     const newPassword = form.get('newPassword')?.value;
     const confirmPassword = form.get('confirmPassword')?.value;
     return newPassword === confirmPassword ? null : { passwordMismatch: true };
@@ -173,11 +173,11 @@ export class MasterAdminProfileComponent implements OnInit {
     }
   }
 
-  get preferencesArray(): FormArray {
-    return this.preferencesForm.get('preferences') as FormArray;
+  get preferencesArray(): UntypedFormArray {
+    return this.preferencesForm.get('preferences') as UntypedFormArray;
   }
   isCategoryAlreadySelected(category: string, currentIndex: number): boolean {
-    const preferencesArray = this.preferencesForm.get('preferences') as FormArray;
+    const preferencesArray = this.preferencesForm.get('preferences') as UntypedFormArray;
 
     for (let i = 0; i < preferencesArray.length; i++) {
       if (i !== currentIndex) { // Ne pas vérifier l'élément actuel
@@ -996,7 +996,7 @@ getEmailForUser(user: User): string {
       this.preferencesArray.push(this.createPreferenceFormGroup());
     }
 
-    createPreferenceFormGroup(): FormGroup {
+    createPreferenceFormGroup(): UntypedFormGroup {
         return this.fb.group({
           id: [''],
           category: ['', [Validators.required]],

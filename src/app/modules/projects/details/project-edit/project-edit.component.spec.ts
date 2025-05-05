@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Projet } from 'app/modules/projects/projet.model';
 
 @Component({
@@ -12,9 +12,9 @@ export class ProjectEditComponent implements OnInit {
   @Input() project: Projet | null = null;
   @Output() templateName = new EventEmitter<'projectDetail' | 'editProject' | 'versionDetail' | 'editVersion'>();
   @Output() save = new EventEmitter<Projet>();
-  projetForm: FormGroup;
+  projetForm: UntypedFormGroup;
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: UntypedFormBuilder) {}
 
   ngOnInit(): void {
     this.init();

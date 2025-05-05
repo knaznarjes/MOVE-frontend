@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/member-ordering */
 import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators, UntypedFormArray } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { AccountService } from '../../services/account.service';
 import { PreferenceService } from '../../services/preference.service';
@@ -39,9 +39,9 @@ import { trigger, state, style, animate, transition } from '@angular/animations'
     ]
   })
 export class TravelerProfileComponent implements OnInit {
-  profileForm: FormGroup;
-  preferencesForm: FormGroup;
-  passwordForm: FormGroup;
+  profileForm: UntypedFormGroup;
+  preferencesForm: UntypedFormGroup;
+  passwordForm: UntypedFormGroup;
   isLoading = true;
   isUpdating = false;
   currentUser: User | null = null;
@@ -61,7 +61,7 @@ export class TravelerProfileComponent implements OnInit {
   router: any;
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private authService: AuthService,
     private accountService: AccountService,
     private preferenceService: PreferenceService,
@@ -86,7 +86,7 @@ export class TravelerProfileComponent implements OnInit {
     }, { validator: this.passwordMatchValidator });
   }
 
-  passwordMatchValidator(group: FormGroup) {
+  passwordMatchValidator(group: UntypedFormGroup) {
     const newPassword = group.get('newPassword')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
     return newPassword === confirmPassword ? null : { passwordMismatch: true };
@@ -439,8 +439,8 @@ export class TravelerProfileComponent implements OnInit {
     }
   }
 
-  get preferencesArray(): FormArray {
-    return this.preferencesForm.get('preferences') as FormArray;
+  get preferencesArray(): UntypedFormArray {
+    return this.preferencesForm.get('preferences') as UntypedFormArray;
   }
 
   setActiveTab(tab: string): void {
@@ -686,7 +686,7 @@ export class TravelerProfileComponent implements OnInit {
         this.preferencesArray.push(this.createPreferenceFormGroup());
       }
 
-      createPreferenceFormGroup(): FormGroup {
+      createPreferenceFormGroup(): UntypedFormGroup {
         return this.fb.group({
           id: [''],
           category: ['', [Validators.required]],

@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators, UntypedFormControl } from '@angular/forms';
 import { Personnel } from 'app/modules/developers/developers.model';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
@@ -14,7 +14,7 @@ import { map, startWith } from 'rxjs/operators';
   styleUrls: ['./edit-developer-dialog.component.scss']
 })
 export class EditDeveloperDialogComponent implements OnInit {
-  developerForm: FormGroup;
+  developerForm: UntypedFormGroup;
   availableSkills: string[] = ['Angular', 'SpringBoot', 'Flutter', 'TypeScript', 'Laravel', 'React'];
   availableRoles: string[] = ['Senior Developer',
     'Project Manager',
@@ -27,10 +27,10 @@ export class EditDeveloperDialogComponent implements OnInit {
 
   @ViewChild('skillInput') skillInput: ElementRef<HTMLInputElement>;
 
-  skillCtrl = new FormControl('');
+  skillCtrl = new UntypedFormControl('');
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private dialogRef: MatDialogRef<EditDeveloperDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: Personnel
   ) {
