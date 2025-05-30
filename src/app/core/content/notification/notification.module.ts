@@ -18,22 +18,22 @@ import { MatLegacyInputModule as MatInputModule } from '@angular/material/legacy
 import { MatLegacySelectModule as MatSelectModule } from '@angular/material/legacy-select';
 import { MatLegacyAutocompleteModule as MatAutocompleteModule } from '@angular/material/legacy-autocomplete';
 
-import { ContentHomeComponent } from './content-home.component';
-import { ContentHomeRoutes } from './content-home.routing';
+import { NotificationComponent } from './notification.component';
+import { NotificationRoutes } from './notification.routing';
 
 @NgModule({
   declarations: [
-    ContentHomeComponent
+    NotificationComponent
   ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    RouterModule.forChild(ContentHomeRoutes),
-    // Material Modules
+    RouterModule.forChild(NotificationRoutes),
+    // Material Modules (removed duplicate MatIconModule)
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    MatIconModule, // Keep only one instance
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatChipsModule,
@@ -43,10 +43,11 @@ import { ContentHomeRoutes } from './content-home.routing';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatAutocompleteModule, // Added for mat-autocomplete
+    MatAutocompleteModule,
+     MatIconModule
   ],
   exports: [
-    ContentHomeComponent
+    NotificationComponent
   ]
 })
-export class ContentHomeModule { }
+export class NotificationModule { }

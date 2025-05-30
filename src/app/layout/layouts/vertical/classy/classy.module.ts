@@ -1,10 +1,14 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatLegacyMenuModule as MatMenuModule } from '@angular/material/legacy-menu';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatLegacyTooltipModule as MatTooltipModule } from '@angular/material/legacy-tooltip';
+import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/legacy-dialog';
 import { FuseNavigationModule } from '@fuse/components/navigation';
 import { FuseLoadingBarModule } from '@fuse/components/loading-bar';
 import { FuseFullscreenModule } from '@fuse/components/fullscreen/fullscreen.module';
@@ -17,19 +21,22 @@ import { ShortcutsModule } from 'app/layout/common/shortcuts/shortcuts.module';
 import { UserModule } from 'app/layout/common/user/user.module';
 import { SharedModule } from 'app/shared/shared.module';
 import { ClassyLayoutComponent } from 'app/layout/layouts/vertical/classy/classy.component';
-import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/legacy-dialog';
 
 @NgModule({
     declarations: [
         ClassyLayoutComponent
     ],
-    imports     : [
+    imports: [
+        CommonModule,
         HttpClientModule,
         RouterModule,
         MatButtonModule,
         MatDividerModule,
         MatIconModule,
         MatMenuModule,
+        MatBadgeModule,
+        MatTooltipModule,
+        MatDialogModule,
         FuseFullscreenModule,
         FuseLoadingBarModule,
         FuseNavigationModule,
@@ -40,13 +47,11 @@ import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/lega
         SearchModule,
         ShortcutsModule,
         UserModule,
-        SharedModule,
-        MatDialogModule
+        SharedModule
     ],
-    exports     : [
+    exports: [
         ClassyLayoutComponent
     ]
 })
-export class ClassyLayoutModule
-{
+export class ClassyLayoutModule {
 }

@@ -30,21 +30,22 @@ $transition: all 0.3s ease;
 $font-family-base: 'Poppins', sans-serif;
 $font-family-accent: 'Pacifico', cursive;
 
-// Main Application Styling
 .admin-profile-container {
-  font-family: $font-family-base;
-  color: $gray-800;
-  background-color: $light-blue;
-  padding: 1rem;
-  min-height: 100vh;
-  max-width: 1280px;
-  margin: 0 auto;
-}
+    font-family: $font-family-base;
+    color: $gray-800;
+    background-color: $light-blue;
+    padding: 1rem;
+    min-height: 100vh;
+    max-width: 100%;  // Élargir à toute la largeur
+    width: 100%;
+    margin: 0 auto;
+  }
 
 // Tabs Navigation
 .tabs-container {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;  // ✅ ajouté pour centrer les onglets horizontalement
   gap: 0.3rem;
   margin-bottom: 1.25rem;
   padding: 0.4rem;
@@ -90,24 +91,27 @@ $font-family-accent: 'Pacifico', cursive;
 
 // Card Styling
 .mat-card {
-  border-radius: $border-radius;
-  box-shadow: $shadow;
-  background-color: $white;
-  margin-bottom: 1.5rem;
-  overflow: hidden;
+    border-radius: $border-radius;
+    box-shadow: $shadow;
+    background-color: $white;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    width: 100%;  // Prendre toute la largeur disponible
+    .mat-card-header {
+        background: linear-gradient(to right, $teal-primary, $pink-primary);
+        padding: 0.875rem 1rem;
+        text-align: center;  // Centrage du texte
 
-  .mat-card-header {
-    background: linear-gradient(to right, $teal-primary, $pink-primary);
-    padding: 0.875rem 1rem;
+        .mat-card-title {
+          color: $white;
+          display: flex;
+          align-items: center;
+          justify-content: center;  // Ajouté pour le centrage horizontal
+          gap: 0.5rem;
+          font-weight: 600;
+          font-size: 1.2rem; // Légèrement plus gros si tu veux
+          margin: 0;
 
-    .mat-card-title {
-      color: $white;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-weight: 600;
-      font-size: 1.1rem;
-      margin: 0;
 
       .material-icons {
         background-color: rgba(255, 255, 255, 0.2);
@@ -425,22 +429,25 @@ button {
   margin-top: 1.5rem;
 }
 
-// Profile Form Styles
 .profile-content {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.25rem;
+    width: 100%;
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      justify-items: center;  // Centre le contenu en mobile aussi
+    }
   }
-}
 
-.profile-photo-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+  .profile-photo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;  // Centre horizontalement partout
+    justify-content: center;  // Centre verticalement si besoin
+  }
+
 
 .profile-photo-container {
   position: relative;
@@ -487,11 +494,26 @@ button {
 }
 
 .photo-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
-}
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+
+    button {
+      width: 160px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.9rem;
+
+      .material-icons {
+        font-size: 1.2rem;
+      }
+    }
+  }
+
 
 // Status Controls
 .status-controls {

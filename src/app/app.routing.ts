@@ -9,15 +9,9 @@ import { MasterAdminProfileComponent } from './core/master_admin/profile-master-
 import { ContentDetailsComponent } from './core/content/contents/content-details/content-details.component';
 import { ContentFormComponent } from './core/content/contents/content-form/content-form.component';
 import { ContentHomeComponent } from './core/content/contents/content-home/content-home.component';
+import { NotificationComponent } from './core/content/notification/notification.component';
 
 export const appRoutes: Route[] = [
-    // Redirection par défaut vers /home
-    {
-        path: '',
-        pathMatch: 'full',
-        redirectTo: 'home'
-    },
-
     // Routes publiques (pas besoin d'être connecté)
     {
         path: '',
@@ -48,6 +42,12 @@ export const appRoutes: Route[] = [
         canActivate: [AuthGuard],
         component: LayoutComponent,
         children: [
+              {
+            path: 'notification-details/:id',
+                component: NotificationComponent,
+                canActivate: [RoleGuard],
+                data: { allowedRoles: ['MASTERADMIN', 'ADMIN', 'TRAVELER'] }
+        },
             {
                 path: 'profile',
                 component: TravelerProfileComponent,
@@ -76,16 +76,15 @@ export const appRoutes: Route[] = [
                 path: 'add/content',
                 component: ContentFormComponent,
                 canActivate: [RoleGuard],
-                data: { allowedRoles: ['MASTERADMIN', 'ADMIN', 'TRAVELER'] }
+                data: { allowedRoles: ['TRAVELER'] }
             },
             {
                 path: 'edit/:id',
                 component: ContentFormComponent,
                 canActivate: [RoleGuard],
-                data: { allowedRoles: ['MASTERADMIN', 'ADMIN', 'TRAVELER'] }
+                data: { allowedRoles: ['TRAVELER'] }
             },
             {
-                // ✅ Changement ici : path plus explicite pour éviter de capter des routes inattendues
                 path: 'content/:id',
                 component: ContentDetailsComponent,
                 canActivate: [RoleGuard],
@@ -93,7 +92,6 @@ export const appRoutes: Route[] = [
             }
         ]
     },
-
     // Wildcard pour 404 (redirige vers home)
     {
         path: '**',

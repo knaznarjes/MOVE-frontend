@@ -9,6 +9,10 @@ import { MatLegacyListModule as MatListModule } from '@angular/material/legacy-l
 import { MatLegacyProgressSpinnerModule as MatProgressSpinnerModule } from '@angular/material/legacy-progress-spinner';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatLegacySnackBarModule as MatSnackBarModule } from '@angular/material/legacy-snack-bar';
+import { FormsModule } from '@angular/forms';
+
+// Import du module emoji picker
+import { PickerModule } from '@ctrl/ngx-emoji-mart';
 
 import { ContentDetailsComponent } from './content-details.component';
 
@@ -26,7 +30,9 @@ import { ContentDetailsComponent } from './content-details.component';
     MatListModule,
     MatProgressSpinnerModule,
     MatExpansionModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    FormsModule,
+    PickerModule // Ajout du module emoji picker
   ],
   exports: [
     ContentDetailsComponent

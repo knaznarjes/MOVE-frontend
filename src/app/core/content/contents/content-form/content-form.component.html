@@ -1,0 +1,427 @@
+<!-- Content Form Template with Updated Location and Map Methods -->
+<div class="content-form-container">
+  <h1 class="page-title">{{ isEditing ? 'Edit Content' : 'Create New Content' }}</h1>
+
+  <!-- Progress bar -->
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div class="progress" [style.width]="(currentStep / totalSteps * 100) + '%'"></div>
+    </div>
+    <div class="steps-indicator">
+      <div class="step" [class.active]="currentStep >= 1" (click)="onStepChange(1)">1. General Information</div>
+      <div class="step" [class.active]="currentStep >= 2" (click)="onStepChange(2)">2. Dates & Location</div>
+      <div class="step" [class.active]="currentStep >= 3" (click)="onStepChange(3)">3. Program & Activities</div>
+      <div class="step" [class.active]="currentStep >= 4" (click)="onStepChange(4)">4. Media</div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="contentForm" (ngSubmit)="onSubmit()">
+
+    <!-- Step 1: General Information -->
+    <div class="step-content" *ngIf="currentStep === 1">
+      <div class="card" formGroupName="generalInfo">
+        <div class="card-header">
+          <h2>General Information</h2>
+        </div>
+        <div class="card-body">
+          <!-- Title -->
+          <div class="form-group">
+            <label for="title">Title *</label>
+            <input type="text" id="title" formControlName="title" class="form-control"
+                   [class.is-invalid]="generalInfo.get('title')?.invalid && generalInfo.get('title')?.touched">
+            <div class="invalid-feedback" *ngIf="generalInfo.get('title')?.errors?.required && generalInfo.get('title')?.touched">
+              Title is required.
+            </div>
+            <div class="invalid-feedback" *ngIf="generalInfo.get('title')?.errors?.minlength && generalInfo.get('title')?.touched">
+              Title must be at least 5 characters.
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label for="description">Description *</label>
+            <textarea id="description" formControlName="description" class="form-control" rows="4"
+                     [class.is-invalid]="generalInfo.get('description')?.invalid && generalInfo.get('description')?.touched"></textarea>
+            <div class="invalid-feedback" *ngIf="generalInfo.get('description')?.errors?.required && generalInfo.get('description')?.touched">
+              Description is required.
+            </div>
+            <div class="invalid-feedback" *ngIf="generalInfo.get('description')?.errors?.minlength && generalInfo.get('description')?.touched">
+              Description must be at least 50 characters.
+            </div>
+          </div>
+
+          <!-- Content Type -->
+          <div class="form-group">
+            <label for="type">Content Type *</label>
+            <select id="type" formControlName="type" class="form-control">
+              <option *ngFor="let type of contentTypes" [value]="type">{{ type | titlecase }}</option>
+            </select>
+          </div>
+
+          <!-- Tags -->
+          <div class="form-group">
+            <label>Tags</label>
+            <div class="tags-container">
+              <div class="selected-tags">
+                <div class="tag" *ngFor="let tag of tags">
+                  {{ tag }}
+                  <button type="button" class="btn-remove" (click)="removeTag(tag)">×</button>
+                </div>
+              </div>
+              <input type="text" placeholder="Add tag..."
+                     (keyup.enter)="addTag($event)"
+                     (keyup.comma)="addTag($event)"
+                     class="form-control tag-input">
+            </div>
+            <div class="available-tags">
+              <span>Suggested tags:</span>
+              <div class="tag-suggestion" *ngFor="let tag of availableTags" (click)="selectTag(tag)">
+                {{ tag.label }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Budget -->
+          <div class="form-group">
+            <label for="budget">Budget (USD)</label>
+            <input type="number" id="budget" formControlName="budget" class="form-control" min="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Dates & Location -->
+    <div class="step-content" *ngIf="currentStep === 2">
+      <div class="card" formGroupName="datesAndLocation">
+        <div class="card-header">
+          <h2>Dates & Location</h2>
+        </div>
+        <div class="card-body">
+          <!-- Dates -->
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="startDate">Start Date</label>
+              <input type="date" id="startDate" formControlName="startDate" class="form-control">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="endDate">End Date</label>
+              <input type="date" id="endDate" formControlName="endDate" class="form-control">
+            </div>
+          </div>
+
+          <!-- Map -->
+          <div class="form-group">
+            <label>Select Location on Map</label>
+<div #mapContainer class="map-container" id="mainMap"></div>
+            <small class="form-text text-muted">Click on the map to select your location. Coordinates will be automatically filled.</small>
+          </div>
+
+          <!-- Locations Form Array -->
+          <div formArrayName="locations">
+            <div *ngFor="let location of locations.controls; let i = index" [formGroupName]="i" class="location-item">
+              <h3>Location {{ i + 1 }}</h3>
+
+              <div class="form-group">
+                <label [for]="'address' + i">Address *</label>
+                <input [id]="'address' + i" type="text" formControlName="address" class="form-control"
+                       [class.is-invalid]="location.get('address')?.invalid && location.get('address')?.touched">
+                <div *ngIf="location.get('address')?.invalid && location.get('address')?.touched" class="invalid-feedback">
+                  Address is required.
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label [for]="'country' + i">Country *</label>
+                <input [id]="'country' + i" type="text" formControlName="country" class="form-control"
+                       [class.is-invalid]="location.get('country')?.invalid && location.get('country')?.touched"
+                       [matAutocomplete]="countryAuto">
+                <mat-autocomplete #countryAuto="matAutocomplete">
+                  <mat-option *ngFor="let country of filteredCountries | async" [value]="country">
+                    {{ country }}
+                  </mat-option>
+                </mat-autocomplete>
+                <div *ngIf="location.get('country')?.invalid && location.get('country')?.touched" class="invalid-feedback">
+                  Country is required.
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label [for]="'lat' + i">Latitude</label>
+                  <input [id]="'lat' + i" type="number" formControlName="lat" class="form-control" readonly>
+                </div>
+                <div class="form-group col-md-6">
+                  <label [for]="'lon' + i">Longitude</label>
+                  <input [id]="'lon' + i" type="number" formControlName="lon" class="form-control" readonly>
+                </div>
+              </div>
+
+              <div class="location-actions">
+                <button type="button" class="btn btn-danger btn-sm" (click)="removeLocation(i)" *ngIf="locations.length > 1">
+                  Remove Location
+                </button>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary" (click)="addLocation()">
+              Add Another Location
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Program & Activities -->
+    <div class="step-content" *ngIf="currentStep === 3">
+      <div class="card" formArrayName="dayPrograms">
+        <div class="card-header">
+          <h2>Program & Activities</h2>
+        </div>
+        <div class="card-body">
+          <div *ngIf="dayPrograms.length === 0" class="empty-state">
+            <p>No days added yet. Add your first day.</p>
+            <button type="button" class="btn btn-primary" (click)="addDayProgram()">Add Day</button>
+          </div>
+
+          <div *ngFor="let dayProgram of dayPrograms.controls; let dayIndex = index" [formGroupName]="dayIndex" class="day-program">
+            <div class="day-header">
+              <h3>Day {{ dayProgram.get('dayNumber')?.value }}</h3>
+              <button type="button" class="btn btn-danger btn-sm" (click)="removeDayProgram(dayIndex)">
+                Remove Day
+              </button>
+            </div>
+
+            <div class="form-group">
+              <label [for]="'dayDescription' + dayIndex">Description *</label>
+              <textarea [id]="'dayDescription' + dayIndex" formControlName="description" class="form-control" rows="3"
+                       [class.is-invalid]="dayProgram.get('description')?.invalid && dayProgram.get('description')?.touched"></textarea>
+              <div *ngIf="dayProgram.get('description')?.invalid && dayProgram.get('description')?.touched" class="invalid-feedback">
+                Description is required.
+              </div>
+            </div>
+
+            <!-- Activities -->
+            <div formArrayName="activities">
+              <h4>Activities</h4>
+
+              <div *ngIf="getActivities(dayIndex).length === 0" class="empty-state">
+                <p>No activities added yet.</p>
+              </div>
+
+              <div *ngFor="let activity of getActivities(dayIndex).controls; let activityIndex = index"
+                   [formGroupName]="activityIndex" class="activity-item">
+                <div class="activity-header">
+                  <h5>Activity {{ activityIndex + 1 }}</h5>
+                  <button type="button" class="btn btn-danger btn-sm" (click)="removeActivity(dayIndex, activityIndex)">
+                    Remove Activity
+                  </button>
+                </div>
+
+                <div class="form-group">
+                  <label [for]="'activityName' + dayIndex + '-' + activityIndex">Name *</label>
+                  <input [id]="'activityName' + dayIndex + '-' + activityIndex" type="text" formControlName="name" class="form-control"
+                         [class.is-invalid]="activity.get('name')?.invalid && activity.get('name')?.touched">
+                  <div *ngIf="activity.get('name')?.invalid && activity.get('name')?.touched" class="invalid-feedback">
+                    Name is required.
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label [for]="'activityDescription' + dayIndex + '-' + activityIndex">Description *</label>
+                  <textarea [id]="'activityDescription' + dayIndex + '-' + activityIndex" formControlName="description"
+                           class="form-control" rows="2"
+                           [class.is-invalid]="activity.get('description')?.invalid && activity.get('description')?.touched"></textarea>
+                  <div *ngIf="activity.get('description')?.invalid && activity.get('description')?.touched" class="invalid-feedback">
+                    Description is required.
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group col-md-4">
+                    <label [for]="'cost' + dayIndex + '-' + activityIndex">Cost (USD) *</label>
+                    <input [id]="'cost' + dayIndex + '-' + activityIndex" type="number" formControlName="cost"
+                           class="form-control" min="0"
+                           [class.is-invalid]="activity.get('cost')?.invalid && activity.get('cost')?.touched">
+                    <div *ngIf="activity.get('cost')?.invalid && activity.get('cost')?.touched" class="invalid-feedback">
+                      Valid cost is required.
+                    </div>
+                  </div>
+                  <div class="form-group col-md-4">
+                    <label [for]="'category' + dayIndex + '-' + activityIndex">Category *</label>
+                    <select [id]="'category' + dayIndex + '-' + activityIndex" formControlName="category"
+                            class="form-control"
+                            [class.is-invalid]="activity.get('category')?.invalid && activity.get('category')?.touched">
+                      <option value="">Select a category</option>
+                      <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+                    </select>
+                    <div *ngIf="activity.get('category')?.invalid && activity.get('category')?.touched" class="invalid-feedback">
+                      Category is required.
+                    </div>
+                  </div>
+                  <div class="form-group col-md-4">
+                    <label [for]="'difficulty' + dayIndex + '-' + activityIndex">Difficulty</label>
+                    <select [id]="'difficulty' + dayIndex + '-' + activityIndex" formControlName="difficulty" class="form-control">
+                      <option *ngFor="let difficulty of difficulties" [value]="difficulty">{{ difficulty }}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label [for]="'contactInfo' + dayIndex + '-' + activityIndex">Contact Information</label>
+                  <input [id]="'contactInfo' + dayIndex + '-' + activityIndex" type="text" formControlName="contactInfo"
+                         class="form-control">
+                </div>
+
+                <!-- Activity Location -->
+                <div class="activity-location" formGroupName="location">
+                  <h6>Activity Location</h6>
+
+                  <div class="form-group">
+                    <label [for]="'activityAddress' + dayIndex + '-' + activityIndex">Address</label>
+                    <input [id]="'activityAddress' + dayIndex + '-' + activityIndex" type="text"
+                           formControlName="address" class="form-control">
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" class="btn btn-secondary" (click)="addActivity(dayIndex)">
+                Add Activity
+              </button>
+            </div>
+          </div>
+
+          <div class="add-day-action">
+            <button type="button" class="btn btn-primary" (click)="addDayProgram()">
+              Add Another Day
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Media -->
+    <div class="step-content" *ngIf="currentStep === 4">
+      <div class="card" formGroupName="mediaInfo">
+        <div class="card-header">
+          <h2>Media</h2>
+        </div>
+        <div class="card-body">
+          <!-- Cover Image -->
+          <div class="cover-image-section">
+            <h3>Cover Image</h3>
+
+            <div class="form-group">
+              <label for="coverImage">Select Cover Image</label>
+              <input type="file" id="coverImage" #fileInput (change)="onCoverImageSelected($event)"
+                     class="form-control-file" accept="{{ acceptedImageTypes }}">
+            </div>
+
+            <div class="form-group">
+              <label for="coverTitle">Title</label>
+              <input type="text" id="coverTitle" formControlName="coverTitle" class="form-control">
+            </div>
+
+            <div class="form-group">
+              <label for="coverDescription">Description</label>
+              <textarea id="coverDescription" formControlName="coverDescription" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div *ngIf="coverImagePreview" class="cover-preview">
+              <h4>Cover Preview</h4>
+              <img [src]="coverImagePreview" alt="Cover Preview" class="img-fluid">
+            </div>
+          </div>
+
+          <!-- Additional Photos -->
+          <div class="photos-section">
+            <h3>Additional Photos</h3>
+
+            <div class="form-group">
+              <label for="photos">Add Photos</label>
+              <input type="file" id="photos" multiple (change)="onPhotosSelected($event)"
+                     class="form-control-file" accept="{{ acceptedImageTypes }}">
+            </div>
+
+            <div *ngIf="photosPreviews.length > 0" class="photos-preview">
+              <h4>Photos Preview</h4>
+              <div class="media-previews">
+                <div *ngFor="let preview of photosPreviews; let i = index" class="media-preview-item">
+                  <img [src]="preview" alt="Photo Preview" class="img-thumbnail">
+                  <button type="button" class="btn btn-danger btn-sm" (click)="removePhoto(i)">Remove</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Existing Photos when editing -->
+            <div *ngIf="existingMedia.length > 0" class="existing-media">
+              <h4>Existing Media</h4>
+              <div class="media-previews">
+                <div *ngFor="let media of existingMedia" class="media-preview-item">
+                  <img *ngIf="media.mediaType === 'IMAGE' || media.mediaType === 'COVER'"
+     [src]="getMediaUrl(media.id)" alt="Existing Media" class="img-thumbnail">
+
+<video *ngIf="media.mediaType === 'VIDEO'" controls class="img-thumbnail">
+  <source [src]="getMediaUrl(media.id)" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+                  <button type="button" class="btn btn-danger btn-sm" (click)="removeExistingMedia(media.id)">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Videos -->
+          <div class="videos-section">
+            <h3>Videos</h3>
+
+            <div class="form-group">
+              <label for="videos">Add Videos</label>
+              <input type="file" id="videos" #videoInput multiple (change)="onVideosSelected($event)"
+                     class="form-control-file" accept="{{ acceptedVideoTypes }}">
+            </div>
+
+            <div *ngIf="videoPreviews.length > 0" class="videos-preview">
+              <h4>Videos Preview</h4>
+              <div class="media-previews">
+                <div *ngFor="let preview of videoPreviews; let i = index" class="media-preview-item">
+                  <video controls class="img-thumbnail">
+                    <source [src]="preview" type="video/mp4">
+                    Your browser does not support the video tag.
+                  </video>
+                  <button type="button" class="btn btn-danger btn-sm" (click)="removeVideo(i)">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading-overlay" *ngIf="loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons">
+      <button type="button" class="btn btn-secondary" (click)="previousStep()" *ngIf="currentStep > 1">
+        Previous
+      </button>
+     <button type="button"  class="btn btn-secondary"(click)="nextStep()" [disabled]="currentStep === maxSteps">
+  Next
+</button>
+      <button type="submit" class="btn btn-success" *ngIf="currentStep === maxSteps" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Saving...' : (isEditing ? 'Update' : 'Save') }}
+      </button>
+    </div>
+
+    <!-- Error messages -->
+    <div class="alert alert-danger mt-3" *ngIf="submitError">
+      {{ submitError }}
+    </div>
+  </form>
+</div>

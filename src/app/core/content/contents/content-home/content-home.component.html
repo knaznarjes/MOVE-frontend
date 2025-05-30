@@ -1,99 +1,806 @@
-<!-- content-home.component.html -->
-<div class="content-list">
-    <h1>Travel & Discoveries</h1>
 
-    <div *ngIf="loading" class="loading-spinner">
-      <mat-spinner diameter="50"></mat-spinner>
+<div class="content-home-container">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="main-title">MOVE</h1>
+      <div class="subtitle-container">
+        <span class="subtitle-item">Memories</span>
+        <span class="subtitle-divider">/</span>
+        <span class="subtitle-item">Organize</span>
+        <span class="subtitle-divider">/</span>
+        <span class="subtitle-item">Vacations</span>
+        <span class="subtitle-divider">/</span>
+        <span class="subtitle-item">Explore</span>
+      </div>
+      <p class="hero-description">Share your adventures, plan your trips, inspire others.</p>
     </div>
+  </div>
 
-    <div *ngIf="!loading && contents.length === 0" class="no-content">
-      <p>No trips found. Start creating your adventures!</p>
-    </div>
-
-    <div *ngIf="!loading && contents.length > 0" [@listAnimation]="contents.length">
-      <div *ngFor="let content of contents" class="travel-ticket">
-        <div class="ticket-header">
-          <h2>{{ content.title }}</h2>
-          <div class="ticket-type">{{ content.type === 'TRAVEL_STORY' ? 'Story' : 'Itinerary' }}</div>
+  <div class="quick-create-section">
+    <div class="container">
+      <div class="row" *ngIf="isTraveler()">
+        <div class="col-md-6">
+          <button class="create-button story-button" (click)="createNewContent(contentTypes.TRAVEL_STORY)">
+            <i class="fa fa-book-open"></i> Create Travel Story
+          </button>
         </div>
+        <div class="col-md-6">
+          <button class="create-button itinerary-button" (click)="createNewContent(contentTypes.ITINERARY)">
+            <i class="fa fa-route"></i> Create Itinerary
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        <div class="ticket-body">
-          <div class="ticket-cover" *ngIf="content.coverImageId">
-            <img [src]="environment.apiUrl + '/api/media/file/' + content.coverImageId" alt="{{ content.title }}">
-          </div>
-
-          <p class="ticket-description">{{ content.description }}</p>
-
-          <div class="ticket-details">
-            <div class="ticket-info">
-              <p *ngIf="content.budget"><strong>Budget:</strong> {{ content.budget | currency:'EUR' }}</p>
-              <p *ngIf="content.duration"><strong>Duration:</strong> {{ content.duration }} days</p>
+  <!-- Content Tabs -->
+  <div class="content-tabs-container">
+    <div class="container">
+      <!-- Search Section -->
+      <div class="search-container">
+        <form [formGroup]="searchForm" (ngSubmit)="onSearchSubmit($event)" class="search-form">
+          <div class="search-input-container">
+            <div class="search-input-wrapper">
+              <input
+                type="text"
+                formControlName="keyword"
+                placeholder="Search travel stories, itineraries..."
+                (input)="onSearchInputChange($event)"
+                class="search-input"
+              />
+              <div class="search-controls">
+                <button
+                  type="button"
+                  *ngIf="searchKeyword"
+                  (click)="clearSearch()"
+                  class="clear-search-btn"
+                  aria-label="Clear search"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+                <button type="submit" class="search-btn" [disabled]="isSearching">
+                  <mat-icon>search</mat-icon>
+                </button>
+              </div>
             </div>
 
-            <div class="ticket-dates">
-              <p *ngIf="content.startDate"><strong>Departure:</strong> {{ content.startDate | date:'dd/MM/yyyy' }}</p>
-              <p *ngIf="content.endDate"><strong>Return:</strong> {{ content.endDate | date:'dd/MM/yyyy' }}</p>
+            <!-- Search Suggestions -->
+            <div class="suggestions-container" *ngIf="showSuggestions">
+              <div class="suggestions-loading" *ngIf="suggestionsLoading">
+                <mat-spinner [diameter]="20"></mat-spinner>
+                <span>Loading suggestions...</span>
+              </div>
+              <ul class="suggestions-list" *ngIf="!suggestionsLoading">
+                <li *ngFor="let suggestion of suggestions" (click)="onSuggestionSelected(suggestion)">
+                  {{ suggestion }}
+                </li>
+              </ul>
             </div>
           </div>
 
-          <div class="ticket-stats">
-            <span *ngIf="content.likeCount" class="like-count">
-              <mat-icon>favorite</mat-icon> {{ content.likeCount }}
-            </span>
-            <span *ngIf="content.rating" class="rating">
-              <mat-icon>star</mat-icon> {{ content.rating | number:'1.1-1' }}
-            </span>
-            <span *ngIf="content.isPublished" class="published-badge">
-              <mat-icon>public</mat-icon> Published
-            </span>
+          <div class="search-options">
+            <button
+              type="button"
+              class="advanced-search-toggle"
+              (click)="toggleAdvancedSearch()"
+            >
+              {{ advancedSearchEnabled ? 'Hide Advanced Filters' : 'Show Advanced Filters' }}
+              <mat-icon>{{ advancedSearchEnabled ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </button>
           </div>
 
-          <div class="ticket-tags" *ngIf="content.tags">
-            <span *ngFor="let tag of content.tags.split(',')" class="tag-item">
-              {{ tag.trim() }}
-            </span>
-          </div>
+          <!-- Advanced Search Options -->
+          <div class="advanced-search-options" *ngIf="advancedSearchEnabled">
+            <div class="advanced-search-grid">
+              <!-- Budget Range -->
+              <div class="form-field">
+                <label>Budget Range</label>
+                <div class="budget-range">
+                  <mat-form-field appearance="outline" class="min-budget">
+                    <mat-label>Min Budget</mat-label>
+                    <input matInput type="number" formControlName="minBudget" placeholder="Min $">
+                  </mat-form-field>
+                  <span class="range-separator">to</span>
+                  <mat-form-field appearance="outline" class="max-budget">
+                    <mat-label>Max Budget</mat-label>
+                    <input matInput type="number" formControlName="maxBudget" placeholder="Max $">
+                  </mat-form-field>
+                </div>
+              </div>
 
-          <div class="ticket-itinerary" *ngIf="hasItinerary(content.id)">
-            <h4>Itinerary</h4>
-            <p>{{ getItineraryDaysCount(content.id) }} day trip with {{ getActivitiesCount(content.id) }} activities</p>
-            <div class="itinerary-preview" *ngIf="showItineraryPreview">
-              <button mat-stroked-button class="view-itinerary" (click)="viewItinerary(content.id)">
-                <mat-icon>map</mat-icon> View Full Itinerary
+              <!-- Content Type -->
+              <div class="form-field">
+                <label>Content Type</label>
+                <mat-form-field appearance="outline">
+                  <mat-label>Type</mat-label>
+                  <mat-select formControlName="contentType">
+                    <mat-option [value]="null">All Types</mat-option>
+                    <mat-option [value]="contentTypes.TRAVEL_STORY">Travel Story</mat-option>
+                    <mat-option [value]="contentTypes.ITINERARY">Itinerary</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Filter Control Buttons -->
+            <div class="filter-actions">
+              <button type="button" class="reset-filters-btn" (click)="resetFilters()">
+                <mat-icon>refresh</mat-icon>
+                Reset Filters
+              </button>
+              <button type="submit" class="apply-filters-btn">
+                <mat-icon>filter_list</mat-icon>
+                Apply Filters
               </button>
             </div>
           </div>
-        </div>
+        </form>
+      </div>
 
-        <div class="ticket-separator">
-          <div class="ticket-hole"></div>
-          <div class="ticket-perforation"></div>
-          <div class="ticket-hole"></div>
-        </div>
-
-        <div class="ticket-footer">
-          <div class="ticket-media-count" *ngIf="content.media?.length">
-            <mat-icon>photo_library</mat-icon> {{ content.media.length }} Photos
+      <!-- Search Results Section -->
+      <div *ngIf="showSearchResults" class="search-results-container">
+        <div class="search-results-header">
+          <h2>Search Results</h2>
+          <div class="search-results-info">
+            <span *ngIf="!isSearching">
+              {{ totalSearchResults }} result{{ totalSearchResults !== 1 ? 's' : '' }} found
+              {{ searchKeyword ? 'for "' + searchKeyword + '"' : '' }}
+            </span>
+            <span *ngIf="isSearching">Searching...</span>
           </div>
-          <div class="ticket-actions">
-            <a mat-button color="primary"[routerLink]="['/content', content.id]">
-              <mat-icon>visibility</mat-icon> View
-            </a>
-            <a mat-button color="accent" [routerLink]="['edit', content.id]">
-                <mat-icon>edit</mat-icon> Edit
-            </a>
+        </div>
 
-            <button mat-button color="warn" (click)="deleteContent(content.id)">
-              <mat-icon>delete</mat-icon> Delete
-            </button>
+        <!-- Loading Indicator -->
+        <div *ngIf="isSearching" class="search-results-loading">
+          <mat-spinner [diameter]="40"></mat-spinner>
+          <p>Searching for content...</p>
+        </div>
+
+        <!-- No Results Message -->
+        <div *ngIf="!isSearching && searchResults.length === 0" class="no-results">
+          <mat-icon>search_off</mat-icon>
+          <p>No content matches your search criteria.</p>
+          <button type="button" (click)="resetFilters()">Reset Filters</button>
+        </div>
+
+        <!-- Search Results Grid -->
+        <div *ngIf="!isSearching && searchResults.length > 0" class="search-results-grid">
+          <div *ngFor="let content of searchResults" class="content-card" (click)="navigateToContentDetails(content)">
+            <!-- Card Media -->
+            <div class="card-media">
+              <!-- Loading state -->
+              <div *ngIf="isMediaLoading(content.id!)" class="media-loading">
+                <mat-spinner [diameter]="30"></mat-spinner>
+              </div>
+              <!-- Error state -->
+              <div *ngIf="hasMediaError(content.id!)" class="media-error">
+                <mat-icon>broken_image</mat-icon>
+              </div>
+              <!-- Image (shown when not loading or errored) -->
+              <img
+                *ngIf="!isMediaLoading(content.id!) && !hasMediaError(content.id!)"
+                [src]="getContentCoverUrl(content.id!)"
+                [alt]="content.title"
+                class="cover-image"
+              >
+            </div>
+
+            <!-- Card Content -->
+            <div class="card-content">
+              <div class="card-header">
+                <div class="content-type-badge" [ngClass]="content.type">
+                  {{ content.type === contentTypes.TRAVEL_STORY ? 'Travel Story' : 'Itinerary' }}
+                </div>
+                <h3 class="content-title">{{ content.title }}</h3>
+              </div>
+
+              <div class="card-details">
+                <p class="content-description">{{ content.description }}</p>
+
+                <div class="content-metadata">
+                  <div class="metadata-item">
+                    <mat-icon>calendar_today</mat-icon>
+                    <span>{{ formatDate(content.creationDate) }}</span>
+                  </div>
+                  <div *ngIf="content.budget" class="metadata-item">
+                    <mat-icon>attach_money</mat-icon>
+                    <span>{{ content.budget | currency }}</span>
+                  </div>
+                  <div *ngIf="content.startDate && content.endDate" class="metadata-item">
+                    <mat-icon>timelapse</mat-icon>
+                    <span>{{ calculateDuration(content) }}</span>
+                  </div>
+                  <div *ngIf="content.locations && content.locations.length > 0" class="metadata-item">
+                    <mat-icon>place</mat-icon>
+                    <span>{{ getLocationNames(content) }}</span>
+                  </div>
+                  <div class="metadata-item user-info" *ngIf="content.userId && userNamesMap.get(content.userId)">
+                    <mat-icon>person</mat-icon>
+                    <span>{{ userNamesMap.get(content.userId) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Actions -->
+              <div class="card-actions">
+                <div class="like-container">
+                  <button
+                    class="like-button"
+                    [class.liked]="hasUserLiked(content.id!)"
+                    [disabled]="isActionLoading(content.id!, 'like')"
+                    (click)="likeContent(content, $event)"
+                  >
+                    <mat-icon *ngIf="!isActionLoading(content.id!, 'like')">
+                      {{ hasUserLiked(content.id!) ? 'favorite' : 'favorite_border' }}
+                    </mat-icon>
+                    <mat-spinner *ngIf="isActionLoading(content.id!, 'like')" [diameter]="20"></mat-spinner>
+                    <span class="like-count">{{ formatLikeCount(content.likeCount) }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div *ngIf="!isSearching && getTotalPages() > 1" class="pagination">
+          <button
+            class="pagination-button prev"
+            [disabled]="currentPage === 0"
+            (click)="goToPreviousPage()"
+          >
+            <mat-icon>chevron_left</mat-icon>
+            Previous
+          </button>
+
+          <div class="page-numbers">
+            <ng-container *ngFor="let page of getPageNumbers()">
+              <span *ngIf="page === -1 || page === -2" class="ellipsis">...</span>
+              <button
+                *ngIf="page >= 0"
+                class="page-number"
+                [class.active]="page === currentPage"
+                (click)="goToPage(page)"
+              >
+                {{ page + 1 }}
+              </button>
+            </ng-container>
+          </div>
+
+          <button
+            class="pagination-button next"
+            [disabled]="currentPage >= getTotalPages() - 1"
+            (click)="goToNextPage()"
+          >
+            Next
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="tabs-navigation">
+        <!-- Onglets visibles par tout le monde -->
+        <button [class.active]="selectedTab === 'all'" (click)="selectTab('all')" class="tab-button">
+          <i class="fa fa-globe"></i> All Contents
+        </button>
+        <button [class.active]="selectedTab === 'trending'" (click)="selectTab('trending')" class="tab-button">
+          <i class="fa fa-heart"></i> Top Liked
+        </button>
+        <button *ngIf="isAdmin()" [class.active]="selectedTab === 'pending'" (click)="selectTab('pending')" class="tab-button">
+          <i class="fa fa-clock"></i> Pending Approval
+        </button>
+        <!-- Onglets visibles uniquement par les travelers -->
+        <button *ngIf="isTraveler()" [class.active]="selectedTab === 'my'" (click)="selectTab('my')" class="tab-button">
+          <i class="fa fa-user"></i> My Contents
+        </button>
+        <button *ngIf="isTraveler()" [class.active]="selectedTab === 'stories'" (click)="selectTab('stories')" class="tab-button">
+          <i class="fa fa-book"></i> My Travel Stories
+        </button>
+        <button *ngIf="isTraveler()" [class.active]="selectedTab === 'itineraries'" (click)="selectTab('itineraries')" class="tab-button">
+          <i class="fa fa-map-marked-alt"></i> My Itineraries
+        </button>
+        <button *ngIf="isTraveler()" class="tab-button" [class.active]="selectedTab === 'favorites'" (click)="selectTab('favorites')">
+          <i class="fa fa-star"></i> My Favorites
+        </button>
+      </div>
+
+      <!-- Content pending approval -->
+      <div *ngIf="selectedTab === 'pending'" class="tab-content">
+        <div *ngIf="loadingPending" class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading pending content...</p>
+        </div>
+
+        <div *ngIf="!loadingPending && pendingContents.length === 0" class="empty-state">
+          <i class="fa fa-check-circle empty-icon"></i>
+          <p>No content pending approval 🎉</p>
+        </div>
+
+        <div class="content-grid">
+          <div *ngFor="let content of pendingContents" class="content-card">
+            <div class="content-card-image-container">
+              <div *ngIf="isMediaLoading(content.id)" class="image-loading">
+                <div class="spinner-sm"></div>
+              </div>
+              <img
+                [src]="getContentCoverUrl(content.id)"
+                alt="{{content.title}}"
+                class="content-card-image"
+                [class.error]="hasMediaError(content.id)">
+              <div class="content-type-badge"
+                [ngClass]="{'travel-story': content.type === contentTypes.TRAVEL_STORY, 'itinerary': content.type === contentTypes.ITINERARY}">
+                {{content.type === contentTypes.TRAVEL_STORY ? 'STORY' : 'ITINERARY'}}
+              </div>
+            </div>
+            <div class="content-card-info">
+              <h3 class="content-card-title">{{ content.title }}</h3>
+              <p class="content-card-location"><i class="fa fa-map-marker-alt"></i> {{ getLocationNames(content) }}</p>
+              <div class="content-card-meta">
+                <span class="content-card-author">
+                  <i class="fa fa-user"></i> {{ userNamesMap.get(content.userId!) || 'Unknown' }}
+                </span>
+                <span class="content-card-date">
+                  <i class="fa fa-calendar-alt"></i> {{ formatDate(content.creationDate) }}
+                </span>
+              </div>
+
+              <div class="content-card-actions">
+                <button class="btn-approve" (click)="approve(content, $event)">
+                  <i class="fa fa-check"></i> Approve
+                </button>
+
+                <button class="btn-view" (click)="navigateToContentDetails(content)">
+                  <i class="fa fa-eye"></i> View
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- All Contents Tab -->
+      <div *ngIf="selectedTab === 'all'" class="tab-content">
+        <div *ngIf="loading.allContents" class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading amazing content...</p>
+        </div>
+        <div *ngIf="!loading.allContents && allContents.length === 0" class="empty-state">
+          <i class="fa fa-compass empty-icon"></i>
+          <p>No content available yet. Be the first to share your adventure!</p>
+        </div>
+        <div class="content-grid">
+          <div *ngFor="let content of allContents" class="content-card" (click)="navigateToContentDetails(content)">
+            <div class="content-card-image-container">
+              <div *ngIf="isMediaLoading(content.id)" class="image-loading">
+                <div class="spinner-sm"></div>
+              </div>
+              <img
+                [src]="getContentCoverUrl(content.id)"
+                alt="{{content.title}}"
+                class="content-card-image"
+                [class.error]="hasMediaError(content.id)"
+              >
+              <!-- Favorite Button -->
+              <button
+                class="favorite-btn"
+                [class.favorited]="isContentFavorited(content.id!)"
+                (click)="toggleFavorite(content, $event)"
+                [disabled]="isActionLoading(content.id!, 'favorite')"
+                *ngIf="isTraveler()"
+                title="Add to favorites">
+                <i *ngIf="!isActionLoading(content.id!, 'favorite')"
+                   [class]="isContentFavorited(content.id!) ? 'fas fa-star' : 'far fa-star'"></i>
+                <i *ngIf="isActionLoading(content.id!, 'favorite')" class="fa fa-spinner fa-spin"></i>
+              </button>
+            </div>
+            <div class="content-card-info">
+              <h3 class="content-card-title">{{content.title}}</h3>
+              <p class="content-card-location">
+                <i class="fa fa-map-marker-alt"></i> {{getLocationNames(content)}}
+              </p>
+              <div class="content-card-meta">
+                <span class="content-card-duration">
+                  <i class="fa fa-clock"></i> {{calculateDuration(content)}}
+                </span>
+                <span class="content-card-date">
+                  <i class="fa fa-calendar-alt"></i> {{formatDate(content.creationDate)}}
+                </span>
+              </div>
+
+              <div class="content-card-feedback">
+                <span *ngIf="isActionLoading(content.id, 'rate')" class="rating-loading">
+                  <i class="fa fa-spinner fa-spin"></i>
+                </span>
+
+                <span *ngIf="content.averageRating && content.averageRating > 0" class="rating-average">
+                  {{ content.averageRating | number:'1.1-1' }}
+                </span>
+              </div>
+
+             <div class="like-favorite-row">
+  <div class="like-container">
+    <button
+      class="btn-like"
+      [class.liked]="hasUserLiked(content.id!)"
+      (click)="likeContent(content, $event)"
+      [disabled]="isActionLoading(content.id!, 'like')">
+      <i *ngIf="!isActionLoading(content.id!, 'like')"
+         [class]="hasUserLiked(content.id!) ? 'fas fa-heart' : 'far fa-heart'"></i>
+      <i *ngIf="isActionLoading(content.id!, 'like')" class="fa fa-spinner fa-spin"></i>
+      <span class="like-count">{{ formatLikeCount(content.likeCount) }}</span>
+    </button>
+  </div>
+
+  <div class="favorite-container" *ngIf="isTraveler()">
+    <button
+      class="btn-favorite"
+      [class.favorited]="isContentFavorited(content.id!)"
+      (click)="toggleFavorite(content, $event)"
+      [disabled]="isActionLoading(content.id!, 'favorite')"
+      title="Add to favorites">
+      <i *ngIf="!isActionLoading(content.id!, 'favorite')"
+         [class]="isContentFavorited(content.id!) ? 'fas fa-star' : 'far fa-star'"></i>
+      <i *ngIf="isActionLoading(content.id!, 'favorite')" class="fa fa-spinner fa-spin"></i>
+    </button>
+  </div>
+</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Liked Tab -->
+      <div *ngIf="selectedTab === 'trending'" class="tab-content">
+        <div *ngIf="loading.topLiked" class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading most liked content...</p>
+        </div>
+        <div *ngIf="!loading.topLiked && topLikedContents.length === 0" class="empty-state">
+          <i class="fa fa-heart empty-icon"></i>
+          <p>No liked content yet. Be the first to like something!</p>
+        </div>
+        <div class="content-grid">
+          <div *ngFor="let content of topLikedContents" class="content-card" (click)="navigateToContentDetails(content)">
+            <div class="content-card-image-container">
+              <div *ngIf="isMediaLoading(content.id)" class="image-loading">
+                <div class="spinner-sm"></div>
+              </div>
+              <img
+                [src]="getContentCoverUrl(content.id)"
+                alt="{{content.title}}"
+                class="content-card-image"
+                [class.error]="hasMediaError(content.id)"
+              >
+              <!-- Favorite Button -->
+              <button
+                class="favorite-btn"
+                [class.favorited]="isContentFavorited(content.id!)"
+                (click)="toggleFavorite(content, $event)"
+                [disabled]="isActionLoading(content.id!, 'favorite')"
+                *ngIf="isTraveler()"
+                title="Add to favorites">
+                <i *ngIf="!isActionLoading(content.id!, 'favorite')"
+                   [class]="isContentFavorited(content.id!) ? 'fas fa-star' : 'far fa-star'"></i>
+                <i *ngIf="isActionLoading(content.id!, 'favorite')" class="fa fa-spinner fa-spin"></i>
+              </button>
+            
+              <div class="likes-badge">
+                <i class="fa fa-heart"></i> {{content.likeCount || 0}}
+              </div>
+            </div>
+            <div class="content-card-info">
+              <h3 class="content-card-title">{{content.title}}</h3>
+              <p class="content-card-location"><i class="fa fa-map-marker-alt"></i> {{getLocationNames(content)}}</p>
+              <div class="content-card-meta">
+                <span class="content-card-author">
+                  <i class="fa fa-user"></i> {{ userNamesMap.get(content.userId!) || 'Unknown' }}
+                </span>
+                <span class="content-card-views" *ngIf="content.views"><i class="fa fa-eye"></i> {{content.views}}</span>
+              </div>
+
+              <div class="content-card-feedback">
+                <span *ngIf="isActionLoading(content.id, 'rate')" class="rating-loading">
+                  <i class="fa fa-spinner fa-spin"></i>
+                </span>
+
+                <span *ngIf="content.averageRating && content.averageRating > 0" class="rating-average">
+                  {{ content.averageRating | number:'1.1-1' }}
+                </span>
+              </div>
+
+              <div class="like-container">
+                <button
+                  class="btn-like"
+                  [class.liked]="hasUserLiked(content.id!)"
+                  (click)="likeContent(content, $event)"
+                  [disabled]="isActionLoading(content.id!, 'like')">
+                  <i *ngIf="!isActionLoading(content.id!, 'like')"
+                     [class]="hasUserLiked(content.id!) ? 'fas fa-heart' : 'far fa-heart'"></i>
+                  <i *ngIf="isActionLoading(content.id!, 'like')" class="fa fa-spinner fa-spin"></i>
+                  <span class="like-count">{{ formatLikeCount(content.likeCount) }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Contents Tab -->
+      <div *ngIf="selectedTab === 'my' && isTraveler()" class="tab-content">
+        <div *ngIf="loading.myContents" class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading your content...</p>
+        </div>
+        <div *ngIf="!loading.myContents && myContents.length === 0" class="empty-state">
+          <i class="fa fa-suitcase empty-icon"></i>
+          <p>You haven't created any content yet. Share your first adventure!</p>
+        </div>
+        <div class="content-grid">
+          <div *ngFor="let content of myContents" class="content-card" (click)="navigateToContentDetails(content)">
+            <div class="content-card-image-container">
+              <div *ngIf="isMediaLoading(content.id)" class="image-loading">
+                <div class="spinner-sm"></div>
+              </div>
+              <img
+                [src]="getContentCoverUrl(content.id)"
+                alt="{{content.title}}"
+                class="content-card-image"
+                [class.error]="hasMediaError(content.id)"
+              >
+              <div class="publish-status" [ngClass]="{'published': content.isPublished, 'draft': !content.isPublished}">
+                {{content.isPublished ? 'PUBLISHED' : 'DRAFT'}}
+              </div>
+            </div>
+            <div class="content-card-info">
+              <h3 class="content-card-title">{{content.title}}</h3>
+              <p class="content-card-location"><i class="fa fa-map-marker-alt"></i> {{getLocationNames(content)}}</p>
+              <div class="content-card-meta">
+                <span class="content-card-duration"><i class="fa fa-clock"></i> {{calculateDuration(content)}}</span>
+                <span class="content-card-date"><i class="fa fa-calendar-alt"></i> {{formatDate(content.lastModified || content.creationDate)}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Travel Stories Tab -->
+      <div *ngIf="selectedTab === 'stories'" class="tab-content">
+        <div *ngIf="loading.myContents" class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading stories...</p>
+        </div>
+        <div *ngIf="!loading.myContents && travelStories.length === 0" class="empty-state">
+          <i class="fa fa-book empty-icon"></i>
+          <p>No travel stories found. Share your first story!</p>
+          <button class="btn-create-empty" (click)="createNewContent(contentTypes.TRAVEL_STORY)">Create Travel Story</button>
+        </div>
+        <div class="content-grid">
+          <div *ngFor="let content of travelStories" class="content-card" (click)="navigateToContentDetails(content)">
+            <div class="content-card-image-container">
+              <div *ngIf="isMediaLoading(content.id)" class="image-loading">
+                <div class="spinner-sm"></div>
+              </div>
+              <img
+                [src]="getContentCoverUrl(content.id)"
+                alt="{{content.title}}"
+                class="content-card-image"
+                [class.error]="hasMediaError(content.id)"
+              >
+              <div class="publish-status" [ngClass]="{'published': content.isPublished, 'draft': !content.isPublished}">
+                {{content.isPublished ? 'PUBLISHED' : 'DRAFT'}}
+              </div>
+            </div>
+            <div class="content-card-info">
+              <h3 class="content-card-title">{{content.title}}</h3>
+              <p class="content-card-location"><i class="fa fa-map-marker-alt"></i> {{getLocationNames(content)}}</p>
+              <div class="content-card-meta">
+                <span class="content-card-date"><i class="fa fa-calendar-alt"></i> {{formatDate(content.lastModified || content.creationDate)}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Itineraries Tab -->
+      <div *ngIf="selectedTab === 'itineraries'" class="tab-content">
+        <div *ngIf="loading.myContents" class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading itineraries...</p>
+        </div>
+        <div *ngIf="!loading.myContents && itineraries.length === 0" class="empty-state">
+          <i class="fa fa-route empty-icon"></i>
+          <p>No itineraries found. Create your first travel plan!</p>
+          <button class="btn-create-empty" (click)="createNewContent(contentTypes.ITINERARY)">Create Itinerary</button>
+        </div>
+        <div class="content-grid">
+          <div *ngFor="let content of itineraries" class="content-card" (click)="navigateToContentDetails(content)">
+            <div class="content-card-image-container">
+              <div *ngIf="isMediaLoading(content.id)" class="image-loading">
+                <div class="spinner-sm"></div>
+              </div>
+              <img
+                [src]="getContentCoverUrl(content.id)"
+                alt="{{content.title}}"
+                class="content-card-image"
+                [class.error]="hasMediaError(content.id)"
+              >
+              <div class="publish-status" [ngClass]="{'published': content.isPublished, 'draft': !content.isPublished}">
+                {{content.isPublished ? 'PUBLISHED' : 'DRAFT'}}
+              </div>
+            </div>
+            <div class="content-card-info">
+              <h3 class="content-card-title">{{content.title}}</h3>
+              <p class="content-card-location"><i class="fa fa-map-marker-alt"></i> {{getLocationNames(content)}}</p>
+              <div class="content-card-meta">
+                <span class="content-card-duration"><i class="fa fa-clock"></i> {{calculateDuration(content)}}</span>
+                <span class="content-card-date"><i class="fa fa-calendar-alt"></i> {{formatDate(content.startDate)}}</span>
+              </div>
+              <div class="content-card-actions">
+                <button class="btn-edit" (click)="editContent(content, $event)">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn-publish" (click)="publishContent(content, $event)">
+                  <i class="fa" [ngClass]="content.isPublished ? 'fa-eye-slash' : 'fa-eye'"></i>
+                </button>
+                <button class="btn-delete" (click)="deleteContent(content, $event)">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Liked Tab -->
+      <div *ngIf="selectedTab === 'trending'" class="tab-content">
+        <div *ngIf="loading.topLiked" class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading most liked content...</p>
+        </div>
+        <div *ngIf="!loading.topLiked && topLikedContents.length === 0" class="empty-state">
+          <i class="fa fa-heart empty-icon"></i>
+          <p>No liked content yet. Be the first to like something!</p>
+        </div>
+        <div class="content-grid">
+          <div *ngFor="let content of topLikedContents" class="content-card" (click)="navigateToContentDetails(content)">
+            <div class="content-card-image-container">
+              <div *ngIf="isMediaLoading(content.id)" class="image-loading">
+                <div class="spinner-sm"></div>
+              </div>
+              <img
+                [src]="getContentCoverUrl(content.id)"
+                alt="{{content.title}}"
+                class="content-card-image"
+                [class.error]="hasMediaError(content.id)"
+              >
+              <div class="content-type-badge" [ngClass]="{'travel-story': content.type === contentTypes.TRAVEL_STORY, 'itinerary': content.type === contentTypes.ITINERARY}">
+                {{content.type === contentTypes.TRAVEL_STORY ? 'STORY' : 'ITINERARY'}}
+              </div>
+              <div class="likes-badge">
+                <i class="fa fa-heart"></i> {{content.likeCount || 0}}
+              </div>
+            </div>
+            <div class="content-card-info">
+              <h3 class="content-card-title">{{content.title}}</h3>
+              <p class="content-card-location"><i class="fa fa-map-marker-alt"></i> {{getLocationNames(content)}}</p>
+              <div class="content-card-meta">
+                <span class="content-card-author">
+                  <i class="fa fa-user"></i> {{ userNamesMap.get(content.userId!) || 'Unknown' }}
+                </span>
+                <span class="content-card-views" *ngIf="content.views"><i class="fa fa-eye"></i> {{content.views}}</span>
+              </div>
+              <div class="content-card-likes">
+                <i class="fas fa-heart"></i> {{formatLikeCount(content.likeCount)}}
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="add-content-container">
-      <a mat-fab color="accent" routerLink="/add/content" class="add-content-button">
-        <mat-icon>add</mat-icon>
-      </a>
+<div *ngIf="selectedTab === 'favorites'" class="tab-content">
+  <!-- Loader -->
+  <div *ngIf="loading.myFavorites" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading your favorite content...</p>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading.myFavorites && myFavorites.length === 0" class="empty-state">
+    <i class="fa fa-star empty-icon"></i>
+    <p>You haven't added any favorites yet. Start exploring and click the ⭐ icon!</p>
+  </div>
+
+  <!-- Favorite Contents -->
+  <div class="content-grid">
+    <div *ngFor="let content of myFavorites" class="content-card" (click)="navigateToContentDetails(content)">
+      <div class="content-card-image-container">
+        <div *ngIf="isMediaLoading(content.id)" class="image-loading">
+          <div class="spinner-sm"></div>
+        </div>
+        <img
+          [src]="getContentCoverUrl(content.id)"
+          alt="{{content.title}}"
+          class="content-card-image"
+          [class.error]="hasMediaError(content.id)"
+        >
+        <!-- Favorite Toggle -->
+        <button
+          class="favorite-btn"
+          [class.favorited]="isContentFavorited(content.id!)"
+          (click)="toggleFavorite(content, $event)"
+          [disabled]="isActionLoading(content.id!, 'favorite')"
+          title="Remove from favorites"
+        >
+          <i *ngIf="!isActionLoading(content.id!, 'favorite')"
+             [class]="isContentFavorited(content.id!) ? 'fas fa-star' : 'far fa-star'"></i>
+          <i *ngIf="isActionLoading(content.id!, 'favorite')" class="fa fa-spinner fa-spin"></i>
+        </button>
+      </div>
+
+      <div class="content-card-info">
+        <h3 class="content-card-title">{{content.title}}</h3>
+        <p class="content-card-location">
+          <i class="fa fa-map-marker-alt"></i> {{ getLocationNames(content) }}
+        </p>
+        <div class="content-card-meta">
+          <span class="content-card-author">
+            <i class="fa fa-user"></i> {{ userNamesMap.get(content.userId!) || 'Unknown' }}
+          </span>
+          <span class="content-card-date">
+            <i class="fa fa-calendar-alt"></i> {{ formatDate(content.creationDate) }}
+          </span>
+        </div>
+
+        <div class="content-card-feedback">
+          <span *ngIf="isActionLoading(content.id, 'rate')" class="rating-loading">
+            <i class="fa fa-spinner fa-spin"></i>
+          </span>
+          <span *ngIf="content.averageRating && content.averageRating > 0" class="rating-average">
+            {{ content.averageRating | number:'1.1-1' }}
+          </span>
+        </div>
+
+     <div class="like-favorite-row">
+  <div class="like-container">
+    <button
+      class="btn-like"
+      [class.liked]="hasUserLiked(content.id!)"
+      (click)="likeContent(content, $event)"
+      [disabled]="isActionLoading(content.id!, 'like')">
+      <i *ngIf="!isActionLoading(content.id!, 'like')"
+         [class]="hasUserLiked(content.id!) ? 'fas fa-heart' : 'far fa-heart'"></i>
+      <i *ngIf="isActionLoading(content.id!, 'like')" class="fa fa-spinner fa-spin"></i>
+      <span class="like-count">{{ formatLikeCount(content.likeCount) }}</span>
+    </button>
+  </div>
+
+  <div class="favorite-container" *ngIf="isTraveler()">
+    <button
+      class="btn-favorite"
+      [class.favorited]="isContentFavorited(content.id!)"
+      (click)="toggleFavorite(content, $event)"
+      [disabled]="isActionLoading(content.id!, 'favorite')"
+      title="Add to favorites">
+      <i *ngIf="!isActionLoading(content.id!, 'favorite')"
+         [class]="isContentFavorited(content.id!) ? 'fas fa-star' : 'far fa-star'"></i>
+      <i *ngIf="isActionLoading(content.id!, 'favorite')" class="fa fa-spinner fa-spin"></i>
+    </button>
+  </div>
+</div>
+      </div>
     </div>
   </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+

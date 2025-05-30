@@ -1,0 +1,666 @@
+// Variables
+$primary-color: #2196f3;
+$accent-color: #ff4081;
+$warn-color: #f44336;
+$success-color: #4caf50;
+$info-color: #2196f3;
+$warning-color: #ff9800;
+
+$bg-primary: #ffffff;
+$bg-secondary: #f5f5f5;
+$bg-card: #ffffff;
+$text-primary: #212121;
+$text-secondary: #757575;
+$border-color: #e0e0e0;
+$shadow-color: rgba(0, 0, 0, 0.1);
+
+$border-radius: 8px;
+$transition: all 0.3s ease;
+$box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+$hover-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin card-style {
+  background: $bg-card;
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
+  border: 1px solid $border-color;
+}
+
+@mixin hover-effect {
+  transition: $transition;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: $hover-shadow;
+    transform: translateY(-1px);
+  }
+}
+
+@mixin notification-type($color) {
+  .notification-icon {
+    .mat-icon {
+      color: $color;
+    }
+
+    .notification-badge {
+      background: $color;
+    }
+  }
+
+  &.unread {
+    border-left: 4px solid $color;
+  }
+}
+
+// Main wrapper
+.notifications-wrapper {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  background: $bg-primary;
+  border-radius: $border-radius;
+  overflow: hidden;
+  @include card-style;
+}
+
+// Header
+.notifications-header {
+  @include flex-between;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, $primary-color, lighten($primary-color, 10%));
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  .notifications-title {
+    @include flex-center;
+    gap: 8px;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+
+    .mat-icon {
+      font-size: 20px;
+    }
+
+    .notification-count {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .unread-badge {
+      background: $accent-color;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+      animation: pulse 2s infinite;
+    }
+  }
+
+  .notifications-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .connection-status {
+      @include flex-center;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      transition: $transition;
+
+      &.connected {
+        background: rgba(76, 175, 80, 0.2);
+        color: $success-color;
+      }
+
+      &.disconnected {
+        background: rgba(244, 67, 54, 0.2);
+        color: $warn-color;
+        animation: blink 1s infinite;
+      }
+
+      .mat-icon {
+        font-size: 16px;
+        margin-right: 4px;
+      }
+    }
+
+    button {
+      color: white;
+      transition: $transition;
+
+      &:hover:not([disabled]) {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.05);
+      }
+
+      &[disabled] {
+        opacity: 0.5;
+      }
+
+      &.clear-btn:hover:not([disabled]) {
+        background: rgba(244, 67, 54, 0.2);
+      }
+
+      &.test-btn:hover:not([disabled]) {
+        background: rgba(255, 152, 0, 0.2);
+      }
+
+      .mat-icon.spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+// Loading state
+.notification-loading {
+  @include flex-center;
+  flex-direction: column;
+  gap: 16px;
+  padding: 40px 20px;
+  color: $text-secondary;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+// Error state
+.notification-error {
+  @include flex-center;
+  flex-direction: column;
+  gap: 16px;
+  padding: 40px 20px;
+  text-align: center;
+  color: $warn-color;
+
+  .mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  p {
+    margin: 0;
+    color: $text-primary;
+  }
+
+  button {
+    margin-top: 8px;
+  }
+}
+
+// Notifications container
+.notifications-container {
+  max-height: 500px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $bg-secondary;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: lighten($text-secondary, 20%);
+    border-radius: 3px;
+
+    &:hover {
+      background: $text-secondary;
+    }
+  }
+}
+
+// Notification item
+.notification-item {
+  @include flex-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid $border-color;
+  transition: $transition;
+  position: relative;
+  @include hover-effect;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.unread {
+    background: linear-gradient(90deg, rgba($primary-color, 0.05), transparent);
+    border-left: 4px solid $primary-color;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 2px;
+      background: $primary-color;
+      animation: pulse 2s infinite;
+    }
+  }
+
+  // Notification types
+  &.success {
+    @include notification-type($success-color);
+  }
+
+  &.warning {
+    @include notification-type($warning-color);
+  }
+
+  &.error {
+    @include notification-type($warn-color);
+  }
+
+  &.info {
+    @include notification-type($info-color);
+  }
+
+  .notification-icon {
+    position: relative;
+    margin-right: 16px;
+    flex-shrink: 0;
+
+    .mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      color: $primary-color;
+      transition: $transition;
+
+      // Type-specific icons
+      &.icon-success {
+        color: $success-color;
+      }
+
+      &.icon-warning {
+        color: $warning-color;
+      }
+
+      &.icon-error {
+        color: $warn-color;
+      }
+
+      &.icon-info {
+        color: $info-color;
+      }
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      background: $accent-color;
+      border-radius: 50%;
+      border: 2px solid white;
+      animation: pulse 2s infinite;
+    }
+  }
+
+  .notification-content {
+    flex: 1;
+    min-width: 0;
+
+    .notification-header {
+      @include flex-between;
+      margin-bottom: 4px;
+
+      .notification-type {
+        font-size: 12px;
+        font-weight: 600;
+        color: $primary-color;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .notification-time {
+        font-size: 12px;
+        color: $text-secondary;
+        white-space: nowrap;
+      }
+    }
+
+    .notification-message {
+      color: $text-primary;
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      word-wrap: break-word;
+
+      // Handle HTML content styling
+      ::ng-deep {
+        strong {
+          font-weight: 600;
+        }
+
+        a {
+          color: $primary-color;
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+
+    .notification-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+
+      .meta-item {
+        @include flex-center;
+        gap: 4px;
+        font-size: 12px;
+        color: $text-secondary;
+
+        .meta-icon {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+        }
+
+        .meta-text {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100px;
+        }
+      }
+    }
+  }
+
+  .notification-actions {
+    display: flex;
+    gap: 4px;
+    margin-left: 12px;
+    opacity: 0;
+    transition: $transition;
+
+    button {
+      padding: 8px;
+      min-width: auto;
+
+      .mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      &.read-btn {
+        color: $primary-color;
+
+        &:hover {
+          background: rgba($primary-color, 0.1);
+        }
+      }
+
+      &.delete-btn {
+        color: $warn-color;
+
+        &:hover {
+          background: rgba($warn-color, 0.1);
+        }
+      }
+    }
+  }
+
+  &:hover .notification-actions {
+    opacity: 1;
+  }
+}
+
+// Empty state
+.notification-empty {
+  padding: 60px 20px;
+  text-align: center;
+
+  .empty-content {
+    max-width: 300px;
+    margin: 0 auto;
+
+    .empty-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: $text-secondary;
+      margin-bottom: 16px;
+    }
+
+    h4 {
+      margin: 0 0 8px 0;
+      color: $text-primary;
+      font-weight: 500;
+    }
+
+    p {
+      margin: 0 0 24px 0;
+      color: $text-secondary;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .empty-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+
+      button {
+        min-width: 200px;
+      }
+    }
+  }
+}
+
+// Footer
+.notifications-footer {
+  padding: 12px 20px;
+  background: $bg-secondary;
+  border-top: 1px solid $border-color;
+
+  .footer-info {
+    @include flex-between;
+    font-size: 12px;
+
+    .footer-text {
+      color: $text-secondary;
+    }
+
+    .connection-info {
+      @include flex-center;
+      gap: 4px;
+      color: $text-secondary;
+
+      &.connected {
+        color: $success-color;
+      }
+
+      .mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes slideIn {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .notifications-wrapper {
+    margin: 0;
+    border-radius: 0;
+    max-width: none;
+  }
+
+  .notifications-header {
+    padding: 12px 16px;
+
+    .notifications-title {
+      font-size: 16px;
+
+      .mat-icon {
+        font-size: 18px;
+      }
+    }
+
+    .notifications-actions {
+      gap: 4px;
+
+      button {
+        padding: 6px;
+
+        .mat-icon {
+          font-size: 18px;
+        }
+      }
+    }
+  }
+
+  .notification-item {
+    padding: 12px 16px;
+
+    .notification-icon {
+      margin-right: 12px;
+
+      .mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .notification-content {
+      .notification-message {
+        font-size: 13px;
+      }
+
+      .notification-meta {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+      }
+    }
+
+    .notification-actions {
+      opacity: 1; // Always show on mobile
+    }
+  }
+
+  .notification-empty {
+    padding: 40px 16px;
+
+    .empty-content {
+      .empty-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+      }
+
+      .empty-actions {
+        button {
+          min-width: auto;
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .notifications-wrapper {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #2d2d2d;
+    --bg-card: #2d2d2d;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --border-color: #404040;
+
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+
+    .notifications-header {
+      background: linear-gradient(135deg, darken($primary-color, 10%), $primary-color);
+    }
+
+    .notification-item {
+      border-color: var(--border-color);
+
+      &:hover {
+        background: var(--bg-secondary);
+      }
+    }
+
+    .notifications-footer {
+      background: var(--bg-secondary);
+      border-color: var(--border-color);
+    }
+  }
+}

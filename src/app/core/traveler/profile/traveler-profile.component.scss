@@ -1,575 +1,537 @@
-$primary: #ff0099;         // Rose comme couleur principale (basé sur le design de l'admin)
-$secondary: #4754c5;       // Bleu indigo comme accent secondaire
-$accent: #00b8a9;          // Teal comme accent tertiaire
-$light-bg: #f5f7ff;        // Fond clair
-$dark-text: #004d66;       // Texte foncé
-$card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
 @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
+// Theme Color Variables
+$pink-primary: #ff0099;
+$teal-primary: #00b8a9;
+$yellow-accent: #f7f2d3;
+$purple-accent: #8080ff;
+$light-blue: #e6f7ff;
+$dark-blue: #004d66;
+$white: #ffffff;
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #6c757d;
+$gray-700: #495057;
+$gray-800: #343a40;
+$gray-900: #212529;
+
+// Shadows and Effects
+$shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+$shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.15);
+$border-radius: 12px;
+$transition: all 0.3s ease;
+
+// Text Styles
+$font-family-base: 'Poppins', sans-serif;
+$font-family-accent: 'Pacifico', cursive;
+
+// Main Profile Container
 .profile-container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 20px;
-  position: relative;
-  box-sizing: border-box;
-}
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 120px;
-
-  p {
-    margin-top: 12px;
-    color: #666;
-    font-size: 16px;
-    font-weight: 500;
-  }
-}
-
-.profile-content {
-  display: flex;
-  flex-direction: column;
-}
-
-// Tab Navigation
-.profile-tabs {
-  display: flex;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: $card-shadow;
-  margin-bottom: 20px;
-  overflow: hidden;
-  padding: 0;
-
-  .tab-button {
-    display: flex;
-    align-items: center;
-    padding: 16px 24px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: $dark-text;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    flex: 1;
-    justify-content: center;
-    border-bottom: 3px solid transparent;
-
-    &:hover {
-      background-color: rgba($primary, 0.05);
-    }
-
-    &.active {
-      color: $primary;
-      border-bottom: 3px solid $primary;
-      background-color: rgba($primary, 0.05);
-    }
-
-    mat-icon {
-      margin-right: 8px;
-    }
-  }
-}
-
-// Profile Section Styling
-.profile-section {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: $card-shadow;
-  padding: 24px;
-
-  .section-title {
-    color: $primary;
-    font-size: 24px;
-    margin: 0 0 8px 0;
-    font-weight: 500;
-  }
-
-  .section-subtitle {
-    color: $dark-text;
-    margin: 0 0 24px 0;
-    font-size: 16px;
-  }
-}
-
-.profile-content-wrapper {
-  display: flex;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
-}
-
-// Profile Photo
-.profile-photo-container {
-  width: 250px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 40px;
-
-  @media (max-width: 768px) {
-    width: 100%;
-    margin-right: 0;
-    margin-bottom: 24px;
-  }
-}
-
-.profile-photo-wrapper {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid $primary;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 12px rgba($primary, 0.2);
-}
-
-.profile-image {
+  font-family: $font-family-base;
+  color: $gray-800;
+  background-color: $light-blue;
+  padding: 1.5rem;
+  min-height: 100vh;
+  max-width: 100%;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.photo-buttons {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-
-  .photo-btn {
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-
-    &.select {
-      background-color: $secondary;
-      color: white;
-
-      &:hover {
-        background-color: darken($secondary, 10%);
-      }
-    }
-
-    &.upload {
-      background-color: $primary;
-      color: white;
-
-      &:hover {
-        background-color: darken($primary, 10%);
-      }
-    }
-
-    mat-icon {
-      margin-right: 4px;
-      font-size: 18px;
-    }
-  }
-}
-
-.upload-progress {
-  width: 100%;
-  border-radius: 10px;
-  overflow: hidden;
-  height: 5px;
-}
-
-// Form Styling
-.profile-form-container {
-  flex: 1;
-}
-
-.form-field {
-  margin-bottom: 16px;
-
-  label {
-    display: block;
-    margin-bottom: 8px;
-    color: $dark-text;
-    font-weight: 500;
-  }
-
-  input, select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    box-sizing: border-box;
-
-    &:focus {
-      outline: none;
-      border-color: $primary;
-      box-shadow: 0 0 0 2px rgba($primary, 0.2);
-    }
-
-    &:read-only {
-      background-color: #f9f9f9;
-    }
-  }
-}
-
-// Action Buttons
-.profile-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 24px;
-  gap: 16px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-
-  &.save {
-    background-color: $primary;
-    color: white;
-
-    &:hover:not(:disabled) {
-      background-color: darken($primary, 10%);
-      transform: translateY(-2px);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-
-  &.delete {
-    background-color: #f44336;
-    color: white;
-
-    &:hover {
-      background-color: darken(#f44336, 10%);
-    }
-  }
-
-  mat-icon {
-    margin-right: 8px;
-  }
-}
-
-// Preferences Styling
-.preference-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-  background-color: $light-bg;
-  padding: 16px;
-  border-radius: 8px;
-  border-left: 4px solid $accent;
-}
-
-.preference-fields {
-  display: flex;
-  flex: 1;
-  gap: 16px;
-
-  @media (max-width: 600px) {
-    flex-direction: column;
-    gap: 12px;
-  }
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  color: #f44336;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  transition: all 0.3s ease;
-
-  &:hover:not(:disabled) {
-    background-color: rgba(#f44336, 0.1);
-  }
-
-  &:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-}
-
-.preference-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 24px;
-}
-
-.add-preference-btn {
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-  border-radius: 20px;
-  background: none;
-  border: 2px solid $accent;
-  color: $accent;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background-color: rgba($accent, 0.1);
-  }
-
-  mat-icon {
-    margin-right: 8px;
-  }
-}
-
-.save-preferences-btn {
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-  border-radius: 20px;
-  border: none;
-  background-color: $primary;
-  color: white;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-
-  &:hover:not(:disabled) {
-    background-color: darken($primary, 10%);
-    transform: translateY(-2px);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  mat-icon {
-    margin-right: 8px;
-  }
-}
-
-// Account Actions
-.account-actions {
-  display: flex;
-  justify-content: center;
-  margin: 24px 0;
-}
-
-.delete-account-btn {
-  display: flex;
-  align-items: center;
-  padding: 12px 24px;
-  border-radius: 20px;
-  border: none;
-  background-color: #f44336;
-  color: white;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background-color: darken(#f44336, 10%);
-    transform: translateY(-2px);
-  }
-
-  mat-icon {
-    margin-right: 8px;
-  }
-}
-
-// Password Form
-.password-form {
-  max-width: 500px;
   margin: 0 auto;
-}
 
-.password-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
-}
-
-.change-password-btn {
-  display: flex;
-  align-items: center;
-  padding: 12px 24px;
-  border-radius: 20px;
-  border: none;
-  background-color: $primary;
-  color: white;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-
-  &:hover:not(:disabled) {
-    background-color: darken($primary, 10%);
-    transform: translateY(-2px);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  mat-icon {
-    margin-right: 8px;
-  }
-}
-
-// Responsive Adjustments
-@media (max-width: 768px) {
-  .profile-tabs {
-    flex-wrap: wrap;
-
-    .tab-button {
-      flex: 0 0 50%;
-      border-bottom: none;
-      border-right: 3px solid transparent;
-
-      &.active {
-        border-bottom: none;
-        border-right: 3px solid $primary;
-      }
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .profile-container {
-    padding: 12px;
-  }
-
-  .profile-tabs {
-    .tab-button {
-      flex: 0 0 100%;
-      padding: 12px;
-
-      mat-icon {
-        margin-right: 12px;
-      }
-    }
-  }
-}
-// Add these styles to your traveler-profile.component.scss file
-
-// Preference Card Styling
-.preferences-card {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: $card-shadow;
-    padding: 24px;
-    margin-bottom: 20px;
-    overflow: hidden;
-
-    .mat-card-header {
-      padding: 0;
-      margin-bottom: 20px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-      padding-bottom: 16px;
-
-      .mat-card-title {
-        color: $primary;
-        font-size: 24px;
-        margin: 0 0 8px 0;
-        font-weight: 500;
-      }
-
-      .mat-card-subtitle {
-        color: $dark-text;
-        margin: 0;
-        font-size: 16px;
-      }
-    }
-
-    .mat-card-content {
-      padding: 0;
-    }
-  }
-
-  // Loading indicator for preferences
-  .loading-indicator {
+  // Loading container
+  .loading-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 120px;
+    padding: 3rem;
 
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba($primary, 0.3);
-      border-radius: 50%;
-      border-top-color: $primary;
-      animation: spin 1s ease-in-out infinite;
+    mat-spinner {
+      margin-bottom: 1rem;
     }
 
     p {
-      margin-top: 12px;
-      color: #666;
-      font-size: 16px;
+      color: $gray-600;
       font-weight: 500;
     }
   }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  // Profile content wrapper
+  .profile-content {
+    animation: fadeIn 0.4s ease;
   }
+}
 
-  // Improve other styling for the preferences section
-  .preferences-list {
-    margin-bottom: 20px;
-  }
+// Profile Tabs Navigation
+.profile-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem;
+  background-color: $white;
+  border-radius: $border-radius;
+  box-shadow: $shadow;
 
-  .no-preferences-message {
-    background-color: $light-bg;
-    border-radius: 8px;
-    padding: 16px;
-    text-align: center;
-    color: #666;
-    margin-bottom: 16px;
-  }
-
-  .card-actions {
+  .tab-button {
+    padding: 0.6rem 1rem;
+    border: none;
+    background: transparent;
+    border-radius: $border-radius;
+    font-family: $font-family-base;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: $gray-600;
     display: flex;
-    justify-content: space-between;
-    margin-top: 24px;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: $transition;
 
-    @media (max-width: 600px) {
-      flex-direction: column;
-      gap: 12px;
+    &:hover {
+      background-color: $gray-100;
+      color: $teal-primary;
+    }
 
-      button {
-        width: 100%;
+    &.active {
+      background: linear-gradient(45deg, $teal-primary, $pink-primary);
+      color: $white;
+      box-shadow: 0 2px 4px rgba(0, 184, 169, 0.3);
+
+      mat-icon {
+        color: $yellow-accent;
+      }
+    }
+
+    mat-icon {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+// Section Title Styling
+.section-title {
+  color: $teal-primary;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+
+  &:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(to right, $teal-primary, $pink-primary);
+    border-radius: 3px;
+  }
+}
+
+.section-subtitle {
+  color: $gray-600;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+// Profile Section
+.profile-section {
+  background-color: $white;
+  border-radius: $border-radius;
+  box-shadow: $shadow;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  animation: slideIn 0.3s ease;
+}
+
+// Profile Content Layout
+.profile-content-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Profile Photo Container
+.profile-photo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .profile-photo-wrapper {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid $light-blue;
+    margin-bottom: 1rem;
+    box-shadow: $shadow;
+  }
+
+  .profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .photo-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+
+    .photo-btn {
+      padding: 0.5rem 0.75rem;
+      border-radius: $border-radius;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      border: none;
+      cursor: pointer;
+      transition: $transition;
+
+      &.select {
+        background-color: rgba(0, 184, 169, 0.1);
+        color: $teal-primary;
+
+        &:hover {
+          background-color: rgba(0, 184, 169, 0.2);
+        }
+      }
+
+      &.upload {
+        background-color: $teal-primary;
+        color: $white;
+
+        &:hover {
+          background-color: darken($teal-primary, 5%);
+        }
+      }
+
+      mat-icon {
+        font-size: 1rem;
       }
     }
   }
 
-  .save-btn {
+  .upload-progress {
+    width: 80%;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+}
+
+// Profile Form Container
+.profile-form-container {
+  .form-field {
+    margin-bottom: 1.25rem;
+
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+      color: $gray-700;
+      font-size: 0.9rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border: 1px solid $gray-300;
+      border-radius: $border-radius;
+      font-family: $font-family-base;
+      font-size: 0.95rem;
+      transition: $transition;
+
+      &:focus {
+        outline: none;
+        border-color: $teal-primary;
+        box-shadow: 0 0 0 3px rgba(0, 184, 169, 0.1);
+      }
+
+      &::placeholder {
+        color: $gray-500;
+      }
+
+      &:read-only {
+        background-color: $gray-100;
+        cursor: not-allowed;
+      }
+
+      &.ng-invalid.ng-touched {
+        border-color: $pink-primary;
+        background-color: rgba(255, 0, 153, 0.05);
+      }
+    }
+  }
+}
+
+// User Status Controls
+.status-button {
+  padding: 0.5rem 1rem;
+  border-radius: $border-radius;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: $transition;
+
+  &.active {
+    background-color: rgba(82, 196, 26, 0.1);
+    color: #52c41a;
+
+    &:hover {
+      background-color: rgba(82, 196, 26, 0.2);
+    }
+  }
+
+  &.inactive {
+    background-color: rgba(255, 77, 77, 0.1);
+    color: #ff4d4d;
+
+    &:hover {
+      background-color: rgba(255, 77, 77, 0.2);
+    }
+  }
+
+  .material-icons {
+    font-size: 1.1rem;
+  }
+}
+
+// Profile Actions
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+
+  .action-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: $border-radius;
+    font-size: 0.95rem;
+    font-weight: 500;
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 10px 20px;
-    border-radius: 20px;
+    gap: 0.5rem;
     border: none;
-    background-color: $primary;
-    color: white;
     cursor: pointer;
+    transition: $transition;
+
+    &.save {
+      background: linear-gradient(45deg, $teal-primary, $pink-primary);
+      color: $white;
+
+      &:hover:not(:disabled) {
+        box-shadow: $shadow-hover;
+        transform: translateY(-2px);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+
+    mat-icon {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+// Preferences Card
+.preferences-card {
+  margin-bottom: 2rem;
+  animation: slideIn 0.3s ease;
+
+  .mat-card-header {
+    background: linear-gradient(to right, $teal-primary, $pink-primary);
+    padding: 1rem;
+    text-align: center;
+
+    .mat-card-title {
+      color: $white;
+      font-weight: 600;
+      font-size: 1.2rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .mat-card-subtitle {
+      color: rgba(255, 255, 255, 0.8);
+      margin-top: 0.4rem;
+      font-size: 0.85rem;
+    }
+  }
+
+  .mat-card-content {
+    padding: 1.5rem;
+
+    .loading-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(0, 184, 169, 0.1);
+        border-left-color: $teal-primary;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      p {
+        color: $gray-600;
+        margin-top: 1rem;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Preferences List
+.preferences-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.preference-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: $gray-100;
+  border-radius: $border-radius;
+  transition: $transition;
+
+  &:hover {
+    background-color: $light-blue;
+  }
+
+  .preference-fields {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+
+    .form-field {
+      margin-bottom: 0;
+
+      .select-input {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border: 1px solid $gray-300;
+        border-radius: $border-radius;
+        font-family: $font-family-base;
+        font-size: 0.95rem;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1rem;
+      }
+
+      .error-message {
+        color: $pink-primary;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+      }
+    }
+  }
+
+  .remove-btn {
+    background-color: transparent;
+    color: $gray-500;
+    padding: 0.5rem;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: $transition;
+
+    &:hover {
+      background-color: rgba(255, 0, 153, 0.1);
+      color: $pink-primary;
+    }
+
+    .material-icons {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.no-preferences-message {
+  padding: 2rem;
+  text-align: center;
+  color: $gray-600;
+}
+
+// Card Actions
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+
+  .add-preference-btn {
+    background-color: rgba(0, 184, 169, 0.1);
+    color: $teal-primary;
+    padding: 0.6rem 1rem;
+    border-radius: $border-radius;
+    font-size: 0.95rem;
     font-weight: 500;
-    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: $transition;
+
+    &:hover {
+      background-color: rgba(0, 184, 169, 0.2);
+    }
+
+    .material-icons {
+      font-size: 1.1rem;
+    }
+  }
+
+  .save-btn {
+    background: linear-gradient(45deg, $teal-primary, $pink-primary);
+    color: $white;
+    padding: 0.6rem 1.2rem;
+    border-radius: $border-radius;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: $transition;
 
     &:hover:not(:disabled) {
-      background-color: darken($primary, 10%);
+      box-shadow: $shadow-hover;
       transform: translateY(-2px);
     }
 
@@ -579,38 +541,203 @@ $card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .material-icons {
-      margin-right: 8px;
+      font-size: 1.1rem;
 
       &.spin {
         animation: spin 1s linear infinite;
       }
     }
   }
+}
 
-  // Fix error message styling
-  .error-message {
-    color: #f44336;
-    font-size: 12px;
-    margin-top: 4px;
-    display: block;
-  }
+// Management Cards
+.management-card.account-deletion {
+    background-color: transparent; // ✅ ou une autre couleur de fond si tu veux garder un fond léger
+    border: none; // ✅ supprime la bordure
+    box-shadow: none; // ✅ enlève toute ombre éventuelle
+    padding: 1rem 0; // ✅ optionnel : réduis un peu l’espace
+}
 
-  // Improve select input styling
-  .select-input {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    background-color: white;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23444' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
+// Password Form compacté
+// Password Form compact et sans espace inutile
+.password-form {
+    max-width: 500px;
+    margin: 2rem auto; // ✅ un petit espace au-dessus/au-dessous
+    display: flex;
+    flex-direction: column;
+    align-items: center; // centre horizontalement
 
-    &:focus {
-      outline: none;
-      border-color: $primary;
-      box-shadow: 0 0 0 2px rgba($primary, 0.2);
+    .form-field {
+      width: 100%;
+      margin-bottom: 0.75rem; // ✅ plus compact
+
+      label {
+        display: block;
+        margin-bottom: 0.3rem;
+        font-weight: 500;
+        color: $gray-700;
+        font-size: 0.9rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.5rem 0.75rem; // ✅ plus petit
+        border: 1px solid $gray-300;
+        border-radius: $border-radius;
+        font-family: $font-family-base;
+        font-size: 0.9rem;
+        transition: $transition;
+
+        &:focus {
+          outline: none;
+          border-color: $teal-primary;
+          box-shadow: 0 0 0 2px rgba(0, 184, 169, 0.15);
+        }
+
+        &::placeholder {
+          color: $gray-500;
+        }
+      }
+    }
+
+    .password-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 1rem; // ✅ réduit l’espace
+
+      .change-password-btn {
+        background: linear-gradient(45deg, $purple-accent, $teal-primary);
+        color: $white;
+        padding: 0.5rem 1rem;
+        border-radius: $border-radius;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        border: none;
+        cursor: pointer;
+        transition: $transition;
+
+        &:hover:not(:disabled) {
+          box-shadow: $shadow-hover;
+          transform: translateY(-2px);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        mat-icon {
+          font-size: 1rem;
+        }
+      }
     }
   }
+
+
+// Account Actions
+.account-actions {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem;
+
+    .delete-account-btn {
+      background-color: #ff4d4d; // rouge uni
+      color: $white;
+      padding: 0.4rem 1rem; // ✅ plus petit
+      border-radius: 20px;  // ✅ bouton plus compact
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border: none;
+      cursor: pointer;
+      transition: $transition;
+      box-shadow: none; // ✅ suppression de l’ombre
+
+      &:hover {
+        background-color: darken(#ff4d4d, 5%);
+      }
+
+      mat-icon {
+        font-size: 1rem;
+      }
+    }
+  }
+
+
+// Dialog Styling
+mat-dialog-title {
+  color: $gray-800;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+mat-dialog-content {
+  p {
+    color: $gray-700;
+    line-height: 1.6;
+  }
+}
+
+mat-dialog-actions {
+  button {
+    padding: 0.6rem 1.2rem;
+    border-radius: $border-radius;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: $transition;
+
+    &[color="warn"] {
+      background-color: #ff4d4d;
+      color: $white;
+
+      &:hover {
+        background-color: darken(#ff4d4d, 10%);
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Form Animation
+.formAnimation-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.formAnimation-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+// Fade Animation
+@for $i from 1 through 5 {
+  .fade-in-#{$i} {
+    animation: fadeIn 0.3s ease forwards;
+    animation-delay: $i * 0.1s;
+    opacity: 0;
+  }
+}
+

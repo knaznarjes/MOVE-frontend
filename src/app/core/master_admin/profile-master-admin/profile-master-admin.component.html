@@ -49,16 +49,18 @@
             </div>
 
             <div class="photo-actions">
-              <button type="button" color="primary" (click)="fileInput.click()">
-                <span class="material-icons">add_photo_alternate</span>
-                Select Photo
-              </button>
-              <input hidden type="file" #fileInput (change)="onFileSelected($event)" accept="image/*">
+                <button mat-raised-button color="primary" type="button" (click)="fileInput.click()">
+                    <mat-icon>add_photo_alternate</mat-icon>
+                    Select Photo
+                  </button>
 
-              <button type="button" color="accent" [disabled]="!selectedFile || isPhotoUploading" (click)="uploadProfilePhoto()">
-                <span class="material-icons">cloud_upload</span>
-                Upload
-              </button>
+                  <input hidden type="file" #fileInput (change)="onFileSelected($event)" accept="image/*">
+
+                  <button mat-raised-button color="accent" type="button" [disabled]="!selectedFile || isPhotoUploading" (click)="uploadProfilePhoto()">
+                    <mat-icon>cloud_upload</mat-icon>
+                    Upload
+                  </button>
+
             </div>
           </div>
 

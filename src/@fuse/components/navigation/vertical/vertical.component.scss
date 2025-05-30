@@ -2,3 +2,10 @@
 @import 'styles/appearances/compact';
 @import 'styles/appearances/dense';
 @import 'styles/appearances/thin';
+
+.fuse-vertical-navigation-wrapper {
+  position: fixed !important;
+  height: 100vh !important;
+  width: 279px !important;
+  z-index: 1000;
+}

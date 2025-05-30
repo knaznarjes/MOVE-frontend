@@ -1,8 +1,7 @@
-// day-program.service.ts
-import { environment } from './../../../environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 import { DayProgram } from '../models/models';
 
 @Injectable({
@@ -11,29 +10,29 @@ import { DayProgram } from '../models/models';
 export class DayProgramService {
   private apiUrl = `${environment.apiUrl}/api/day-programs`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  // Récupérer un jour par ID
+  // Créer un jour de programme
+  create(dayProgram: DayProgram): Observable<DayProgram> {
+    return this.http.post<DayProgram>(this.apiUrl, dayProgram);
+  }
+
+  // Récupérer un jour de programme par ID
   getById(id: string): Observable<DayProgram> {
     return this.http.get<DayProgram>(`${this.apiUrl}/${id}`);
   }
 
-  // Récupérer tous les jours d'un contenu
+  // Récupérer tous les jours de programme d'un contenu
   getAllByContent(contentId: string): Observable<DayProgram[]> {
     return this.http.get<DayProgram[]>(`${this.apiUrl}/content/${contentId}`);
   }
 
-  // Créer un nouveau jour
-  create(day: DayProgram): Observable<DayProgram> {
-    return this.http.post<DayProgram>(this.apiUrl, day);
+  // Mettre à jour un jour de programme
+  update(id: string, dayProgram: DayProgram): Observable<DayProgram> {
+    return this.http.put<DayProgram>(`${this.apiUrl}/${id}`, dayProgram);
   }
 
-  // Mettre à jour un jour
-  update(id: string, day: DayProgram): Observable<DayProgram> {
-    return this.http.put<DayProgram>(`${this.apiUrl}/${id}`, day);
-  }
-
-  // Supprimer un jour
+  // Supprimer un jour de programme
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

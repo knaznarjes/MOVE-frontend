@@ -2,25 +2,33 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatLegacyCardModule as MatCardModule } from '@angular/material/legacy-card';
-import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
+
+// Material Modules (using only Angular 16 compatible modules)
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatLegacyInputModule as MatInputModule } from '@angular/material/legacy-input';
-import { MatLegacyFormFieldModule as MatFormFieldModule } from '@angular/material/legacy-form-field';
-import { MatLegacySelectModule as MatSelectModule } from '@angular/material/legacy-select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatLegacyProgressSpinnerModule as MatProgressSpinnerModule } from '@angular/material/legacy-progress-spinner';
-import { MatLegacySnackBarModule as MatSnackBarModule } from '@angular/material/legacy-snack-bar';
-import { MatLegacyChipsModule as MatChipsModule } from '@angular/material/legacy-chips';
-import { MatExpansionModule } from '@angular/material/expansion';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatStepperModule } from '@angular/material/stepper';
 
+import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
+
+// Components and routing
 import { ContentFormComponent } from './content-form.component';
-import { MatLegacySlideToggleModule as MatSlideToggleModule } from '@angular/material/legacy-slide-toggle';
-import { MatLegacyCheckboxModule as MatCheckboxModule } from '@angular/material/legacy-checkbox';
-import { HttpClientModule } from '@angular/common/http';
-import { MatLegacyAutocompleteModule as MatAutocompleteModule } from '@angular/material/legacy-autocomplete';
+import { ContentFormRoutes } from './content.routing';
+
+import { DatePipe } from '@angular/common';
 
 @NgModule({
   declarations: [
@@ -28,28 +36,34 @@ import { MatLegacyAutocompleteModule as MatAutocompleteModule } from '@angular/m
   ],
   imports: [
     CommonModule,
-    RouterModule,
+    FormsModule,
     ReactiveFormsModule,
+    RouterModule.forChild(ContentFormRoutes),
+
+    // Material modules
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatInputModule,
     MatFormFieldModule,
+    MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatChipsModule,
-    MatExpansionModule,
-    MatDividerModule,
-    MatSlideToggleModule,
-    MatCheckboxModule,
-    FormsModule,
-    ReactiveFormsModule,
-    HttpClientModule,
     MatAutocompleteModule,
-    MatSelectModule 
+    MatDividerModule,
+    MatTooltipModule,
+    MatBadgeModule,
+    MatExpansionModule,
+    MatStepperModule,
+
+    // Third-party modules
+    NgxMaterialTimepickerModule
+  ],
+  providers: [
+    DatePipe // Required for date formatting in the component
   ],
   exports: [
     ContentFormComponent

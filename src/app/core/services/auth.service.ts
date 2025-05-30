@@ -78,8 +78,9 @@ export class AuthService {
     );
   }
 
-  /** Refresh token when expired */
-  refreshToken(): Observable<AuthenticationResponse> {
+  /// Correction de la méthode refreshToken dans AuthService
+
+refreshToken(): Observable<AuthenticationResponse> {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
       return throwError(() => new Error('No refresh token available'));
@@ -87,10 +88,19 @@ export class AuthService {
 
     const request: RefreshTokenRequest = { refreshToken };
 
+    // Vérifier que l'URL de refresh est bien configurée
+    // Adapter cette URL selon votre backend
     return this.http.post<AuthenticationResponse>(`${this.apiUrl}/api/auth/refresh-token`, request).pipe(
-      tap(response => this.setSession(response)),
+      tap(response => {
+        if (!response || !response.token) {
+          throw new Error('Invalid token refresh response');
+        }
+        console.log('[AuthService] Token refreshed successfully');
+        this.setSession(response);
+      }),
       catchError(error => {
         console.error('[AuthService] Token refresh failed:', error);
+        // En cas d'échec, déconnecter l'utilisateur
         if (error.status === 401 || error.status === 403) {
           this.logout();
         }
@@ -98,6 +108,15 @@ export class AuthService {
       })
     );
   }
+  getUserId(): string | null {
+  return this.currentUserSubject.value?.id || localStorage.getItem('userId');
+}
+getUserById(userId: string): Observable<User> {
+  return this.http.get<UserDTO>(`${this.apiUrl}/api/users/${userId}`).pipe(
+    map(dto => this.mapUserDTO(dto)), // on le convertit vers User (modèle interne)
+    catchError(this.handleError)
+  );
+}
 
   /** Get user details from backend */
   getCurrentUser(): Observable<User> {

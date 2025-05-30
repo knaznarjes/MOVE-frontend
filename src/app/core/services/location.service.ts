@@ -9,11 +9,12 @@ import { Location } from '../models/models';
 })
 export class LocationService {
   private apiUrl = `${environment.apiUrl}/api/locations`;
-  constructor(private http: HttpClient) { }
 
-  // Récupérer tous les lieux
-  getAllLocations(): Observable<Location[]> {
-    return this.http.get<Location[]>(`${this.apiUrl}/all`);
+  constructor(private http: HttpClient) {}
+
+  // Créer un lieu
+  createLocation(location: Location): Observable<Location> {
+    return this.http.post<Location>(this.apiUrl, location);
   }
 
   // Récupérer un lieu par ID
@@ -21,9 +22,9 @@ export class LocationService {
     return this.http.get<Location>(`${this.apiUrl}/${id}`);
   }
 
-  // Créer un nouveau lieu
-  createLocation(location: Location): Observable<Location> {
-    return this.http.post<Location>(this.apiUrl, location);
+  // Récupérer tous les lieux (admin seulement)
+  getAllLocations(): Observable<Location[]> {
+    return this.http.get<Location[]>(`${this.apiUrl}/all`);
   }
 
   // Mettre à jour un lieu
@@ -38,13 +39,7 @@ export class LocationService {
 
   // Rechercher des lieux par pays
   getLocationsByCountry(country: string): Observable<Location[]> {
-    return this.http.get<Location[]>(`${this.apiUrl}/country`, {
-      params: new HttpParams().set('country', country)
-    });
-  }
-
-  // ✅ Liste des pays du monde (API gratuite REST Countries)
-  getAllCountries(): Observable<any[]> {
-    return this.http.get<any[]>('https://restcountries.com/v3.1/all');
+    const params = new HttpParams().set('country', country);
+    return this.http.get<Location[]>(`${this.apiUrl}/country`, { params });
   }
 }

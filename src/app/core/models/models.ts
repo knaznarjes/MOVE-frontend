@@ -85,11 +85,11 @@ export interface UserDTO {
   email?: string;
 }
 
-// Content microservice models
 export enum ContentType {
-  TRAVEL_STORY = 'TravelStory',
-  ITINERARY = 'Itinerary'
+  TRAVEL_STORY = 'TRAVEL_STORY',
+  ITINERARY = 'ITINERARY',
 }
+
 export interface Location {
   id?: string;
   address: string;
@@ -98,6 +98,7 @@ export interface Location {
   lon?: number;
 }
 
+
 export interface Media {
   id?: string;
   title: string;
@@ -105,7 +106,8 @@ export interface Media {
   fileType: string;
   fileSize: string;
   fileName: string;
-  mediaType?: string; // "COVER", "ALBUM"
+  thumbnailName?: string;   // Miniature (nom du fichier)
+  mediaType?: string;       // "COVER", "ALBUM", "VIDEO"
   displayOrder?: number;
   uploadDate?: Date;
   contentId?: string;
@@ -115,13 +117,11 @@ export interface ActivityPoint {
   id?: string;
   name: string;
   description: string;
-  startTime: Date;
-  endTime: Date;
   cost: number;
   category: string;
   difficulty: string;
   contactInfo: string;
-  itineraryDayId?: string;
+  dayProgramId?: string;     // Mise à jour ici (anciennement itineraryDayId)
   location: Location;
 }
 
@@ -130,10 +130,11 @@ export interface DayProgram {
   dayNumber: number;
   description: string;
   contentId?: string;
-  activities: ActivityPoint[]; // Non-optional to match backend getter
+  activities: ActivityPoint[]; // Non-optional pour correspondre au getter Java
 }
 
 export interface Content {
+  averageRating: number; // garde ça comme double/moyenne
   id?: string;
   title: string;
   description: string;
@@ -150,7 +151,106 @@ export interface Content {
   type: ContentType;
   userId?: string;
   coverImageId?: string;
-  media: Media[]; // Non-optional to match backend getter
-  locations: Location[]; // Non-optional to match backend getter
-  dayPrograms: DayProgram[]; // Non-optional to match backend getter
+  media: Media[];
+  locations: Location[];
+  dayPrograms: DayProgram[];
+
 }
+//search service
+export interface ContentIndex {
+  averageRating: number;
+  id?: string;
+  title: string;
+  description: string;
+  budget?: number;
+  rating?: number;
+  userId?: string;
+  type: ContentType;
+  creationDate?: Date;
+  lastModified?: Date;
+  isPublished?: boolean;
+    likeCount?: number;
+
+}
+
+export interface SearchResult<T> {
+  content: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+export interface AdvancedSearchParams {
+  keyword?: string;
+  minBudget?: number;
+  maxBudget?: number;
+  minRating?: number;
+  type?: string; // Modifié de ContentType à string pour correspondre au backend
+  isPublished?: boolean;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  page?: number;
+  size?: number;
+}
+export interface SearchHistory {
+  id?: string;
+  userId: string;
+  keyword: string;
+  timestamp: Date;
+}
+export type MediaType = 'COVER' | 'ALBUM' | 'VIDEO';
+
+export interface ContentItem {
+  id: string;
+  title: string;
+  description: string;
+  budget?: number;
+  rating?: number;
+  tags?: string;
+  type?: ContentType;
+  userId?: string;
+  likeCount?: number;
+  averageRating?: number;
+}
+export interface ContentFavorisDTO {
+  id: string;
+  userId: string;
+  contentId: string;
+  dateAdded: string;
+}
+// models/notification.model.ts
+
+export interface Notification {
+  fromUserName: any;
+  senderName: any;
+  timestamp: string | number | Date;
+  id?: string;
+  userId: string;
+  message: string;
+  type: string; // COMMENT, LIKE, FOLLOW, etc.
+  sourceId?: string;
+  sourceName?: string;
+  read: boolean;
+  createdAt?: string;
+  readAt?: string;
+  metadata?: string; // format JSON.stringify({ ... })
+  priority?: number; // 0 = basse, 1 = normale, 2 = haute
+}
+
+
+export interface Comment {
+  id?: string;
+  contentId: string;
+  userId: string;
+  contentOwnerId: string; // ✅ Ajouté pour refléter le backend
+  message: string;
+  createdAt?: string;     // LocalDateTime devient string en JSON
+  updatedAt?: string;
+  deleted?: boolean;
+  valid?: boolean;        // Optionnel, si utilisé dans la logique de validation frontend
+}
+
+

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable arrow-parens */
 import { Router } from '@angular/router';
 import { AuthService } from './../../services/auth.service';
 import { Injectable } from '@angular/core';
@@ -25,6 +27,7 @@ export class AuthInterceptor implements HttpInterceptor {
       return next.handle(request);
     }
 
+    // Utiliser le service AuthService pour la cohérence
     const token = this.authService.getToken();
 
     console.log('[AuthInterceptor] Token intercepted:', token || '⛔ No token found');
@@ -33,6 +36,9 @@ export class AuthInterceptor implements HttpInterceptor {
       request = this.addToken(request, token);
     } else {
       console.warn('[AuthInterceptor] Protected endpoint accessed without token');
+      // Si la route requiert un token mais qu'il n'y en a pas, rediriger vers login
+      this.router.navigate(['/home']);
+      return throwError(() => new Error('No authentication token available'));
     }
 
     return next.handle(request).pipe(
@@ -42,8 +48,8 @@ export class AuthInterceptor implements HttpInterceptor {
             return this.handle401Error(request, next);
           } else if (error.status === 403) {
             console.error('[AuthInterceptor] Access forbidden (403):', request.url);
-            // Optional redirect to a permissions error page
-            // this.router.navigate(['/forbidden']);
+            // Rediriger vers une page d'erreur
+            this.router.navigate(['/forbidden']);
           }
         }
         return throwError(() => error);
@@ -67,12 +73,13 @@ export class AuthInterceptor implements HttpInterceptor {
       '/api/auth/refresh'
     ];
 
-    // If URL is absolute (starts with http), remove the apiUrl
-    if (url.startsWith(environment.apiUrl)) {
-      url = url.substring(environment.apiUrl.length);
+    // Si l'URL est absolue, retirer l'apiUrl
+    const apiUrl = environment.apiUrl;
+    if (url.startsWith(apiUrl)) {
+      url = url.substring(apiUrl.length);
     }
 
-    // Check if URL corresponds to a public endpoint
+    // Vérifier si l'URL correspond à un endpoint public
     return publicEndpoints.some(endpoint => url.includes(endpoint));
   }
 
@@ -86,6 +93,9 @@ export class AuthInterceptor implements HttpInterceptor {
           this.isRefreshing = false;
 
           if (response && response.token) {
+            console.log('[AuthInterceptor] Token refreshed successfully:', response.token);
+            // Laisser AuthService gérer le stockage du token
+            // Ne pas utiliser this.saveToken() car cela crée une incohérence
             this.refreshTokenSubject.next(response.token);
             return next.handle(this.addToken(request, response.token));
           } else {
@@ -114,4 +124,7 @@ export class AuthInterceptor implements HttpInterceptor {
       );
     }
   }
+
+  // SUPPRIMÉ: Ne pas implémenter de méthodes redondantes avec AuthService
+  // saveToken() et getToken() devraient seulement être dans AuthService
 }

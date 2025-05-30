@@ -1,13 +1,15 @@
 <div class="admin-profile-container">
+
+    <!-- Main container with tabs navigation -->
     <div class="tabs-container">
       <button class="tab-button" [class.active]="activeCardIndex === 0" (click)="setActiveCard(0)">
         <span class="material-icons">person</span> Profile
       </button>
       <button class="tab-button" [class.active]="activeCardIndex === 1" (click)="setActiveCard(1)">
-        <span class="material-icons">settings</span> Preferences
+        <span class="material-icons">flight</span> Preferences
       </button>
       <button class="tab-button" [class.active]="activeCardIndex === 2" (click)="setActiveCard(2)">
-        <span class="material-icons">group</span> User Management
+        <span class="material-icons">groups</span> User Management
       </button>
       <button class="tab-button" [class.active]="activeCardIndex === 3" (click)="setActiveCard(3)" *ngIf="selectedUser">
         <span class="material-icons">account_circle</span> User Details
@@ -18,239 +20,226 @@
       </button>
     </div>
 
-   <!-- Profile Card -->
+    <!-- Profile Card -->
     <div class="mat-card profile-card" *ngIf="activeCardIndex === 0">
-        <div class="mat-card-header">
-          <div>
-            <div class="mat-card-title"> Admin Profile</div>
-            <div class="mat-card-subtitle">Update your personal information</div>
-          </div>
+      <div class="mat-card-header">
+        <div>
+          <div class="mat-card-title"><span class="material-icons">flight_takeoff</span>  Admin Profile</div>
+        </div>
+      </div>
+
+      <div class="mat-card-content">
+        <div class="loading-indicator" *ngIf="isLoading">
+          <div class="spinner"></div>
+          <p>Loading profile data...</p>
         </div>
 
-        <div class="mat-card-content">
-          <div class="loading-indicator" *ngIf="isLoading">
-            <div class="spinner"></div>
-            <p>Loading profile data...</p>
+        <div class="profile-content" *ngIf="!isLoading">
+          <div class="profile-photo-section">
+            <div class="profile-photo-container">
+              <img [src]="profileImageSrc || 'assets/images/default-profile.png'"
+                  alt="Profile photo"
+                  class="profile-photo"
+                  (error)="handleImageError($event)">
+
+              <div class="photo-upload-overlay" *ngIf="isPhotoUploading">
+                <div class="spinner"></div>
+                <span class="upload-percentage">{{ uploadProgress }}%</span>
+              </div>
+            </div>
+
+            <div class="photo-actions">
+                <button mat-raised-button color="primary" type="button" (click)="fileInput.click()">
+                    <mat-icon>add_photo_alternate</mat-icon>
+                    Select Photo
+                  </button>
+
+                  <input hidden type="file" #fileInput (change)="onFileSelected($event)" accept="image/*">
+
+                  <button mat-raised-button color="accent" type="button" [disabled]="!selectedFile || isPhotoUploading" (click)="uploadProfilePhoto()">
+                    <mat-icon>cloud_upload</mat-icon>
+                    Upload
+                  </button>
+
+            </div>
           </div>
 
-          <div class="profile-content" *ngIf="!isLoading">
-            <div class="profile-photo-section">
-              <div class="profile-photo-container">
-                <img [src]="profileImageSrc || 'assets/images/default-profile.png'"
-                     alt="Profile photo"
-                     class="profile-photo"
-                     (error)="handleImageError($event)">
-
-                <div class="photo-upload-overlay" *ngIf="isPhotoUploading">
-                  <div class="spinner"></div>
-                  <span class="upload-percentage">{{ uploadProgress }}%</span>
-                </div>
+          <form [formGroup]="profileForm" class="profile-form" (ngSubmit)="updateProfile()" (submit)="$event.preventDefault()">
+            <div class="form-field">
+              <label for="fullName">Full Name</label>
+              <input id="fullName" formControlName="fullName" placeholder="Enter your full name">
+              <div class="error" *ngIf="profileForm.get('fullName')?.hasError('required') && profileForm.get('fullName')?.touched">
+                Full name is required
               </div>
+              <div class="error" *ngIf="profileForm.get('fullName')?.hasError('minlength') && profileForm.get('fullName')?.touched">
+                Full name must be at least 3 characters
+              </div>
+            </div>
 
-              <div class="photo-actions">
-                <button type="button" color="primary" (click)="fileInput.click()">
-                  <span class="material-icons">add_photo_alternate</span>
-                  Select Photo
-                </button>
-                <input hidden type="file" #fileInput (change)="onFileSelected($event)" accept="image/*">
+            <div class="form-field">
+              <label for="email">Email</label>
+              <input type="email" [value]="currentUser?.email || ''" placeholder="Email" readonly>
+            </div>
 
-                <button type="button" color="accent" [disabled]="!selectedFile || isPhotoUploading" (click)="uploadProfilePhoto()">
-                  <span class="material-icons">cloud_upload</span>
-                  Upload
+            <!-- User Status Controls -->
+            <div class="form-field" *ngIf="currentUser">
+              <label>Status</label>
+              <div class="status-controls">
+                <!-- Account Locked status -->
+                <button type="button"
+                      class="status-button"
+                      [ngClass]="{ 'active': !currentUser.accountLocked, 'inactive': currentUser.accountLocked }"
+                      (click)="toggleAccountLock(currentUser)">
+                  <span class="material-icons">{{ currentUser.accountLocked ? 'lock' : 'vpn_key' }}</span>
+                  {{ currentUser.accountLocked ? 'Locked' : 'Unlocked' }}
                 </button>
               </div>
             </div>
 
-            <form [formGroup]="profileForm" class="profile-form" (ngSubmit)="updateProfile()">
-              <div class="form-field">
-                <label for="fullName">Full Name</label>
-                <input id="fullName" formControlName="fullName" placeholder="Enter your full name">
-                <div class="error" *ngIf="profileForm.get('fullName')?.hasError('required') && profileForm.get('fullName')?.touched">
-                  Full name is required
-                </div>
-                <div class="error" *ngIf="profileForm.get('fullName')?.hasError('minlength') && profileForm.get('fullName')?.touched">
-                  Full name must be at least 3 characters
-                </div>
-              </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary" [disabled]="profileForm.invalid || isUpdating">
+                <span class="material-icons">save</span>
+                Save Profile
+              </button>
 
-              <div class="form-field">
-                <label for="email">Email</label>
-                <input type="email" id="email" [value]="currentUser?.email || ''" placeholder="Email" readonly>
-              </div>
-<!-- User Status Controls -->
-<div class="form-field" *ngIf="currentUser">
-    <label>Status</label>
-    <div style="display: flex; gap: 12px; align-items: center;">
-
-
-      <!-- Account Locked status -->
-      <button type="button"
-              class="status-button"
-              [ngClass]="{ 'active': !currentUser.accountLocked, 'inactive': currentUser.accountLocked }"
-              (click)="toggleAccountLock(currentUser)">
-        <span class="material-icons">{{ currentUser.accountLocked ? 'lock' : 'vpn_key' }}</span>
-        {{ currentUser.accountLocked ? 'Locked' : 'Unlocked' }}
-      </button>
-    </div>
-  </div>
-
-              <div class="form-actions">
-                <button type="submit" color="primary" [disabled]="profileForm.invalid || isUpdating">
-                  <span class="material-icons">save</span>
-                  Save Profile
-                </button>
-
-                <!-- Delete Account Button -->
-                <button type="button" color="warn" (click)="openDeleteConfirmation()">
-                  <span class="material-icons">delete_forever</span>
-                  Delete Account
-                </button>
-              </div>
-            </form>
-          </div>
+              <!-- Delete Account Button -->
+              <button type="button" class="btn-delete" (click)="openDeleteConfirmation()">
+                <span class="material-icons">delete_forever</span>
+                Delete Account
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
 
     <!-- Confirmation Dialog -->
     <ng-template #deleteConfirmationDialog>
-        <h2 mat-dialog-title>Delete Your Account</h2>
-        <mat-dialog-content>
+      <div class="confirmation-dialog">
+        <h2 class="dialog-title">Delete Your Account</h2>
+        <div class="dialog-content">
           <p>Are you sure you want to delete your account? This action cannot be undone.</p>
-        </mat-dialog-content>
-        <mat-dialog-actions align="end">
-          <button type="button" mat-button mat-dialog-close="false">Cancel</button>
-          <button type="button" mat-button [mat-dialog-close]="true" color="warn">Delete</button>
-        </mat-dialog-actions>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn-cancel" mat-dialog-close="false">Cancel</button>
+          <button type="button" class="btn-confirm" [mat-dialog-close]="true">Delete</button>
+        </div>
+      </div>
     </ng-template>
-
-
-<div class="mat-card preferences-card" *ngIf="activeCardIndex === 1" [@fadeIn]>
-    <div class="mat-card-header">
-      <div>
-        <div class="mat-card-title">Travel Preferences</div>
-        <div class="mat-card-subtitle">Customize your travel settings</div>
-      </div>
-    </div>
-
-    <div class="mat-card-content" [@formAnimation]="formState">
-      <div class="loading-indicator" *ngIf="isLoading">
-        <div class="spinner"></div>
-        <p>Loading preferences...</p>
-      </div>
-
-      <form [formGroup]="preferencesForm" (ngSubmit)="updatePreferences()" *ngIf="!isLoading">
-        <div formArrayName="preferences" class="preferences-list">
-          <div *ngFor="let preference of preferencesArray.controls; let i = index" [formGroupName]="i" class="preference-item">
-            <div class="preference-fields">
-              <div class="form-field">
-                <label [for]="'category' + i">Category</label>
-                <select [id]="'category' + i" formControlName="category" class="select-input">
-                  <option value="accommodation">Accommodation</option>
-                  <option value="transportation">Transportation</option>
-                  <option value="activities">Activities</option>
-                  <option value="food">Food</option>
-                  <option value="budget">Budget</option>
-                </select>
-                <span class="error-message" *ngIf="preferencesArray.at(i).get('category')?.invalid && preferencesArray.at(i).get('category')?.touched">
-                  Category is required
-                </span>
-              </div>
-
-              <div class="form-field">
-                <label [for]="'priority' + i">Priority</label>
-                <select [id]="'priority' + i" formControlName="priority" class="select-input">
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-                <span class="error-message" *ngIf="preferencesArray.at(i).get('priority')?.invalid && preferencesArray.at(i).get('priority')?.touched">
-                  Priority is required
-                </span>
-              </div>
-            </div>
-
-            <!-- Delete button is always active -->
-            <button
-              type="button"
-              class="remove-btn"
-              (click)="removePreferenceField(i)"
-              aria-label="Remove this preference">
-              <span class="material-icons">delete_outline</span>
-            </button>
+    <div class="mat-card preferences-card" *ngIf="activeCardIndex === 1" [@fadeIn]>
+        <div class="mat-card-header">
+          <div>
+            <div class="mat-card-title"><span class="material-icons">explore</span> Travel Preferences</div>
           </div>
         </div>
 
-        <!-- Show message when no preferences exist -->
-        <div *ngIf="preferencesArray.length === 0" class="no-preferences-message">
-          <p>No preferences added yet. Click "Add Preference" to create one.</p>
-        </div>
+        <div class="mat-card-content" [@formAnimation]="formState">
+          <div class="loading-indicator" *ngIf="isLoading">
+            <div class="spinner"></div>
+            <p>Loading preferences...</p>
+          </div>
 
-        <div class="card-actions">
-          <button type="button" class="add-preference-btn" (click)="addPreferenceField()">
-            <span class="material-icons">add_circle_outline</span>
-            Add Preference
-          </button>
+          <div [formGroup]="preferencesForm">
+            <div formArrayName="preferences">
+              <div *ngFor="let preference of preferencesArray.controls; let i = index" [formGroupName]="i" class="preference-item">
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Category</mat-label>
+                    <mat-select formControlName="category" (selectionChange)="onCategoryChange(i)">
+                      <mat-option *ngFor="let cat of availableCategories" [value]="cat.value" [disabled]="isCategoryAlreadySelected(cat.value, i)">
+                        {{ cat.label }}
+                        <mat-icon *ngIf="isCategoryAlreadySelected(cat.value, i)" color="warn">block</mat-icon>
+                      </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="preferencesArray.at(i).get('category')?.hasError('required')">
+                      Category is required
+                    </mat-error>
+                    <mat-error *ngIf="preferencesArray.at(i).get('category')?.hasError('duplicateCategory')">
+                      This category is already selected
+                    </mat-error>
+                  </mat-form-field>
 
-          <button type="submit" class="save-btn" [disabled]="preferencesForm.invalid || isUpdating">
-            <span class="material-icons" *ngIf="!isUpdating">save</span>
-            <span class="material-icons spin" *ngIf="isUpdating">sync</span>
-            Save Preferences
-          </button>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Priority</mat-label>
+                    <mat-select formControlName="priority">
+                      <mat-option value="HIGH">High</mat-option>
+                      <mat-option value="MEDIUM">Medium</mat-option>
+                      <mat-option value="LOW">Low</mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="preferencesArray.at(i).get('priority')?.hasError('required')">
+                      Priority is required
+                    </mat-error>
+                  </mat-form-field>
+
+                  <button mat-icon-button color="warn" type="button" (click)="removePreferenceField(i)"
+                         *ngIf="preferencesArray.length > 1">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="actions-row">
+              <button mat-stroked-button color="primary" type="button" (click)="addPreferenceField()">
+                <mat-icon>add</mat-icon> Add Preference
+              </button>
+              <button mat-raised-button color="primary" (click)="updatePreferences()" [disabled]="preferencesForm.invalid || isUpdating">
+                <mat-icon>save</mat-icon> Save Preferences
+              </button>
+            </div>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
+      </div>
+
     <!-- User Management Card -->
-<div class="mat-card user-management-card" *ngIf="activeCardIndex === 2">
-    <div class="mat-card-header">
-      <div>
-        <div class="mat-card-title">User Management</div>
-        <div class="mat-card-subtitle">View and manage system users</div>
-      </div>
-    </div>
-
-    <div class="mat-card-content">
-      <div class="loading-indicator" *ngIf="isLoadingUsers">
-        <div class="spinner"></div>
-        <p>Loading users...</p>
+    <div class="mat-card user-management-card" *ngIf="activeCardIndex === 2">
+      <div class="mat-card-header">
+        <div>
+          <div class="mat-card-title"><span class="material-icons">supervisor_account</span> User Management</div>
+        </div>
       </div>
 
-      <div class="user-content" *ngIf="!isLoadingUsers">
-        <!-- Dashboard Section - NOUVEAU -->
-        <div class="dashboard-section">
-          <div class="dashboard-cards">
-            <div class="dashboard-card total-users">
-              <div class="card-icon">
-                <span class="material-icons">people</span>
-              </div>
-              <div class="card-content">
-                <div class="card-value">{{ users?.length || 0 }}</div>
-                <div class="card-label">Total Users</div>
-              </div>
-            </div>
+      <div class="mat-card-content">
+        <div class="loading-indicator" *ngIf="isLoadingUsers">
+          <div class="spinner"></div>
+          <p>Loading users...</p>
+        </div>
 
-            <div class="dashboard-card admins">
-              <div class="card-icon">
-                <span class="material-icons">admin_panel_settings</span>
+        <div class="user-content" *ngIf="!isLoadingUsers">
+          <!-- Dashboard Section -->
+          <div class="dashboard-section">
+            <div class="dashboard-cards">
+              <div class="dashboard-card total-users">
+                <div class="card-icon">
+                  <span class="material-icons">people</span>
+                </div>
+                <div class="card-content">
+                  <div class="card-value">{{ users?.length || 0 }}</div>
+                  <div class="card-label">Total Users</div>
+                </div>
               </div>
-              <div class="card-content">
-                <div class="card-value">{{ getAdminCount() }}</div>
-                <div class="card-label">Admins</div>
-              </div>
-            </div>
 
-            <div class="dashboard-card travelers">
-              <div class="card-icon">
-                <span class="material-icons">card_travel</span>
+              <div class="dashboard-card admins">
+                <div class="card-icon">
+                  <span class="material-icons">admin_panel_settings</span>
+                </div>
+                <div class="card-content">
+                  <div class="card-value">{{ getAdminCount() }}</div>
+                  <div class="card-label">Admins</div>
+                </div>
               </div>
-              <div class="card-content">
-                <div class="card-value">{{ getTravelerCount() }}</div>
-                <div class="card-label">Travelers</div>
-              </div>
-            </div>
 
-        
-            <div class="dashboard-card unlocked">
+              <div class="dashboard-card travelers">
+                <div class="card-icon">
+                  <span class="material-icons">card_travel</span>
+                </div>
+                <div class="card-content">
+                  <div class="card-value">{{ getTravelerCount() }}</div>
+                  <div class="card-label">Travelers</div>
+                </div>
+              </div>
+
+              <div class="dashboard-card unlocked">
                 <div class="card-icon">
                   <span class="material-icons">lock_open</span>
                 </div>
@@ -259,97 +248,100 @@
                   <div class="card-label">Unlocked Users</div>
                 </div>
               </div>
-          </div>
-        </div>
-        <!-- Fin de la section Dashboard -->
-
-        <!-- Advanced Search Form -->
-        <form [formGroup]="userManagementForm" class="search-form" (ngSubmit)="search()" (submit)="$event.preventDefault()">
-          <div class="search-fields">
-            <div class="form-field">
-              <label for="name">Name</label>
-              <input id="name" formControlName="name" placeholder="Search by name">
-            </div>
-
-            <div class="form-field">
-              <label for="email">Email</label>
-              <input id="email" formControlName="email" placeholder="Search by email">
-            </div>
-
-            <div class="form-field">
-              <label for="role">Role</label>
-              <select id="role" formControlName="role">
-                <option value="">All Roles</option>
-                <option value="ADMIN">Admin</option>
-                <option value="MASTERADMIN">Master Admin</option>
-                <option value="TRAVELER">Traveler</option>
-                <!-- Add other roles as needed -->
-              </select>
             </div>
           </div>
 
-          <div class="search-actions">
-            <button type="submit" color="primary">
-              <span class="material-icons">search</span>
-              Search
+          <form [formGroup]="userManagementForm" class="search-form" (ngSubmit)="search()" (submit)="$event.preventDefault()">
+            <div class="search-fields">
+              <div class="form-field">
+                <label for="name">Name</label>
+                <input id="name" formControlName="name" placeholder="Search by name">
+              </div>
+
+              <div class="form-field">
+                <label for="email">Email</label>
+                <input id="email" formControlName="email" placeholder="Search by email">
+              </div>
+
+              <div class="form-field">
+                <label for="role">Role</label>
+                <select id="role" formControlName="role">
+                  <option value="">All Roles</option>
+                  <option value="ADMIN">Admin</option>
+                  <option value="MASTERADMIN">Master Admin</option>
+                  <option value="TRAVELER">Traveler</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="search-actions">
+              <button type="submit" class="btn-search">
+                <span class="material-icons">search</span>
+                Search
+              </button>
+              <button type="button" class="btn-reset" (click)="resetSearch()">
+                <span class="material-icons">refresh</span>
+                Reset
+              </button>
+            </div>
+          </form>
+
+          <div class="table-container">
+            <table class="user-table">
+              <thead>
+                <tr>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let user of users">
+                  <td>{{ user.fullName }}</td>
+                  <td>{{ getEmailForUser(user) }}</td>
+                  <td>
+                    <span class="role-badge" [ngClass]="user.role.toLowerCase()">{{ user.role }}</span>
+                  </td>
+                  <td class="actions-cell">
+                    <button type="button" class="btn-view" title="View Details" (click)="viewUserDetails(user)">
+                      <span class="material-icons">visibility</span>
+                    </button>
+                    <button type="button" class="btn-role" title="Change Role" (click)="openUpdateRoleDialog(user)">
+                      <span class="material-icons">security</span>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="users?.length === 0">
+                  <td colspan="4" class="no-data">
+                    <div class="empty-state">
+                      <span class="material-icons">search_off</span>
+                      <p>No users found matching your criteria</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <button type="button" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
+              <span class="material-icons">chevron_left</span>
             </button>
-            <button type="button" color="accent" (click)="resetSearch()">
-              <span class="material-icons">refresh</span>
-              Reset
+            <span>Page {{ currentPage }} of {{ totalPages }}</span>
+            <button type="button" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
+              <span class="material-icons">chevron_right</span>
             </button>
           </div>
-        </form>
-
-        <div class="table-container">
-          <table class="user-table">
-            <thead>
-              <tr>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let user of users">
-                <td>{{ user.fullName }}</td>
-                <td>{{ getEmailForUser(user) }}</td>
-                <td>{{ user.role }}</td>
-                <td>
-                  <button type="button" color="primary" title="View Details" (click)="viewUserDetails(user)">
-                    <span class="material-icons">visibility</span>
-                  </button>
-                  <button type="button" color="accent" title="Change Role" (click)="openUpdateRoleDialog(user)">
-                    <span class="material-icons">security</span>
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="users?.length === 0">
-                <td colspan="4" class="no-data">
-                  No users found matching your criteria
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="pagination">
-          <button type="button" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
-            <span class="material-icons">chevron_left</span>
-          </button>
-          <span>Page {{ currentPage }} of {{ totalPages }}</span>
-          <button type="button" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
-            <span class="material-icons">chevron_right</span>
-          </button>
         </div>
       </div>
     </div>
-  </div>
+
     <!-- User Details Card -->
     <div class="mat-card user-details-card" *ngIf="activeCardIndex === 3 && selectedUser">
       <div class="mat-card-header">
         <div>
-          <div class="mat-card-title">User Details</div>
+          <div class="mat-card-title"><span class="material-icons">person_pin</span> User Details</div>
           <div class="mat-card-subtitle">{{ selectedUser.fullName }}</div>
         </div>
       </div>
@@ -361,6 +353,10 @@
                  alt="User photo"
                  class="user-detail-photo"
                  (error)="handleImageError($event)">
+            <div class="user-status">
+              <span class="status-indicator" [ngClass]="{'active': !selectedUser.accountLocked}"></span>
+              {{ selectedUser.accountLocked ? 'Account Locked' : 'Account Active' }}
+            </div>
           </div>
 
           <div class="user-info-section">
@@ -369,22 +365,21 @@
               <span class="info-value">{{ selectedUser.fullName }}</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Email:</span>
-                <span class="info-value">{{ getEmailForUser(selectedUser) }}</span>
+              <span class="info-label">Email:</span>
+              <span class="info-value">{{ getEmailForUser(selectedUser) }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Role:</span>
-              <span class="info-value">{{ selectedUser.role }}</span>
+              <span class="info-value role-badge" [ngClass]="selectedUser.role.toLowerCase()">{{ selectedUser.role }}</span>
             </div>
 
             <div class="user-actions">
-              <button type="button" color="primary" (click)="openUpdateRoleDialog(selectedUser)"
-                     [disabled]="isMasterAdmin(selectedUser) || isAdmin(selectedUser)">
+              <button type="button" class="btn-primary" (click)="openUpdateRoleDialog(selectedUser)">
                 <span class="material-icons">security</span>
                 Change Role
               </button>
 
-              <button type="button" (click)="setActiveCard(2)">
+              <button type="button" class="btn-secondary" (click)="setActiveCard(2)">
                 <span class="material-icons">keyboard_return</span>
                 Back to List
               </button>
@@ -398,59 +393,83 @@
     <div class="mat-card password-card" *ngIf="activeCardIndex === 4">
       <div class="mat-card-header">
         <div>
-          <h2 class="mat-card-title">Change Password</h2>
-          <p class="mat-card-subtitle">Update your account password</p>
+          <div class="mat-card-title"><span class="material-icons">enhanced_encryption</span> Change Password</div>
         </div>
       </div>
 
       <div class="mat-card-content">
-        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" (submit)="$event.preventDefault()">
           <div class="form-field">
             <label for="currentPassword">Current Password</label>
-            <input
-              id="currentPassword"
-              type="password"
-              formControlName="currentPassword"
-              placeholder="Enter your current password">
+            <div class="password-input-container">
+              <input
+                id="currentPassword"
+                [type]="showPassword.current ? 'text' : 'password'"
+                formControlName="currentPassword"
+                placeholder="Enter your current password">
+              <button type="button" class="toggle-password" (click)="showPassword.current = !showPassword.current">
+                <span class="material-icons">{{ showPassword.current ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
             <div class="error" *ngIf="passwordForm.get('currentPassword')?.hasError('required') &&
-                                      passwordForm.get('currentPassword')?.touched">
+                                    passwordForm.get('currentPassword')?.touched">
               Current password is required
             </div>
           </div>
 
           <div class="form-field">
             <label for="newPassword">New Password</label>
-            <input
-              id="newPassword"
-              type="password"
-              formControlName="newPassword"
-              placeholder="Enter your new password">
+            <div class="password-input-container">
+              <input
+                id="newPassword"
+                [type]="showPassword.new ? 'text' : 'password'"
+                formControlName="newPassword"
+                placeholder="Enter your new password">
+              <button type="button" class="toggle-password" (click)="showPassword.new = !showPassword.new">
+                <span class="material-icons">{{ showPassword.new ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
             <div class="error" *ngIf="passwordForm.get('newPassword')?.hasError('required') &&
-                                      passwordForm.get('newPassword')?.touched">
+                                    passwordForm.get('newPassword')?.touched">
               New password is required
             </div>
             <div class="error" *ngIf="passwordForm.get('newPassword')?.hasError('minlength') &&
-                                      passwordForm.get('newPassword')?.touched">
+                                    passwordForm.get('newPassword')?.touched">
               New password must be at least 8 characters
             </div>
           </div>
 
           <div class="form-field">
             <label for="confirmPassword">Confirm New Password</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              formControlName="confirmPassword"
-              placeholder="Confirm your new password">
+            <div class="password-input-container">
+              <input
+                id="confirmPassword"
+                [type]="showPassword.confirm ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                placeholder="Confirm your new password">
+              <button type="button" class="toggle-password" (click)="showPassword.confirm = !showPassword.confirm">
+                <span class="material-icons">{{ showPassword.confirm ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
             <div class="error" *ngIf="passwordForm.get('confirmPassword')?.hasError('required') &&
-                                      passwordForm.get('confirmPassword')?.touched">
+                                    passwordForm.get('confirmPassword')?.touched">
               Password confirmation is required
             </div>
           </div>
 
           <div class="error password-mismatch" *ngIf="passwordForm.hasError('mismatch') &&
-                                                     passwordForm.get('confirmPassword')?.touched">
+                                                   passwordForm.get('confirmPassword')?.touched">
             Passwords do not match
+          </div>
+
+          <div class="password-strength" *ngIf="passwordForm.get('newPassword')?.value">
+            <div class="strength-label">Password strength:</div>
+            <div class="strength-meter">
+              <div class="strength-bar" [ngClass]="getPasswordStrength(passwordForm.get('newPassword')?.value)"></div>
+            </div>
+            <div class="strength-text" [ngClass]="getPasswordStrength(passwordForm.get('newPassword')?.value)">
+              {{ getPasswordStrengthText(passwordForm.get('newPassword')?.value) }}
+            </div>
           </div>
 
           <div class="form-actions">
@@ -471,23 +490,23 @@
 
     <!-- Template for Role Update Dialog -->
     <ng-template #userRoleUpdateDialog>
-      <h2 mat-dialog-title>Update User Role</h2>
-      <mat-dialog-content>
-        <form [formGroup]="userRoleForm">
-          <div class="form-field">
-            <label for="roleSelect">New Role</label>
-            <select id="roleSelect" formControlName="role">
-              <option value="ADMIN">Admin</option>
-              <option value="TRAVELER">Traveler</option>
-              <!-- Add other roles as needed -->
-            </select>
-          </div>
-        </form>
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button type="button" mat-button mat-dialog-close>Cancel</button>
-        <button type="button" mat-button [mat-dialog-close]="userRoleForm.get('role')?.value"
-                [disabled]="isUpdating">Update</button>
-      </mat-dialog-actions>
+      <div class="role-update-dialog">
+        <h2 class="dialog-title">Update User Role</h2>
+        <div class="dialog-content">
+          <form [formGroup]="userRoleForm">
+            <div class="form-field">
+              <label for="role">New Role</label>
+              <select id="role" formControlName="role">
+                <option value="ADMIN">Admin</option>
+                <option value="TRAVELER">Traveler</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn-cancel" mat-dialog-close>Cancel</button>
+          <button type="button" class="btn-primary" [mat-dialog-close]="userRoleForm.get('role')?.value">Update</button>
+        </div>
+      </div>
     </ng-template>
-</div>
+  </div>
